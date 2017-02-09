@@ -7,14 +7,17 @@ namespace GServer
 {
     public enum MessageType : byte
     {
-        Handshake = 0,
-        Ping = 1,
+        Empty = 0,
+        Handshake,
+        Ping,
+        Rpc,
+        Authorization,
     }
 
     public class Header : ISerializable
     {
+        public MessageType Type { get; private set; }
         public Token ConnectionToken { get; private set; }
-
         public byte[] Serialize()
         {
             throw new NotImplementedException();
@@ -26,8 +29,8 @@ namespace GServer
     }
     public class Message : ISerializable
     {
-        public MessageType Type{get;private set;}
         public Header Header { get; private set; }
+        public byte[] body { get; private set; }
         public byte[] Serialize()
         {
             throw new NotImplementedException();
@@ -36,6 +39,5 @@ namespace GServer
         {
             throw new NotImplementedException();
         }
-        public static readonly Message Handshake = new Message { Type = MessageType.Handshake };
     }
 }

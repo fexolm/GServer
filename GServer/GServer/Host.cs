@@ -21,7 +21,9 @@ namespace GServer
         private readonly Queue<Datagram> _datagrams;
         private readonly UdpClient _client;
         private readonly Thread _listenThread;
+        private readonly Thread _connectionCleaningThread;
         private readonly List<Thread> _processingThreads;
+        private readonly ConnectioManager _connectionManager;
         private readonly IDictionary<Token, Connection> _connections;
         private bool _isListening;
         public Host(int port, int threadCount)
@@ -32,12 +34,18 @@ namespace GServer
             _processingThreads = new List<Thread>();
             _connections = new Dictionary<Token, Connection>();
             _isListening = false;
+            _connectionManager = new ConnectioManager();
+            _connectionCleaningThread = new Thread(CleanConnections);
+
             for (int i = 0; i < threadCount; i++)
             {
                 var thread = new Thread(ProcessQueue);
                 _processingThreads.Add(thread);
-                thread.Start();
             }
+        }
+        private void CleanConnections()
+        {
+
         }
         private void Listen()
         {
@@ -72,33 +80,51 @@ namespace GServer
         }
         private void ProcessDatagram(Datagram datagram)
         {
-            _client.Send(datagram.Buffer, datagram.Buffer.Length, datagram.EndPoint);
-            Console.WriteLine(datagram.EndPoint.Address + ":" + datagram.EndPoint.Port);
-            switch ((MessageType)datagram.Buffer[0])
+            var msg = Message.Deserialize(datagram.Buffer);
+            switch (msg.Header.Type)
             {
                 case MessageType.Handshake:
+                    var connection = new Connection(datagram.EndPoint);
                     lock (_connections)
                     {
-                        var connection = new Connection(datagram.EndPoint);
                         _connections.Add(connection.Token, connection);
                     }
                     break;
                 case MessageType.Ping:
+                    Connection con = null;
                     lock (_connections)
                     {
-
+                        con = _connections[msg.Header.ConnectionToken];
                     }
+                    lock (con)
+                    {
+                        con.UpdateActivity();
+                    }
+                    break;
+                case MessageType.Rpc:
+                    break;
+                case MessageType.Authorization:
                     break;
             }
         }
         public void StartListen()
         {
             _isListening = true;
+            foreach (var thread in _processingThreads)
+            {
+                thread.Start();
+            }
             _listenThread.Start();
+            _connectionCleaningThread.Start();
         }
         public void StopListen()
         {
             _isListening = false;
+        }
+        public void Send(Message msg, IPEndPoint endPoint)
+        {
+            var buffer = msg.Serialize();
+            _client.Send(buffer, buffer.Length, endPoint);
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace GServer
 {
-    class Connection
+    public class Connection
     {
         public readonly IPEndPoint EndPoint;
         public readonly Token Token;
@@ -17,9 +17,15 @@ namespace GServer
             Token = Token.GenerateToken();
             LastActivity = DateTime.Now;
         }
-        public void Ping()
+        public void UpdateActivity()
         {
             LastActivity = DateTime.Now;
+        }
+        public event Action<Connection> Disconnected;
+        public void Disconnect()
+        {
+            if (Disconnected != null)
+                Disconnected.Invoke(this);
         }
     }
 }

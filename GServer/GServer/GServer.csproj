@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConnectioManager.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="Host.cs" />
     <Compile Include="ISerializable.cs" />
