@@ -83,6 +83,12 @@ namespace GServer
                         _connections.Add(connection.Token, connection);
                     }
                     break;
+                case MessageType.Ping:
+                    lock (_connections)
+                    {
+
+                    }
+                    break;
             }
         }
         public void StartListen()
