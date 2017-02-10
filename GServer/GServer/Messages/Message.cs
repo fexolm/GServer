@@ -44,8 +44,8 @@ namespace GServer
             BitArray buffer = new BitArray((byte)Mode);
             if (buffer.Get(3))
                 MessageId = host.MessageCount++;
-            if (buffer.Get(2))
-                TypeId = host.TypeCounts[type]++;
+            //if (buffer.Get(2))
+            //    TypeId = host.TypeCounts[type]++;
         }        
         public byte[] Serialize()
         {

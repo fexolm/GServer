@@ -25,7 +25,6 @@ namespace GServer
         private readonly List<Thread> _processingThreads;
         private readonly ConnectioManager _connectionManager;
         private readonly IDictionary<Token, Connection> _connections;
-        public IDictionary<MessageType, Int16> TypeCounts;              
         private bool _isListening;
         public int MessageCount;
         
@@ -104,13 +103,8 @@ namespace GServer
                         con.UpdateActivity();
                     }
                     break;
-                case MessageType.Rpc:
-
-                    break;
-                case MessageType.Authorization:
-                    break;
-                case MessageType.Ack:
-                    AckManager.ReceiveAck(msg, this);
+                default:
+                    Console.WriteLine("Пришло странное сообщение");
                     break;
             }            
         }
