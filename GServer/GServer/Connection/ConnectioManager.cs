@@ -37,5 +37,17 @@ namespace GServer
                 _connections.Remove(key);
             }
         }
+
+        public Connection this[Token key]
+        {
+            get
+            {
+                return _connections[key];
+            }
+            set
+            {
+                _connections[key] = value;
+            }
+        }
     }
 }

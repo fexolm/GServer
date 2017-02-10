@@ -24,7 +24,7 @@ namespace GServer
         private readonly Thread _connectionCleaningThread;
         private readonly List<Thread> _processingThreads;
         private readonly ConnectioManager _connectionManager;
-        private readonly IDictionary<Token, Connection> _connections;
+        //private readonly IDictionary<Token, Connection> _connections;
         private bool _isListening;
         public int MessageCount;
         
@@ -34,7 +34,7 @@ namespace GServer
             _listenThread = new Thread(Listen);
             _datagrams = new Queue<Datagram>();
             _processingThreads = new List<Thread>();
-            _connections = new Dictionary<Token, Connection>();
+            //_connections = new Dictionary<Token, Connection>();
             _isListening = false;
             _connectionManager = new ConnectioManager();
             _connectionCleaningThread = new Thread(CleanConnections);
@@ -47,7 +47,10 @@ namespace GServer
         }
         private void CleanConnections()
         {
-
+            lock (_connectionManager)
+            {
+                _connectionManager.RemoveNotActive();
+            }
         }
         private void Listen()
         {
@@ -87,16 +90,16 @@ namespace GServer
             {
                 case MessageType.Handshake:
                     var connection = new Connection(datagram.EndPoint);
-                    lock (_connections)
+                    lock (_connectionManager)
                     {
-                        _connections.Add(connection.Token, connection);
+                        _connectionManager.Add(connection.Token, connection);
                     }
                     break;
                 case MessageType.Ping:
                     Connection con = null;
-                    lock (_connections)
+                    lock (_connectionManager)
                     {
-                        con = _connections[msg.Header.ConnectionToken];
+                        con = _connectionManager[msg.Header.ConnectionToken];
                     }
                     lock (con)
                     {
