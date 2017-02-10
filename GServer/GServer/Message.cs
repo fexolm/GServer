@@ -41,7 +41,6 @@ namespace GServer
         {
             Type = type;
             Mode = mode;
-            //Token;
             BitArray buffer = new BitArray((byte)Mode);
             if (buffer.Get(3))
                 MessageId = host.MessageCount++;
@@ -91,10 +90,12 @@ namespace GServer
             return result;
         }
     }
+
+
     public class Message : ISerializable
     {
         public Header Header { get; private set; }
-        public byte[] body { get; private set; }
+        public byte[] Body { get; private set; }
         public byte[] Serialize()
         {
             using (MemoryStream m = new MemoryStream())
@@ -102,19 +103,41 @@ namespace GServer
                 using (BinaryWriter writer = new BinaryWriter(m))
                 {
                     writer.Write(Header.Serialize());
-                    writer.Write(body);
+                    if(Body != null)
+                    writer.Write(Body);
                 }
                 return m.ToArray();
             }
         }
         public static Message Deserialize(byte[] buffer)
         {
-            throw new NotImplementedException();
+            Message result = new Message();
+            using (MemoryStream m = new MemoryStream(buffer))
+            {
+                using (BinaryReader reader = new BinaryReader(m))
+                {
+                    result.Header = (Header.Deserialize(buffer));
+                    if (reader.PeekChar() == -1)
+                        result.Body = null;
+                    else
+                    {
+                        List<byte> bytes = new List<byte>();
+                        while (reader.PeekChar() != -1)
+                            bytes.Add(reader.ReadByte());
+                        result.Body = bytes.ToArray();
+                    }
+                }
+            }
+            return result;
         }
-        public Message(Host host, MessageType Type, ModeType Mode/*, byte[] Body*/)
+        public Message(Host host, MessageType Type, ModeType Mode, ISerializable body)
         {
-            Header = new Header(host, (MessageType)Type, (ModeType)Mode );
-            //body = Body;                  
+            Header = new Header(host, (MessageType)Type, (ModeType)Mode);
+            if (body != null)
+                Body = body.Serialize();
+            else
+                Body = null;              
         }
+        public Message() { }
     }
 }

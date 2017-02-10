@@ -7,27 +7,41 @@ using System.Text;
 namespace GServer
 {
     class ModeMessageBuilder
-    {        
+    {
+        byte b = (byte)2;           
         ModeType Mode { get; set; }
-        public Message MessageBuilder(Message Mess)
+        Message BuildedMessage;
+        public Message MessageBuilder(Message Mess, Host host)
         {                        
             switch (Mess.Header.Mode)
             {
                 case ModeType.Unreliable:
+
                     return null;                    
                 case ModeType.UnreliableSequenced:
-                    return Mes
-                case ModeType.ReliableUnsequenced:
-                    break;
+                    return Mess;
+                case ModeType.ReliableUnsequenced:                    
+                    //BuildedMessage = new Message(host, MessageType.Ack, ModeType.Unreliable, );
+                    //присвоить BM body значение Id Mess
+                    return Mess;                    
                 case ModeType.ReiableSequenced:
-                    break;
+                    return Mess;                    
                 case ModeType.ReliableOrdered:
-                    break;
-            } 
+                    return Mess;
+             }
+            throw new NotImplementedException();
         }
     }
 }
-/*
- в каждом кейсе написать обработчик сообщений соотв типа 
+/* 
+
+
+
+
+    создать методы для обработки каждого типа сообщения 
+    в методах обработки принимать результат функции MessBuilder
+    если sequ/ord  то идет сравнение с typeID последнего пакета того же типа
+    иначе обработка по типу 
+     
      
      */
