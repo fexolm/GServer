@@ -44,8 +44,8 @@ namespace GServer
             BitArray Mode = new BitArray((byte)mode);
             if (Mode.Get(0))
                 MessageId = host.MessageCount++;
-            if (Mode.Get(1))
-                TypeId = host.TypeCounts[type]++;
+            //if (Mode.Get(1))
+            //    TypeId = host.TypeCounts[type]++;
             Reliable = Mode.Get(0);
             Sequensed = Mode.Get(1);
             Ordered = Mode.Get(2);
