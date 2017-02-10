@@ -34,7 +34,7 @@ namespace GServer
             }
             foreach (var key in toRemove)
             {
-                _connections.Remove(key);
+WS                _connections.Remove(key);
             }
         }
     }

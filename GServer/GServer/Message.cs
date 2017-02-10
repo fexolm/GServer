@@ -13,7 +13,6 @@ namespace GServer
         Rpc,
         Authorization,
     }
-
     public class Header : ISerializable
     {
         public MessageType Type { get; private set; }
@@ -30,7 +29,7 @@ namespace GServer
     public class Message : ISerializable
     {
         public Header Header { get; private set; }
-        public byte[] body { get; private set; }
+        public ISerializable body { get; private set; }
         public byte[] Serialize()
         {
             throw new NotImplementedException();
@@ -41,3 +40,4 @@ namespace GServer
         }
     }
 }
+
