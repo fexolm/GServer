@@ -19,22 +19,20 @@ namespace GServer
     public class Host
     {
         private readonly Queue<Datagram> _datagrams;
-        private readonly UdpClient _client;
+        private UdpClient _client;
         private readonly Thread _listenThread;
         private readonly Thread _connectionCleaningThread;
         private readonly List<Thread> _processingThreads;
-        private readonly ConnectioManager _connectionManager;
+        private readonly ConnectionManager _connectionManager;
         private bool _isListening;
-        public int MessageCount;
-        
+
         public Host(int port, int threadCount)
         {
-            _client = new UdpClient(port);
-            _listenThread = new Thread(Listen);
+            _listenThread = new Thread(()=>Listen(port));
             _datagrams = new Queue<Datagram>();
             _processingThreads = new List<Thread>();
             _isListening = false;
-            _connectionManager = new ConnectioManager();
+            _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
 
             for (int i = 0; i < threadCount; i++)
@@ -50,8 +48,9 @@ namespace GServer
                 _connectionManager.RemoveNotActive();
             }
         }
-        private void Listen()
+        private void Listen(int port)
         {
+            _client = new UdpClient(port);
             while (_isListening && _client.Available > 0)
             {
                 IPEndPoint endPoint = null;
@@ -83,6 +82,8 @@ namespace GServer
         }
         private void ProcessDatagram(Datagram datagram)
         {
+            if (datagram.Buffer.Length == 0)
+                return;
             var msg = Message.Deserialize(datagram.Buffer);
             switch (msg.Header.Type)
             {
@@ -107,7 +108,7 @@ namespace GServer
                 default:
                     Console.WriteLine("Пришло странное сообщение");
                     break;
-            }            
+            }
         }
         public void StartListen()
         {
@@ -122,6 +123,8 @@ namespace GServer
         public void StopListen()
         {
             _isListening = false;
+            _processingThreads.Clear();
+            _client.Close();
         }
         public void Send(Message msg, IPEndPoint endPoint)
         {

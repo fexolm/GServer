@@ -6,10 +6,10 @@ using System.Text;
 
 namespace GServer
 {
-    public class ConnectioManager
+    public class ConnectionManager
     {
         private SortedDictionary<Token, Connection> _connections;
-        public ConnectioManager()
+        public ConnectionManager()
         {
             _connections = new SortedDictionary<Token, Connection>();
         }

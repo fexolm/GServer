@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Unit_Tests
@@ -17,15 +18,38 @@ namespace Unit_Tests
 
         public object Invoke(string methodName, params object[] parameters)
         {
-            return _type.GetMethod("methodName").Invoke(_object, parameters);
+            return _type.GetMethod(methodName,
+                BindingFlags.Public |
+                BindingFlags.NonPublic |
+                BindingFlags.Instance).Invoke(_object, parameters);
         }
         public object GetField(string fieldName)
         {
-            return _type.GetField(fieldName).GetValue(_object);
+            return _type.GetField(fieldName,
+                BindingFlags.Public |
+                BindingFlags.NonPublic |
+                BindingFlags.Instance).GetValue(_object);
         }
         public void SetField(string fieldName, object value)
         {
-            _type.GetField(fieldName).SetValue(_object, value);
+            _type.GetField(fieldName,
+                BindingFlags.Public |
+                BindingFlags.NonPublic |
+                BindingFlags.Instance).SetValue(_object, value);
+        }
+        public object GetProperty(string propName)
+        {
+            return _type.GetProperty(propName,
+                BindingFlags.Public |
+                BindingFlags.NonPublic |
+                BindingFlags.Instance).GetValue(_object, null);
+        }
+        public void SetProperty(string propName, object value)
+        {
+            _type.GetProperty(propName,
+                BindingFlags.Public |
+                BindingFlags.NonPublic |
+                BindingFlags.Instance).SetValue(_object, value, null);
         }
     }
 }
