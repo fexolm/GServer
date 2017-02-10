@@ -24,7 +24,6 @@ namespace GServer
         private readonly Thread _connectionCleaningThread;
         private readonly List<Thread> _processingThreads;
         private readonly ConnectioManager _connectionManager;
-        //private readonly IDictionary<Token, Connection> _connections;
         private bool _isListening;
         public int MessageCount;
         
@@ -34,7 +33,6 @@ namespace GServer
             _listenThread = new Thread(Listen);
             _datagrams = new Queue<Datagram>();
             _processingThreads = new List<Thread>();
-            //_connections = new Dictionary<Token, Connection>();
             _isListening = false;
             _connectionManager = new ConnectioManager();
             _connectionCleaningThread = new Thread(CleanConnections);
