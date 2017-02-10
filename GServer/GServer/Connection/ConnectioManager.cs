@@ -6,10 +6,10 @@ using System.Text;
 
 namespace GServer
 {
-    public class ConnectioManager
+    public class ConnectionManager
     {
         private SortedDictionary<Token, Connection> _connections;
-        public ConnectioManager()
+        public ConnectionManager()
         {
             _connections = new SortedDictionary<Token, Connection>();
         }
@@ -35,6 +35,18 @@ namespace GServer
             foreach (var key in toRemove)
             {
                 _connections.Remove(key);
+            }
+        }
+
+        public Connection this[Token key]
+        {
+            get
+            {
+                return _connections[key];
+            }
+            set
+            {
+                _connections[key] = value;
             }
         }
     }

@@ -39,15 +39,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AckManager.cs" />
-    <Compile Include="ConnectioManager.cs" />
-    <Compile Include="Connection.cs" />
+    <Compile Include="Messages\AckManager.cs" />
+    <Compile Include="Connection\ConnectioManager.cs" />
+    <Compile Include="Connection\Connection.cs" />
     <Compile Include="Host.cs" />
-    <Compile Include="ISerializable.cs" />
-    <Compile Include="Message.cs" />
-    <Compile Include="ModeMessageBuilder.cs" />
+    <Compile Include="Messages\ISerializable.cs" />
+    <Compile Include="Messages\Message.cs" />
+    <Compile Include="Messages\ModeMessageBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Token.cs" />
+    <Compile Include="Messages\Token.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Token\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
