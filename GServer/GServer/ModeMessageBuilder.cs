@@ -7,23 +7,24 @@ using System.Text;
 namespace GServer
 {
     class ModeMessageBuilder
-    {        
+    {
         ModeType Mode { get; set; }
         public Message MessageBuilder(Message Mess)
-        {                        
+        {
             switch (Mess.Header.Mode)
             {
                 case ModeType.Unreliable:
-                    return null;                    
+                    return null;
                 case ModeType.UnreliableSequenced:
-                    return Mes
+                    return Mess;
                 case ModeType.ReliableUnsequenced:
                     break;
                 case ModeType.ReiableSequenced:
                     break;
                 case ModeType.ReliableOrdered:
                     break;
-            } 
+            }
+            throw new NotImplementedException();
         }
     }
 }

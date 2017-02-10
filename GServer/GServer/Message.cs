@@ -101,7 +101,7 @@ namespace GServer
                 using (BinaryWriter writer = new BinaryWriter(m))
                 {
                     writer.Write(Header.Serialize());
-                    writer.Write(body);
+                    writer.Write(body.Serialize());
                 }
                 return m.ToArray();
             }
