@@ -12,24 +12,8 @@ namespace GServer
         ModeType Mode { get; set; }
         Message BuildedMessage;
         public Message MessageBuilder(Message Mess, Host host)
-        {                        
-            switch (Mess.Header.Mode)
-            {
-                case ModeType.Unreliable:
-
-                    return null;                    
-                case ModeType.UnreliableSequenced:
-                    return Mess;
-                case ModeType.ReliableUnsequenced:                    
-                    //BuildedMessage = new Message(host, MessageType.Ack, ModeType.Unreliable, );
-                    //присвоить BM body значение Id Mess
-                    return Mess;                    
-                case ModeType.ReiableSequenced:
-                    return Mess;                    
-                case ModeType.ReliableOrdered:
-                    return Mess;
-             }
-            throw new NotImplementedException();
+        {
+            return Mess;
         }
     }
 }
