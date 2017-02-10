@@ -39,17 +39,13 @@ namespace GServer
         public int MessageId { get; set; }
         public Int16 TypeId { get; set; }
         public Header(){ }
-        public Header(Host host, MessageType type, ModeType mode)
+        public Header(MessageType type, byte mode)
         {
             Type = type;                        
-            BitArray Mode = new BitArray((byte)mode);
-            if (Mode.Get(0))
-                MessageId = host.MessageCount++;
-            if (Mode.Get(1))
-                TypeId = host.TypeCounts[type]++;
-            Reliable = Mode.Get(0);
-            Sequensed = Mode.Get(1);
-            Ordered = Mode.Get(2);
+            BitArray Mode = new BitArray((byte)mode);            
+            Reliable = Mode.Get(7);
+            Sequensed = Mode.Get(6);
+            Ordered = Mode.Get(5);
 
         }        
         public byte[] Serialize()
@@ -146,9 +142,9 @@ namespace GServer
             }
             return result;
         }
-        public Message(Host host, MessageType Type, ModeType Mode, ISerializable body)
+        public Message(MessageType Type, byte Mode, ISerializable body)
         {
-            Header = new Header(host, (MessageType)Type, (ModeType)Mode);
+            Header = new Header(Type, Mode);
             if (body != null)
                 Body = body.Serialize();
             else
