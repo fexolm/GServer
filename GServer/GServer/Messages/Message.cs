@@ -20,7 +20,7 @@ namespace GServer
         Ack = 5,
     }
 
-    public enum ModeType : byte
+    public enum Mode : byte
     {
         Unreliable = 0,
         UnreliableSequenced = 2,
@@ -39,7 +39,7 @@ namespace GServer
         public int MessageId { get; set; }
         public Int16 TypeId { get; set; }
         public Header(){ }
-        public Header(MessageType type, byte mode)
+        public Header(MessageType type, Mode mode)
         {
             Type = type;                        
             BitArray Mode = new BitArray((byte)mode);            
@@ -142,9 +142,9 @@ namespace GServer
             }
             return result;
         }
-        public Message(MessageType Type, byte Mode, ISerializable body)
+        public Message(MessageType type, Mode mode, ISerializable body)
         {
-            Header = new Header(Type, Mode);
+            Header = new Header(type, mode);
             if (body != null)
                 Body = body.Serialize();
             else
