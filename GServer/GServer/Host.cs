@@ -50,7 +50,11 @@ namespace GServer
         }
         private void Listen(int port)
         {
-            _client = new UdpClient(port);
+            _client = new UdpClient();
+            _client.ExclusiveAddressUse = false;
+            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
+            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            _client.Client.Bind(new IPEndPoint(IPAddress.Any, port));
             while (_isListening && _client.Available > 0)
             {
                 IPEndPoint endPoint = null;
