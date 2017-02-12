@@ -17,7 +17,6 @@ namespace Unit_Tests
             var proc = (List<Thread>)po.GetField("_processingThreads");
             po.Invoke("StartListen");
             Assert.AreEqual(4, proc.Count);
-            Thread.Sleep(1000);
             po.Invoke("StopListen");
             Assert.AreEqual(0, proc.Count);
         }

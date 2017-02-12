@@ -28,7 +28,7 @@ namespace GServer
 
         public Host(int port, int threadCount)
         {
-            _listenThread = new Thread(() => Listen(port));
+            _listenThread = new Thread(()=>Listen(port));
             _datagrams = new Queue<Datagram>();
             _processingThreads = new List<Thread>();
             _isListening = false;
@@ -50,12 +50,7 @@ namespace GServer
         }
         private void Listen(int port)
         {
-            _client = new UdpClient();
-            _client.ExclusiveAddressUse = false;
-            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
-            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            _client.Client.Bind(new IPEndPoint(IPAddress.Any, port));
-
+            _client = new UdpClient(port);
             while (_isListening && _client.Available > 0)
             {
                 IPEndPoint endPoint = null;
