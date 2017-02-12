@@ -164,6 +164,14 @@ namespace GServer
             else
                 Body = null;              
         }
+        public Message(MessageType type, Mode mode, ISerializable body)
+        {
+            Header = new Header(type, mode);
+            if (body != null)
+                Body = body.Serialize();
+            else
+                Body = null;
+        }
         public Message() { }
     }
 }

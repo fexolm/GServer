@@ -14,12 +14,8 @@ namespace GServer
         public Message HeaderWorker(Message Mess)
         {
             Message message = new Message();
-            BitArray mode = new BitArray(8);
-            mode.Set(7, Mess.Header.Reliable);
-            mode.Set(6, Mess.Header.Sequensed);
-            mode.Set(5, Mess.Header.Ordered);
-            byte[] modeByte = new byte[1];
-            mode.CopyTo(modeByte, 0);
+            BitArray mode = new BitArray(8);            
+            
             if (Mess.Header.Reliable)
                 message = new Message(MessageType.Ack, Mode.Unreliable, null);
             else
