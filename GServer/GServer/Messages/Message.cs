@@ -68,10 +68,12 @@ namespace GServer
             using (MemoryStream m = new MemoryStream())
             {
                 using (BinaryWriter writer = new BinaryWriter(m))
-                {
-                    
-                    writer.Write(ConnectionToken.Serialize());
+                {   
                     writer.Write((byte)Type);
+                    if(Type != MessageType.Handshake)
+                    {
+                        writer.Write(ConnectionToken.Serialize());
+                    }                    
                     writer.Write(mode);
                     if (Mode.Get(7))
                     {
