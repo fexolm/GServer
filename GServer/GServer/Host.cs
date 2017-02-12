@@ -93,6 +93,20 @@ namespace GServer
             if (datagram.Buffer.Length == 0)
                 return;
             var msg = Message.Deserialize(datagram.Buffer);
+            Connection connection;
+            if (msg.Header.Type == MessageType.Handshake)
+            {
+                connection = new Connection(datagram.EndPoint);
+                lock (_connectionManager)
+                {
+                    _connectionManager.Add(connection.Token, connection);
+                }
+                //TODO Отослать токен клиенту
+            }
+            else
+            {
+                connection = _connectionManager[msg.Header.ConnectionToken];
+            }
             IList<ReceiveHandler> handlers = null;
             lock (_receiveHandlers)
             {
@@ -101,14 +115,14 @@ namespace GServer
                     handlers = _receiveHandlers[(short)msg.Header.Type];
                 }
             }
-            if(handlers != null)
+            if (handlers != null)
             {
-                var con = _connectionManager[msg.Header.ConnectionToken];
+                connection = _connectionManager[msg.Header.ConnectionToken];
                 foreach (var h in handlers)
                 {
-                    h.Invoke(msg, con);
+                    h.Invoke(msg, connection);
                 }
-                con.UpdateActivity();
+                connection.UpdateActivity();
             }
         }
         public void StartListen(int threadCount)
