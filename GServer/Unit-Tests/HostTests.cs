@@ -22,15 +22,15 @@ namespace Unit_Tests
             Assert.AreEqual(0, proc.Count);
         }
         [Test]
-        public void DatagramProcessing()
+        public void DequeueWithMultipleThreads()
         {
             var po = new PrivateObject(new Host(8080, 4));
             po.Invoke("StartListen");
             var queue = (Queue<Datagram>)po.GetField("_datagrams");
             lock (queue)
             {
-                queue.Enqueue(new Datagram(new byte[] {}, null));
-                queue.Enqueue(new Datagram(new byte[] {}, null));
+                queue.Enqueue(new Datagram(new byte[] { }, null));
+                queue.Enqueue(new Datagram(new byte[] { }, null));
             }
             Thread.Sleep(1000);
             lock (queue)
@@ -40,8 +40,8 @@ namespace Unit_Tests
             po.Invoke("StopListen");
             lock (queue)
             {
-                queue.Enqueue(new Datagram(new byte[] {}, null));
-                queue.Enqueue(new Datagram(new byte[] {}, null));
+                queue.Enqueue(new Datagram(new byte[] { }, null));
+                queue.Enqueue(new Datagram(new byte[] { }, null));
             }
             Thread.Sleep(1000);
             lock (queue)
@@ -65,6 +65,11 @@ namespace Unit_Tests
             pcon.SetProperty("LastActivity", DateTime.Now - TimeSpan.FromSeconds(31));
             manager.RemoveNotActive();
             Assert.AreEqual(0, dic.Count);
+        }
+        [Test]
+        public void DatagramProcessing()
+        {
+
         }
     }
 }

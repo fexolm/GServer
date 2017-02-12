@@ -25,10 +25,10 @@ namespace GServer
         private readonly List<Thread> _processingThreads;
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
-
+        private IDictionary<short, Action<Message, EndPoint>> _ReceiveHandlers;
         public Host(int port, int threadCount)
         {
-            _listenThread = new Thread(()=>Listen(port));
+            _listenThread = new Thread(() => Listen(port));
             _datagrams = new Queue<Datagram>();
             _processingThreads = new List<Thread>();
             _isListening = false;
@@ -60,9 +60,16 @@ namespace GServer
                 IPEndPoint endPoint = null;
                 var buffer = _client.Receive(ref endPoint);
                 var datagram = new Datagram(buffer, endPoint);
-                lock (_datagrams)
+                if (_processingThreads.Count > 0)
                 {
-                    _datagrams.Enqueue(datagram);
+                    lock (_datagrams)
+                    {
+                        _datagrams.Enqueue(datagram);
+                    }
+                }
+                else
+                {
+                    ProcessDatagram(datagram);
                 }
             }
         }
@@ -89,29 +96,21 @@ namespace GServer
             if (datagram.Buffer.Length == 0)
                 return;
             var msg = Message.Deserialize(datagram.Buffer);
-            switch (msg.Header.Type)
+            bool contains = false;
+            lock (_ReceiveHandlers)
             {
-                case MessageType.Handshake:
-                    var connection = new Connection(datagram.EndPoint);
-                    lock (_connectionManager)
-                    {
-                        _connectionManager.Add(connection.Token, connection);
-                    }
-                    break;
-                case MessageType.Ping:
-                    Connection con = null;
-                    lock (_connectionManager)
-                    {
-                        con = _connectionManager[msg.Header.ConnectionToken];
-                    }
-                    lock (con)
-                    {
-                        con.UpdateActivity();
-                    }
-                    break;
-                default:
-                    Console.WriteLine("Пришло странное сообщение");
-                    break;
+                if (!_ReceiveHandlers.ContainsKey((short)msg.Header.Type))
+                {
+                    contains = true;
+                }
+                else
+                {
+                    _ReceiveHandlers[(short)msg.Header.Type].Invoke(msg, datagram.EndPoint);
+                }
+            }
+            if (contains)
+            {
+                throw new Exception("no handler for this msgType");
             }
         }
         public void StartListen()
@@ -134,6 +133,25 @@ namespace GServer
         {
             var buffer = msg.Serialize();
             _client.Send(buffer, buffer.Length, endPoint);
+        }
+        public void AddHandler(short type, Action<Message, EndPoint> handler)
+        {
+            bool contains = false;
+            lock (_ReceiveHandlers)
+            {
+                if (_ReceiveHandlers.ContainsKey(type))
+                {
+                    contains = true;
+                }
+                else
+                {
+                    _ReceiveHandlers.Add(type, handler);
+                }
+            }
+            if (contains)
+            {
+                throw new Exception("Hander for this msgtype is already registered");
+            }
         }
     }
 }
