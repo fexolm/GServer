@@ -69,7 +69,20 @@ namespace Unit_Tests
         [Test]
         public void DatagramProcessing()
         {
-            var po = new PrivateObject(new Host(8080));
+            Message msg = null;
+            var host = new Host(8080);
+            var po = new PrivateObject(host);
+            var dm = new Datagram(new Message(MessageType.Ack, Mode.ReiableSequenced, null).Serialize(), null);
+            host.AddHandler((short)MessageType.Ack, (m, e) => 
+            {
+                msg = m;
+            });
+            po.Invoke("ProcessDatagram", dm);
+            Assert.AreEqual(msg.Header.Type, MessageType.Ack);
+            Assert.AreEqual(msg.Header.Reliable, true);
+            Assert.AreEqual(msg.Header.Sequensed, true);
+            Assert.AreEqual(msg.Header.Ordered, false);
+            Assert.AreEqual(msg.Body, null);
         }
     }
 }

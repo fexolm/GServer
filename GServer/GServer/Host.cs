@@ -34,6 +34,7 @@ namespace GServer
             _isListening = false;
             _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
+            _ReceiveHandlers = new SortedDictionary<short, Action<Message, EndPoint>>();
         }
         private void CleanConnections()
         {
