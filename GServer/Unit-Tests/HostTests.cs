@@ -13,23 +13,24 @@ namespace Unit_Tests
         [Test]
         public void CorrectThreadCount()
         {
-            var po = new PrivateObject(new Host(8080, 4));
+            var po = new PrivateObject(new Host(8080));
             var proc = (List<Thread>)po.GetField("_processingThreads");
-            po.Invoke("StartListen");
+            po.Invoke("StartListen", 4);
             Assert.AreEqual(4, proc.Count);
+            Thread.Sleep(1000);
             po.Invoke("StopListen");
             Assert.AreEqual(0, proc.Count);
         }
         [Test]
-        public void DatagramProcessing()
+        public void DequeueWithMultipleThreads()
         {
-            var po = new PrivateObject(new Host(8080, 4));
-            po.Invoke("StartListen");
+            var po = new PrivateObject(new Host(8080));
+            po.Invoke("StartListen", 4);
             var queue = (Queue<Datagram>)po.GetField("_datagrams");
             lock (queue)
             {
-                queue.Enqueue(new Datagram(new byte[] {}, null));
-                queue.Enqueue(new Datagram(new byte[] {}, null));
+                queue.Enqueue(new Datagram(new byte[] { }, null));
+                queue.Enqueue(new Datagram(new byte[] { }, null));
             }
             Thread.Sleep(1000);
             lock (queue)
@@ -39,8 +40,8 @@ namespace Unit_Tests
             po.Invoke("StopListen");
             lock (queue)
             {
-                queue.Enqueue(new Datagram(new byte[] {}, null));
-                queue.Enqueue(new Datagram(new byte[] {}, null));
+                queue.Enqueue(new Datagram(new byte[] { }, null));
+                queue.Enqueue(new Datagram(new byte[] { }, null));
             }
             Thread.Sleep(1000);
             lock (queue)
@@ -64,6 +65,24 @@ namespace Unit_Tests
             pcon.SetProperty("LastActivity", DateTime.Now - TimeSpan.FromSeconds(31));
             manager.RemoveNotActive();
             Assert.AreEqual(0, dic.Count);
+        }
+        [Test]
+        public void DatagramProcessing()
+        {
+            Message msg = null;
+            var host = new Host(8080);
+            var po = new PrivateObject(host);
+            var dm = new Datagram(new Message(MessageType.Ack, Mode.ReiableSequenced, null).Serialize(), null);
+            host.AddHandler((short)MessageType.Ack, (m, e) => 
+            {
+                msg = m;
+            });
+            po.Invoke("ProcessDatagram", dm);
+            Assert.AreEqual(msg.Header.Type, MessageType.Ack);
+            Assert.AreEqual(msg.Header.Reliable, true);
+            Assert.AreEqual(msg.Header.Sequensed, true);
+            Assert.AreEqual(msg.Header.Ordered, false);
+            Assert.AreEqual(msg.Body, null);
         }
     }
 }
