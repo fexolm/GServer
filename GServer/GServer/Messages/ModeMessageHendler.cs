@@ -12,14 +12,7 @@ namespace GServer
         public int AllMesssageCount { get; private set; }
         public IDictionary<MessageType, List<Int16>> DictOrdered { get; private set; }
         public Message HeaderWorker(Message Mess)
-        {
-            Message message = new Message();
-            BitArray mode = new BitArray(8);            
-            
-            if (Mess.Header.Reliable)
-                message = new Message(MessageType.Ack, Mode.Unreliable, null);
-            else
-                return null;
+        {  
             if (!Mess.Header.Sequensed)
             { }
             else if (Mess.Header.Ordered)
@@ -43,7 +36,14 @@ namespace GServer
             {
                 TypesCounts[Mess.Header.Type] = (Int16)(Mess.Header.TypeId + 1);
             }
-            return message;
+            if (Mess.Header.Reliable)
+            {
+                Message message = new Message(MessageType.Ack, Mode.Unreliable, null);
+                return message;
+            }               
+            else
+                return null;
+            
         }        
     }
 }
