@@ -7,25 +7,23 @@ using System.Text;
 namespace GServer
 {
     class ModeMessageBuilder
-    {   
-        public Message BuildedMessage = new Message();
+    {           
         public IDictionary<MessageType, Int16> TypesCounts { get; private set; }
         public int AllMesssageCount { get; private set; }
         public IDictionary<MessageType, List<Int16>> DictOrdered { get; private set; }
-        public List<Message> MessageBuilder(Message Mess)
+        public Message HeaderWorker(Message Mess)
         {
-
+            Message message = new Message();
             BitArray mode = new BitArray(8);
             mode.Set(7, Mess.Header.Reliable);
             mode.Set(6, Mess.Header.Sequensed);
             mode.Set(5, Mess.Header.Ordered);
             byte[] modeByte = new byte[1];
             mode.CopyTo(modeByte, 0);
-            List<Message> messageArray = new List<Message>();            
             if (Mess.Header.Reliable)
-                messageArray.Add(new Message(MessageType.Ack, (Mode)modeByte[0], null));
+                message = new Message(MessageType.Ack, Mode.Unreliable, null);
             else
-                messageArray.Add(null);
+                return null;
             if (!Mess.Header.Sequensed)
             { }
             else if (Mess.Header.Ordered)
@@ -49,8 +47,8 @@ namespace GServer
             {
                 TypesCounts[Mess.Header.Type] = (Int16)(Mess.Header.TypeId + 1);
             }
-            return messageArray;
-        }
+            return message;
+        }        
     }
 }
 /* 

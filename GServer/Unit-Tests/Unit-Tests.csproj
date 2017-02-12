@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="HostTests.cs" />
+    <Compile Include="MessageTest.cs" />
     <Compile Include="PrivateObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
