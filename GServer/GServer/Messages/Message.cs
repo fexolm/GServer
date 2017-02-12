@@ -39,14 +39,23 @@ namespace GServer
         public int MessageId { get; set; }
         public Int16 TypeId { get; set; }
         public Header(){ }
+        public Header(MessageType type, Mode mode, Token token)
+        {
+            Type = type;
+            ConnectionToken = token;                        
+            BitArray Mode = new BitArray((byte)mode);            
+            Reliable = Mode.Get(0);
+            Sequensed = Mode.Get(1);
+            Ordered = Mode.Get(2);
+
+        }
         public Header(MessageType type, Mode mode)
         {
-            Type = type;                        
-            BitArray Mode = new BitArray((byte)mode);            
-            Reliable = Mode.Get(7);
-            Sequensed = Mode.Get(6);
-            Ordered = Mode.Get(5);
-
+            Type = type;
+            BitArray Mode = new BitArray((byte)mode);
+            Reliable = Mode.Get(0);
+            Sequensed = Mode.Get(1);
+            Ordered = Mode.Get(2);
         }        
         public byte[] Serialize()
         {
@@ -84,9 +93,12 @@ namespace GServer
             using (MemoryStream m = new MemoryStream(buffer))
             {
                 using (BinaryReader reader = new BinaryReader(m))
-                {
-                    result.ConnectionToken = new Token(reader.ReadString());                    
+                {                                       
                     result.Type = (MessageType)reader.ReadByte();
+                    if(result.Type != MessageType.Handshake)
+                    {
+                        result.ConnectionToken = new Token(reader.ReadString());
+                    }                     
                     mode = reader.ReadByte();
                     result.Reliable = Mode.Get(7);
                     result.Sequensed = Mode.Get(6);
@@ -142,9 +154,9 @@ namespace GServer
             }
             return result;
         }
-        public Message(MessageType type, Mode mode, ISerializable body)
+        public Message(MessageType type, Mode mode, Token token, ISerializable body)
         {
-            Header = new Header(type, mode);
+            Header = new Header(type, mode, token);
             if (body != null)
                 Body = body.Serialize();
             else
