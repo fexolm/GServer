@@ -20,7 +20,7 @@ namespace GServer
         Ack = 5,
     }
 
-    public enum ModeType : byte
+    public enum Mode : byte
     {
         Unreliable = 0,
         UnreliableSequenced = 2,
@@ -28,6 +28,7 @@ namespace GServer
         ReiableSequenced = 6,
         ReliableOrdered = 7
     }
+
     public class Header : ISerializable
     {
         public MessageType Type { get; private set; }
@@ -38,17 +39,13 @@ namespace GServer
         public int MessageId { get; set; }
         public Int16 TypeId { get; set; }
         public Header(){ }
-        public Header(Host host, MessageType type, ModeType mode)
+        public Header(MessageType type, Mode mode)
         {
-            Type = type;
-            BitArray Mode = new BitArray((byte)mode);
-            //if (Mode.Get(0))
-            //    MessageId = host.MessageCount++;
-            //if (Mode.Get(1))
-            //    TypeId = host.TypeCounts[type]++;
-            Reliable = Mode.Get(0);
-            Sequensed = Mode.Get(1);
-            Ordered = Mode.Get(2);
+            Type = type;                        
+            BitArray Mode = new BitArray((byte)mode);            
+            Reliable = Mode.Get(7);
+            Sequensed = Mode.Get(6);
+            Ordered = Mode.Get(5);
 
         }        
         public byte[] Serialize()
@@ -97,7 +94,7 @@ namespace GServer
                     if(Mode.Get(7))
                     {
                         result.MessageId = reader.ReadInt32();
-                    }                    
+                    }
                     if (Mode.Get(6))
                         result.TypeId = reader.ReadInt16();                    
                 }
@@ -145,9 +142,9 @@ namespace GServer
             }
             return result;
         }
-        public Message(Host host, MessageType Type, ModeType Mode, ISerializable body)
+        public Message(MessageType type, Mode mode, ISerializable body)
         {
-            Header = new Header(host, (MessageType)Type, (ModeType)Mode);
+            Header = new Header(type, mode);
             if (body != null)
                 Body = body.Serialize();
             else
@@ -156,4 +153,3 @@ namespace GServer
         public Message() { }
     }
 }
-
