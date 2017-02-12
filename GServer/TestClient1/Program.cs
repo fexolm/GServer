@@ -10,8 +10,8 @@ namespace TestClient1
     {
         static void Main(string[] args)
         {
-            Host host = new Host(8080, 4);
-            host.StartListen();
+            Host host = new Host(8080);
+            host.StartListen(4);
             UdpClient client = new UdpClient(8081);
             var sent = new byte[] { 0, 0, 0, 1 };
             client.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));

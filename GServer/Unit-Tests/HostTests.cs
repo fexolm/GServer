@@ -13,9 +13,9 @@ namespace Unit_Tests
         [Test]
         public void CorrectThreadCount()
         {
-            var po = new PrivateObject(new Host(8080, 4));
+            var po = new PrivateObject(new Host(8080));
             var proc = (List<Thread>)po.GetField("_processingThreads");
-            po.Invoke("StartListen");
+            po.Invoke("StartListen", 4);
             Assert.AreEqual(4, proc.Count);
             Thread.Sleep(1000);
             po.Invoke("StopListen");
@@ -24,8 +24,8 @@ namespace Unit_Tests
         [Test]
         public void DequeueWithMultipleThreads()
         {
-            var po = new PrivateObject(new Host(8080, 4));
-            po.Invoke("StartListen");
+            var po = new PrivateObject(new Host(8080));
+            po.Invoke("StartListen", 4);
             var queue = (Queue<Datagram>)po.GetField("_datagrams");
             lock (queue)
             {
@@ -69,7 +69,7 @@ namespace Unit_Tests
         [Test]
         public void DatagramProcessing()
         {
-
+            var po = new PrivateObject(new Host(8080));
         }
     }
 }

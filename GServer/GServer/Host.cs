@@ -26,7 +26,7 @@ namespace GServer
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
         private IDictionary<short, Action<Message, EndPoint>> _ReceiveHandlers;
-        public Host(int port, int threadCount)
+        public Host(int port)
         {
             _listenThread = new Thread(() => Listen(port));
             _datagrams = new Queue<Datagram>();
@@ -34,12 +34,6 @@ namespace GServer
             _isListening = false;
             _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
-
-            for (int i = 0; i < threadCount; i++)
-            {
-                var thread = new Thread(ProcessQueue);
-                _processingThreads.Add(thread);
-            }
         }
         private void CleanConnections()
         {
@@ -113,8 +107,13 @@ namespace GServer
                 throw new Exception("no handler for this msgType");
             }
         }
-        public void StartListen()
+        public void StartListen(int threadCount)
         {
+            for (int i = 0; i < threadCount; i++)
+            {
+                var thread = new Thread(ProcessQueue);
+                _processingThreads.Add(thread);
+            }
             _isListening = true;
             foreach (var thread in _processingThreads)
             {
