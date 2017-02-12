@@ -16,6 +16,8 @@ namespace GServer
             EndPoint = ipEndpoint;
         }
     }
+
+    public delegate void ReceiveHandler(Message msg, Connection con);
     public class Host
     {
         private readonly Queue<Datagram> _datagrams;
@@ -25,7 +27,7 @@ namespace GServer
         private readonly List<Thread> _processingThreads;
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
-        private IDictionary<short, Action<Message, EndPoint>> _ReceiveHandlers;
+        private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
         public Host(int port)
         {
             _listenThread = new Thread(() => Listen(port));
@@ -34,7 +36,7 @@ namespace GServer
             _isListening = false;
             _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
-            _ReceiveHandlers = new SortedDictionary<short, Action<Message, EndPoint>>();
+            _receiveHandlers = new SortedDictionary<short, IList<ReceiveHandler>>();
         }
         private void CleanConnections()
         {
@@ -91,21 +93,22 @@ namespace GServer
             if (datagram.Buffer.Length == 0)
                 return;
             var msg = Message.Deserialize(datagram.Buffer);
-            bool contains = false;
-            lock (_ReceiveHandlers)
+            IList<ReceiveHandler> handlers = null;
+            lock (_receiveHandlers)
             {
-                if (!_ReceiveHandlers.ContainsKey((short)msg.Header.Type))
+                if (_receiveHandlers.ContainsKey((short)msg.Header.Type))
                 {
-                    contains = true;
-                }
-                else
-                {
-                    _ReceiveHandlers[(short)msg.Header.Type].Invoke(msg, datagram.EndPoint);
+                    handlers = _receiveHandlers[(short)msg.Header.Type];
                 }
             }
-            if (contains)
+            if(handlers != null)
             {
-                throw new Exception("no handler for this msgType");
+                var con = _connectionManager[msg.Header.ConnectionToken];
+                foreach (var h in handlers)
+                {
+                    h.Invoke(msg, con);
+                }
+                con.UpdateActivity();
             }
         }
         public void StartListen(int threadCount)
@@ -134,23 +137,20 @@ namespace GServer
             var buffer = msg.Serialize();
             _client.Send(buffer, buffer.Length, endPoint);
         }
-        public void AddHandler(short type, Action<Message, EndPoint> handler)
+        public void AddHandler(short type, ReceiveHandler handler)
         {
-            bool contains = false;
-            lock (_ReceiveHandlers)
+            lock (_receiveHandlers)
             {
-                if (_ReceiveHandlers.ContainsKey(type))
+                if (_receiveHandlers.ContainsKey(type))
                 {
-                    contains = true;
+                    _receiveHandlers[type].Add(handler);
                 }
                 else
                 {
-                    _ReceiveHandlers.Add(type, handler);
+                    IList<ReceiveHandler> list = new List<ReceiveHandler>();
+                    list.Add(handler);
+                    _receiveHandlers.Add(type, list);
                 }
-            }
-            if (contains)
-            {
-                throw new Exception("Hander for this msgtype is already registered");
             }
         }
     }
