@@ -72,7 +72,9 @@ namespace Unit_Tests
             Message msg = null;
             var host = new Host(8080);
             var po = new PrivateObject(host);
-            var dm = new Datagram(new Message(MessageType.Ack, Mode.ReiableSequenced, null).Serialize(), null);
+            var message=new Message(MessageType.Ack, Mode.ReiableSequenced, null);
+            var sentBytes=message.Serialize();
+            var dm = new Datagram(sentBytes, null);
             host.AddHandler((short)MessageType.Ack, (m, e) => 
             {
                 msg = m;

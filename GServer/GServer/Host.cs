@@ -37,6 +37,12 @@ namespace GServer
             _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
             _receiveHandlers = new SortedDictionary<short, IList<ReceiveHandler>>();
+            _connectionManager.HandshakeRecieved += SendToken;
+        }
+
+        private void SendToken(Connection obj)
+        {
+            //TODO: Отослать токен
         }
         private void CleanConnections()
         {
@@ -94,35 +100,25 @@ namespace GServer
                 return;
             var msg = Message.Deserialize(datagram.Buffer);
             Connection connection;
-            if (msg.Header.Type == MessageType.Handshake)
+            if (_connectionManager.TryGetConnection(out connection, msg, datagram.EndPoint))
             {
-                connection = new Connection(datagram.EndPoint);
-                lock (_connectionManager)
+                IList<ReceiveHandler> handlers = null;
+                lock (_receiveHandlers)
                 {
-                    _connectionManager.Add(connection.Token, connection);
+                    if (_receiveHandlers.ContainsKey((short)msg.Header.Type))
+                    {
+                        handlers = _receiveHandlers[(short)msg.Header.Type];
+                    }
                 }
-                //TODO Отослать токен клиенту
-            }
-            else
-            {
-                connection = _connectionManager[msg.Header.ConnectionToken];
-            }
-            IList<ReceiveHandler> handlers = null;
-            lock (_receiveHandlers)
-            {
-                if (_receiveHandlers.ContainsKey((short)msg.Header.Type))
+                if (handlers != null)
                 {
-                    handlers = _receiveHandlers[(short)msg.Header.Type];
+                    connection = _connectionManager[msg.Header.ConnectionToken];
+                    foreach (var h in handlers)
+                    {
+                        h.Invoke(msg, connection);
+                    }
+                    connection.UpdateActivity();
                 }
-            }
-            if (handlers != null)
-            {
-                connection = _connectionManager[msg.Header.ConnectionToken];
-                foreach (var h in handlers)
-                {
-                    h.Invoke(msg, connection);
-                }
-                connection.UpdateActivity();
             }
         }
         public void StartListen(int threadCount)
