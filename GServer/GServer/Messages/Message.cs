@@ -52,6 +52,7 @@ namespace GServer
         public Header(MessageType type, Mode mode)
         {
             Type = type;
+            
             BitArray Mode = new BitArray(new byte[] { (byte)mode}) ;
             Reliable = Mode.Get(0);
             Sequensed = Mode.Get(1);
@@ -70,7 +71,7 @@ namespace GServer
                 using (BinaryWriter writer = new BinaryWriter(m))
                 {   
                     writer.Write((byte)Type);
-                    if(Type != MessageType.Handshake)
+                    if(ConnectionToken != null)
                     {
                         writer.Write(ConnectionToken.Serialize());
                     }                    
@@ -97,7 +98,7 @@ namespace GServer
                 using (BinaryReader reader = new BinaryReader(m))
                 {                                       
                     result.Type = (MessageType)reader.ReadByte();
-                    if(result.Type != MessageType.Handshake)
+                    if(result.Type != MessageType.Handshake && reader.PeekChar() != -1)
                     {
                         result.ConnectionToken = new Token(reader.ReadString());
                     }                     
@@ -105,11 +106,11 @@ namespace GServer
                     result.Reliable = Mode.Get(0);
                     result.Sequensed = Mode.Get(1);
                     result.Ordered = Mode.Get(2);
-                    if(Mode.Get(7) && reader.PeekChar() == -1)
+                    if(Mode.Get(7) && reader.PeekChar() != -1)
                     {
                         result.MessageId = reader.ReadInt32();
                     }
-                    if (Mode.Get(6) && reader.PeekChar() == -1)
+                    if (Mode.Get(6) && reader.PeekChar() != -1)
                         result.TypeId = reader.ReadInt16();                    
                 }
             }
@@ -171,19 +172,21 @@ namespace GServer
                 Body = body.Serialize();
             else
                 Body = null;
-        }       
-
-        public static Message HandShake()
-        {
-            Message handShake = new Message(MessageType.Handshake);
-            return handShake;
         }
+
+        private static readonly Message _handshake = new Message { Header = new Header(), Body = null };
+
+        public static Message Handshake {  get { return _handshake; } }
+
+        
+        
+
         public Message(MessageType type)
         {
             Header = new Header(type, Mode.Unreliable);
             Body = null;
         }
 
-        public Message() { }
+        private Message() { }
     }
 }
