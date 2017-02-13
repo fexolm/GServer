@@ -12,12 +12,12 @@ namespace GServer
 {
     public enum MessageType : byte
     {
-        Empty = 0,
-        Handshake = 1,
-        Ping = 2,
-        Rpc = 3,
-        Authorization = 4,
-        Ack = 5,
+        Empty,
+        Handshake,
+        Ping,
+        Rpc,
+        Authorization,
+        Ack,
     }
 
     public enum Mode : byte
@@ -39,21 +39,21 @@ namespace GServer
         public int MessageId { get; set; }
         public Int16 TypeId { get; set; }
         public Header(){ }
-        public Header(MessageType type, Mode mode, Token token)
+        public Header(MessageType _type, Mode _mode, Token _token)
         {
-            Type = type;
-            ConnectionToken = token;                        
-            BitArray Mode = new BitArray(new byte[] { (byte)mode });                        
+            Type = _type;
+            ConnectionToken = _token;                        
+            BitArray Mode = new BitArray(new byte[] { (byte)_mode });                        
             Reliable = Mode.Get(0);
             Sequensed = Mode.Get(1);
             Ordered = Mode.Get(2);
 
         }
-        public Header(MessageType type, Mode mode)
+        public Header(MessageType _type, Mode _mode)
         {
-            Type = type;
+            Type = _type;
             
-            BitArray Mode = new BitArray(new byte[] { (byte)mode}) ;
+            BitArray Mode = new BitArray(new byte[] { (byte)_mode}) ;
             Reliable = Mode.Get(0);
             Sequensed = Mode.Get(1);
             Ordered = Mode.Get(2);
@@ -88,21 +88,21 @@ namespace GServer
                 return m.ToArray();
             }
         }
-        public static Header Deserialize(byte[] buffer)
+        public static Header Deserialize(byte[] _buffer)
         {
-            var result = new Header();
-            byte mode = new byte();
-            BitArray Mode = new BitArray(new byte[] { mode });            
-            using (MemoryStream m = new MemoryStream(buffer))
+            var result = new Header();            
+                        
+            using (MemoryStream m = new MemoryStream(_buffer))
             {
                 using (BinaryReader reader = new BinaryReader(m))
                 {                                       
                     result.Type = (MessageType)reader.ReadByte();
-                    if(result.Type != MessageType.Handshake && reader.PeekChar() != -1)
+                    if(result.Type != MessageType.Handshake)
                     {
                         result.ConnectionToken = new Token(reader.ReadString());
                     }                     
-                    mode = reader.ReadByte();
+                    byte mode = reader.ReadByte();
+                    BitArray Mode = new BitArray(new byte[] { mode });
                     result.Reliable = Mode.Get(0);
                     result.Sequensed = Mode.Get(1);
                     result.Ordered = Mode.Get(2);
@@ -111,7 +111,10 @@ namespace GServer
                         result.MessageId = reader.ReadInt32();
                     }
                     if (Mode.Get(6) && reader.PeekChar() != -1)
-                        result.TypeId = reader.ReadInt16();                    
+                    {
+                        result.TypeId = reader.ReadInt16();
+                    }
+                                            
                 }
             }
             return result;
@@ -130,60 +133,70 @@ namespace GServer
                 using (BinaryWriter writer = new BinaryWriter(m))
                 {
                     writer.Write(Header.Serialize());
-                    if(Body != null)
-                    writer.Write(Body);
+                    if (Body != null)
+                    {
+                        writer.Write(Body);
+                    }
                 }
                 return m.ToArray();
             }
         }
-        public static Message Deserialize(byte[] buffer)
+        public static Message Deserialize(byte[] _buffer)
         {
             Message result = new Message();
-            using (MemoryStream m = new MemoryStream(buffer))
+            using (MemoryStream m = new MemoryStream(_buffer))
             {
                 using (BinaryReader reader = new BinaryReader(m))
                 {
-                    result.Header = (Header.Deserialize(buffer));
+                    result.Header = (Header.Deserialize(_buffer));
                     if (reader.PeekChar() == -1)
+                    {
                         result.Body = null;
+                    }
                     else
                     {
                         List<byte> bytes = new List<byte>();
                         while (reader.PeekChar() != -1)
+                        {
                             bytes.Add(reader.ReadByte());
+                        }
                         result.Body = bytes.ToArray();
                     }
                 }
             }
             return result;
         }
-        public Message(MessageType type, Mode mode, Token token, ISerializable body)
+        public Message(MessageType _type, Mode _mode, Token _token, ISerializable _body)
         {
-            Header = new Header(type, mode, token);
-            if (body != null)
-                Body = body.Serialize();
+            Header = new Header(_type, _mode, _token);
+            if (_body != null)
+            {
+                Body = _body.Serialize();
+            }
             else
                 Body = null;              
         }
-        public Message(MessageType type, Mode mode, ISerializable body)
+        public Message(MessageType _type, Mode _mode, ISerializable _body)
         {
-            Header = new Header(type, mode);
-            if (body != null)
-                Body = body.Serialize();
+            Header = new Header(_type, _mode);
+            if (_body != null)
+            {
+                Body = _body.Serialize();
+            }
             else
                 Body = null;
         }
 
-        private static readonly Message _handshake = new Message { Header = new Header(), Body = null };
+        private static readonly Message _handshake = new Message { Header = new Header(MessageType.Handshake, Mode.Unreliable), Body = null };
 
         public static Message Handshake {  get { return _handshake; } }
 
         
         
 
-        public Message(MessageType type)
+        public Message(MessageType _type)
         {
-            Header = new Header(type, Mode.Unreliable);
+            Header = new Header(_type, Mode.Unreliable);
             Body = null;
         }
 
