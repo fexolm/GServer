@@ -25,7 +25,7 @@ namespace GServer
         Unreliable = 0,
         UnreliableSequenced = 2,
         ReliableUnsequenced = 4,
-        ReiableSequenced = 6,
+        ReliableSequenced = 6,
         ReliableOrdered = 7
     }
 
