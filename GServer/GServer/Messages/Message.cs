@@ -44,9 +44,9 @@ namespace GServer
             Type = _type;
             ConnectionToken = _token;                        
             BitArray Mode = new BitArray(new byte[] { (byte)_mode });                        
-            Reliable = Mode.Get(0);
+            Reliable = Mode.Get(2);
             Sequensed = Mode.Get(1);
-            Ordered = Mode.Get(2);
+            Ordered = Mode.Get(0);
 
         }
         public Header(MessageType _type, Mode _mode)
@@ -54,9 +54,9 @@ namespace GServer
             Type = _type;
             
             BitArray Mode = new BitArray(new byte[] { (byte)_mode}) ;
-            Reliable = Mode.Get(0);
+            Reliable = Mode.Get(2);
             Sequensed = Mode.Get(1);
-            Ordered = Mode.Get(2);
+            Ordered = Mode.Get(0);
         }        
         public byte[] Serialize()
         {
@@ -78,11 +78,11 @@ namespace GServer
                     writer.Write(mode);
                     if (Mode.Get(0))
                     {
-                        writer.Write((byte)MessageId);
+                        writer.Write(MessageId);
                     }
                     if (Mode.Get(1))
                     {
-                        writer.Write((byte)TypeId);
+                        writer.Write(TypeId);
                     }
                 }
                 return m.ToArray();
@@ -106,15 +106,14 @@ namespace GServer
                     result.Reliable = Mode.Get(0);
                     result.Sequensed = Mode.Get(1);
                     result.Ordered = Mode.Get(2);
-                    if(Mode.Get(7) && reader.PeekChar() != -1)
+                    if(Mode.Get(0))
                     {
                         result.MessageId = reader.ReadInt32();
                     }
-                    if (Mode.Get(6) && reader.PeekChar() != -1)
+                    if (Mode.Get(1))
                     {
                         result.TypeId = reader.ReadInt16();
-                    }
-                                            
+                    }                     
                 }
             }
             return result;
@@ -149,19 +148,19 @@ namespace GServer
                 using (BinaryReader reader = new BinaryReader(m))
                 {
                     result.Header = (Header.Deserialize(_buffer));
-                    if (reader.PeekChar() == -1)
-                    {
+                    //if (reader.PeekChar() == -1)
+                    //{
                         result.Body = null;
-                    }
-                    else
-                    {
-                        List<byte> bytes = new List<byte>();
-                        while (reader.PeekChar() != -1)
-                        {
-                            bytes.Add(reader.ReadByte());
-                        }
-                        result.Body = bytes.ToArray();
-                    }
+                    //}
+                    //else
+                    //{
+                    //    List<byte> bytes = new List<byte>();
+                    //    while (reader.PeekChar() != -1)
+                    //    {
+                    //        bytes.Add(reader.ReadByte());
+                    //    }
+                    //    result.Body = bytes.ToArray();
+                    //}
                 }
             }
             return result;
