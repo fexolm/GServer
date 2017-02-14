@@ -72,17 +72,20 @@ namespace Unit_Tests
             Message msg = null;
             var host = new Host(8080);
             var po = new PrivateObject(host);
-            var dm = new Datagram(new Message(MessageType.Ack, Mode.ReliableSequenced, null).Serialize(), null);
-            host.AddHandler((short)MessageType.Ack, (m, e) => 
+            var token = Token.GenerateToken();
+            var dm = new Datagram(new Message(MessageType.Ack, Mode.Reliable | Mode.Sequenced, token, 123, null).Serialize(), null);
+            host.AddHandler((short)MessageType.Ack, (m, e) =>
             {
                 msg = m;
             });
             po.Invoke("ProcessDatagram", dm);
             Assert.AreEqual(msg.Header.Type, MessageType.Ack);
             Assert.AreEqual(msg.Header.Reliable, true);
-            Assert.AreEqual(msg.Header.Sequensed, true);
+            Assert.AreEqual(msg.Header.Sequenced, true);
             Assert.AreEqual(msg.Header.Ordered, false);
+            Assert.AreEqual(msg.Header.MessageId, 123);
             Assert.AreEqual(msg.Body, null);
+            Assert.AreEqual(token, msg.Header.ConnectionToken);
         }
     }
 }
