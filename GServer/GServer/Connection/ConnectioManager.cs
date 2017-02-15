@@ -9,10 +9,10 @@ namespace GServer
 {
     public class ConnectionManager
     {
-        private SortedDictionary<Token, Connection> _connections;
+        private IDictionary<Token, Connection> _connections;
         public ConnectionManager()
         {
-            _connections = new SortedDictionary<Token, Connection>();
+            _connections = new Dictionary<Token, Connection>();
         }
         public void Add(Token token, Connection con)
         {

@@ -8,14 +8,22 @@ namespace GServer
 {
     public class Token : ISerializable
     {
-        private string TokenStr;
-        public Token(string str)
+        private static int _globalNum = 0;
+
+        private readonly int _tempNum;
+
+        private Token()
         {
-            TokenStr = str;
+            _tempNum = _globalNum;
+            _globalNum++;
+        }
+        public Token(int num)
+        {
+            _tempNum = num;
         }
         public static Token GenerateToken()
         {
-            return new Token(Convert.ToBase64String(Guid.NewGuid().ToByteArray()));
+            return new Token();
         }
         public byte[] Serialize()
         {
@@ -23,21 +31,21 @@ namespace GServer
             {
                 using (BinaryWriter writer = new BinaryWriter(m))
                 {
-                    writer.Write(TokenStr);
+                    writer.Write(_tempNum);
                 }
                 return m.ToArray();
             }
         }
         public override string ToString()
         {
-            return TokenStr;
+            return _tempNum.ToString();
         }
         public override bool Equals(object obj)
         {
             try
             {
                 var left = (Token)obj;
-                return left.TokenStr == TokenStr;
+                return left._tempNum == _tempNum;
             }
             catch
             {
@@ -55,7 +63,7 @@ namespace GServer
         }
         public override int GetHashCode()
         {
-            return TokenStr.GetHashCode();
+            return _tempNum.GetHashCode();
         }
     }
 }

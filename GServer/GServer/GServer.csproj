@@ -40,10 +40,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DefaultBehaviour.cs" />
-    <Compile Include="Messages\AckManager.cs" />
     <Compile Include="Connection\ConnectioManager.cs" />
     <Compile Include="Connection\Connection.cs" />
     <Compile Include="Host.cs" />
+    <Compile Include="Messages\DataStorage.cs" />
     <Compile Include="Messages\ISerializable.cs" />
     <Compile Include="Messages\Message.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -26,6 +26,9 @@ namespace GServer
         private readonly Thread _connectionCleaningThread;
         private readonly List<Thread> _processingThreads;
         private readonly ConnectionManager _connectionManager;
+
+
+
         private bool _isListening;
         private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
         public Host(int port)
@@ -36,13 +39,12 @@ namespace GServer
             _isListening = false;
             _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
-            _receiveHandlers = new SortedDictionary<short, IList<ReceiveHandler>>();
+            _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
             _connectionManager.HandshakeRecieved += SendToken;
         }
-
         private void SendToken(Connection obj)
         {
-            //TODO: Отослать токен
+
         }
         private void CleanConnections()
         {

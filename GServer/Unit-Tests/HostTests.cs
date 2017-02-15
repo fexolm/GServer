@@ -72,9 +72,12 @@ namespace Unit_Tests
             Message msg = null;
             var host = new Host(8080);
             var po = new PrivateObject(host);
-            var token = Token.GenerateToken();
-            var dm = new Datagram(new Message(MessageType.Ack, Mode.Reliable | Mode.Sequenced, token, 123, null).Serialize(), null);
-            host.AddHandler((short)MessageType.Ack, (m, e) => 
+            var cm = (ConnectionManager)po.GetField("_connectionManager");
+            Connection con = new Connection(null);
+            cm.Add(con.Token, con);
+
+            var dm = new Datagram(new Message(MessageType.Ack, Mode.Reliable | Mode.Sequenced, con.Token, 123, null).Serialize(), null);
+            host.AddHandler((short)MessageType.Ack, (m, e) =>
             {
                 msg = m;
             });
@@ -85,7 +88,7 @@ namespace Unit_Tests
             Assert.AreEqual(msg.Header.Ordered, false);
             Assert.AreEqual(msg.Header.MessageId, 123);
             Assert.AreEqual(msg.Body, null);
-            Assert.AreEqual(token, msg.Header.ConnectionToken);
+            Assert.AreEqual(msg.Header.ConnectionToken, con.Token);
         }
     }
 }

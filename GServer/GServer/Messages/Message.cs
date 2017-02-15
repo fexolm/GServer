@@ -76,7 +76,7 @@ namespace GServer
                 result._mode = (Mode)reader.ReadByte();
                 if (result.Type != MessageType.Empty && result.Type != MessageType.Handshake)
                 {
-                    result.ConnectionToken = new Token(reader.ReadString());
+                    result.ConnectionToken = new Token(reader.ReadInt32());
                     result.MessageId = reader.ReadInt32();
                 }
             }
@@ -118,12 +118,7 @@ namespace GServer
                     }
                     else
                     {
-                        List<byte> bytes = new List<byte>();
-                        while (reader.PeekChar() != -1)
-                        {
-                            bytes.Add(reader.ReadByte());
-                        }
-                        result.Body = bytes.ToArray();
+                        result.Body = reader.ReadBytes((int)(m.Length - m.Position));
                     }
                 }
             }
