@@ -46,7 +46,6 @@
     <Compile Include="Host.cs" />
     <Compile Include="Messages\ISerializable.cs" />
     <Compile Include="Messages\Message.cs" />
-    <Compile Include="Messages\ModeMessageBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Messages\Token.cs" />
     <Compile Include="State\GameObject.cs" />
