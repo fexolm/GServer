@@ -71,7 +71,6 @@ namespace GServer
                 if (HandshakeRecieved != null)
                 {
                     HandshakeRecieved.Invoke(con);
-
                 }
                 return true;
             }

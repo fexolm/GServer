@@ -102,6 +102,13 @@ namespace GServer
             Writer.Write(val.ToByteArray());
             return this;
         }
+        public DataStorage Push(byte[] val)
+        {
+            if (Writer == null)
+                throw new Exception("DataStorage in read only mode");
+            Writer.Write(val);
+            return this;
+        }
         public byte ReadByte()
         {
             if (Reader == null)
@@ -174,7 +181,6 @@ namespace GServer
                 Reader.Close();
             if (Writer != null)
                 Writer.Close();
-            Stream.Close();
         }
         ~DataStorage()
         {

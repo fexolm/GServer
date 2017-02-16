@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define DEBUG
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -20,15 +21,13 @@ namespace GServer
     public delegate void ReceiveHandler(Message msg, Connection con);
     public class Host
     {
+        private Token _hostToken;
         private readonly Queue<Datagram> _datagrams;
         private UdpClient _client;
         private readonly Thread _listenThread;
         private readonly Thread _connectionCleaningThread;
         private readonly List<Thread> _processingThreads;
         private readonly ConnectionManager _connectionManager;
-
-
-
         private bool _isListening;
         private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
         public Host(int port)
@@ -44,7 +43,10 @@ namespace GServer
         }
         private void SendToken(Connection obj)
         {
-
+            var ds = new DataStorage();
+            ds.Push(obj.Token.Serialize());
+            Message msg = new Message(MessageType.Empty, Mode.None, null, 123, ds);
+            Send(msg, obj.EndPoint);
         }
         private void CleanConnections()
         {
@@ -60,21 +62,31 @@ namespace GServer
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _client.Client.Bind(new IPEndPoint(IPAddress.Any, port));
-            while (_isListening && _client.Available > 0)
+            while (_isListening)
             {
-                IPEndPoint endPoint = null;
-                var buffer = _client.Receive(ref endPoint);
-                var datagram = new Datagram(buffer, endPoint);
-                if (_processingThreads.Count > 0)
+                if (_client.Available > 0)
                 {
-                    lock (_datagrams)
+                    try
                     {
-                        _datagrams.Enqueue(datagram);
+                        IPEndPoint endPoint = null;
+                        var buffer = _client.Receive(ref endPoint);
+                        var datagram = new Datagram(buffer, endPoint);
+                        if (_processingThreads.Count > 0)
+                        {
+                            lock (_datagrams)
+                            {
+                                _datagrams.Enqueue(datagram);
+                            }
+                        }
+                        else
+                        {
+                            ProcessDatagram(datagram);
+                        }
                     }
-                }
-                else
-                {
-                    ProcessDatagram(datagram);
+                    catch (Exception ex)
+                    {
+                        ErrLog.Invoke(ex.Message);
+                    }
                 }
             }
         }
@@ -101,9 +113,19 @@ namespace GServer
             if (datagram.Buffer.Length == 0)
                 return;
             var msg = Message.Deserialize(datagram.Buffer);
+
             Connection connection;
             if (_connectionManager.TryGetConnection(out connection, msg, datagram.EndPoint))
             {
+                //if (connection.Token != _hostToken)
+                //{
+                //    return;
+                //}
+                if (msg.Header.Reliable)
+                {
+                    Send(connection.GenerateAck(msg), datagram.EndPoint);
+                }
+
                 IList<ReceiveHandler> handlers = null;
                 lock (_receiveHandlers)
                 {
@@ -117,7 +139,16 @@ namespace GServer
                     connection = _connectionManager[msg.Header.ConnectionToken];
                     foreach (var h in handlers)
                     {
-                        h.Invoke(msg, connection);
+                        try
+                        {
+                            h.Invoke(msg, connection);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ErrLog != null)
+                                ErrLog.Invoke(ex.Message);
+                        }
                     }
                     connection.UpdateActivity();
                 }
@@ -146,8 +177,28 @@ namespace GServer
         }
         public void Send(Message msg, IPEndPoint endPoint)
         {
-            var buffer = msg.Serialize();
-            _client.Send(buffer, buffer.Length, endPoint);
+            try
+            {
+                var buffer = msg.Serialize();
+                _client.Send(buffer, buffer.Length, endPoint);
+            }
+            catch (Exception ex)
+            {
+                ErrLog.Invoke(ex.Message);
+            }
+        }
+        public void Send(Message msg)
+        {
+            try
+            {
+                msg.Header.ConnectionToken = _hostToken;
+                var buffer = msg.Serialize();
+                _client.Send(buffer, buffer.Length);
+            }
+            catch (Exception ex)
+            {
+                ErrLog.Invoke(ex.Message);
+            }
         }
         public void AddHandler(short type, ReceiveHandler handler)
         {
@@ -165,5 +216,30 @@ namespace GServer
                 }
             }
         }
+        public void Connect(IPEndPoint ep)
+        {
+            _client.Connect(ep);
+            var buffer = Message.Handshake.Serialize();
+            _client.Send(buffer, buffer.Length);
+            IPEndPoint remoteEp = null;
+            while (true)
+            {
+                byte[] recieved = _client.Receive(ref remoteEp);
+                if (remoteEp.Address.ToString() == ep.Address.ToString() && remoteEp.Port == ep.Port)
+                {
+                    var msg = Message.Deserialize(recieved);
+                    var ds = new DataStorage(msg.Body);
+                    _hostToken = new Token(ds.ReadInt32());
+                    Connection con = new Connection(ep, _hostToken);
+                    lock (_connectionManager)
+                    {
+                        _connectionManager.Add(con.Token, con);
+                    }
+                    break;
+                }
+            }
+        }
+        public Action<string> ErrLog;
+        public Action<string> DebugLog;
     }
 }
