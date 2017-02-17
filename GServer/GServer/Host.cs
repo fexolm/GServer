@@ -117,41 +117,55 @@ namespace GServer
             Connection connection;
             if (_connectionManager.TryGetConnection(out connection, msg, datagram.EndPoint))
             {
-                //if (connection.Token != _hostToken)
-                //{
-                //    return;
-                //}
                 if (msg.Header.Reliable)
                 {
                     Send(connection.GenerateAck(msg), datagram.EndPoint);
                 }
 
-                IList<ReceiveHandler> handlers = null;
-                lock (_receiveHandlers)
+                if (msg.Header.Sequenced)
                 {
-                    if (_receiveHandlers.ContainsKey((short)msg.Header.Type))
+                    if (connection.IsMessageInItsOrder((short)msg.Header.Type, msg.Header.MessageId))
                     {
-                        handlers = _receiveHandlers[(short)msg.Header.Type];
+                        DatagramHandler(msg, connection);
                     }
                 }
-                if (handlers != null)
+                else if (msg.Header.Ordered)
                 {
-                    connection = _connectionManager[msg.Header.ConnectionToken];
-                    foreach (var h in handlers)
+                    DatagramHandler(msg, connection);
+                }
+                else
+                {
+                    DatagramHandler(msg, connection);
+                }
+            }
+        }
+        private void DatagramHandler(Message msg, Connection connection)
+        {
+            IList<ReceiveHandler> handlers = null;
+            lock (_receiveHandlers)
+            {
+                if (_receiveHandlers.ContainsKey((short)msg.Header.Type))
+                {
+                    handlers = _receiveHandlers[(short)msg.Header.Type];
+                }
+            }
+            if (handlers != null)
+            {
+                connection = _connectionManager[msg.Header.ConnectionToken];
+                foreach (var h in handlers)
+                {
+                    try
                     {
-                        try
-                        {
-                            h.Invoke(msg, connection);
+                        h.Invoke(msg, connection);
 
-                        }
-                        catch (Exception ex)
-                        {
-                            if (ErrLog != null)
-                                ErrLog.Invoke(ex.Message);
-                        }
                     }
-                    connection.UpdateActivity();
+                    catch (Exception ex)
+                    {
+                        if (ErrLog != null)
+                            ErrLog.Invoke(ex.Message);
+                    }
                 }
+                connection.UpdateActivity();
             }
         }
         public void StartListen(int threadCount)
@@ -239,6 +253,7 @@ namespace GServer
                 }
             }
         }
+
         public Action<string> ErrLog;
         public Action<string> DebugLog;
     }

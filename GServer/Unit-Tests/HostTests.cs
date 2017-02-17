@@ -121,7 +121,7 @@ namespace Unit_Tests
             host.StopListen();
         }
         [Test]
-        public void HostConversation()
+        public void HostConversationAck()
         {
             Host h1 = new Host(8080);
             Host h2 = new Host(8081);
@@ -131,7 +131,7 @@ namespace Unit_Tests
             h1.DebugLog = s => debug += s + '\n';
             h2.DebugLog = s => debug += s + '\n';
             h1.StartListen(4);
-            h2.StartListen(4);
+            h2.StartListen(0);
             bool successMessage = false;
             bool successArc = false;
             h2.AddHandler((short)MessageType.Ack, (m, e) => { successArc = true; });
@@ -140,7 +140,6 @@ namespace Unit_Tests
             h2.Send(new Message(MessageType.Rpc, Mode.Reliable, null, 123, null));
             Thread.Sleep(4000);
 
-            
             Assert.AreEqual(string.Empty, err);
             Assert.AreEqual(true, successMessage, "Сообщение не пришло");
             Assert.AreEqual(true, successArc, "Arc не пришел");
@@ -148,5 +147,6 @@ namespace Unit_Tests
             h1.StopListen();
             h2.StopListen();
         }
+
     }
 }
