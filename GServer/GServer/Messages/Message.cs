@@ -124,14 +124,14 @@ namespace GServer
                 Body = null;
         }
 
-        private static readonly Message _handshake = new Message(MessageType.Handshake, Mode.Ordered, null, default(int), null);
+        private static readonly Message _handshake = new Message(MessageType.Handshake, Mode.Sequenced, null, default(int), null);
         public static Message Handshake { get { return _handshake; } }
         public static Message Ack(MessageHeader header, int ackBitField)
         {
             var ds = new DataStorage();
             ds.Push(ackBitField);
             ds.Push((short)header.Type);
-            return new Message(MessageType.Ack, Mode.Sequenced, header.ConnectionToken, header.MessageId, ds);
+            return new Message(MessageType.Ack, Mode.None, header.ConnectionToken, header.MessageId, ds);
         }
         private Message() { }
     }

@@ -131,7 +131,7 @@ namespace GServer
                 }
                 else if (msg.Header.Ordered)
                 {
-                    DatagramHandler(msg, connection);
+                    connection.InvokeOrdered(msg, () => DatagramHandler(msg, connection));
                 }
                 else
                 {

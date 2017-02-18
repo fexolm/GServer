@@ -1,5 +1,6 @@
 ﻿using GServer.Messages;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -23,6 +24,7 @@ namespace GServer
             LastActivity = DateTime.Now;
             _AckPerMsgType = new Dictionary<short, Ack>();
             _lastMessageNumPerType = new Dictionary<short, int>();
+            _handlerQueue = new SortedList<int, Action>();
         }
         public void UpdateActivity()
         {
@@ -35,6 +37,7 @@ namespace GServer
                 Disconnected.Invoke(this);
         }
 
+        private readonly IDictionary<short, int> _lastMessageNumPerType;
         #region Reliable
 
         private readonly IDictionary<short, Ack> _AckPerMsgType;
@@ -59,7 +62,6 @@ namespace GServer
         #endregion
 
         #region Sequenced
-        private readonly IDictionary<short, int> _lastMessageNumPerType;
         public bool IsMessageInItsOrder(short type, int num)
         {
             lock (_lastMessageNumPerType)
@@ -82,6 +84,47 @@ namespace GServer
                     return true;
                 }
             }
+        }
+        #endregion
+
+        #region Ordered
+
+        private SortedList<int, Action> _handlerQueue;
+        public void InvokeOrdered(Message msg, Action callback)
+        {
+            List<KeyValuePair<int, Action>> actionsToInvoke = new List<KeyValuePair<int, Action>>();
+
+            lock (_lastMessageNumPerType)
+            {
+                    if (!_lastMessageNumPerType.ContainsKey((short)msg.Header.Type))
+                    {
+                        _lastMessageNumPerType.Add((short)msg.Header.Type, 0);
+                    }
+            }
+            lock (_handlerQueue)
+            {
+                _handlerQueue.Add(msg.Header.MessageId, callback);
+                foreach (var element in _handlerQueue)
+                {
+                    lock (_lastMessageNumPerType)
+                    {
+                        if (element.Key == _lastMessageNumPerType[(short)msg.Header.Type] + 1)
+                        {
+                            actionsToInvoke.Add(element);
+                            _lastMessageNumPerType[(short)msg.Header.Type]++;
+                        }
+                    }
+                }
+                foreach (var element in actionsToInvoke)
+                {
+                    _handlerQueue.Remove(element.Key);
+                }
+            }
+            foreach (var action in actionsToInvoke)
+            {
+                action.Value.Invoke();
+            }
+
         }
         #endregion
     }
