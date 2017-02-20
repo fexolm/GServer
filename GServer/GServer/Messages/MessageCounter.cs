@@ -57,11 +57,23 @@ namespace GServer
             }
             return mc;
         }
+        public static int operator -(MessageCounter left, MessageCounter right)
+        {
+            var dif = left._count - right._count;
+            if (Math.Abs(dif) > (1 + short.MaxValue))
+            {
+                return Math.Abs(dif) - short.MaxValue - 1;
+            }
+            else
+            {
+                return dif;
+            }
+        }
         public short ToShort()
         {
             return _count;
         }
-        public static explicit operator MessageCounter(short val)
+        public static implicit operator MessageCounter(short val)
         {
             return new MessageCounter(val);
         }
