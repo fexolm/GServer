@@ -46,6 +46,7 @@
     <Compile Include="Messages\DataStorage.cs" />
     <Compile Include="Messages\ISerializable.cs" />
     <Compile Include="Messages\Message.cs" />
+    <Compile Include="Messages\MessageCounter.cs" />
     <Compile Include="Messages\MessageManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Messages\Token.cs" />

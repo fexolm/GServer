@@ -147,7 +147,7 @@ namespace Unit_Tests
             h1.StopListen();
             h2.StopListen();
         }
-        [Test]
+        [Test, Timeout(6000)]
         public void HostConversationSequenced()
         {
             Host h1 = new Host(8080);
@@ -191,7 +191,7 @@ namespace Unit_Tests
             h2.StopListen();
 
         }
-        [Test]
+        [Test, Timeout(3000)]
         public void HostConversationOrdered()
         {
             Host h1 = new Host(8080);
@@ -235,17 +235,15 @@ namespace Unit_Tests
             h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null, 8, null));
 
             h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null, 7, null));
-            Thread.Sleep(6000);
-
+            Thread.Sleep(1000);
             Assert.AreEqual(string.Empty, err);
             Assert.AreEqual(8, h1Messages.Count, "Сообщение не пришло");
             Assert.AreEqual(8, h2Messages.Count, "Ack не пришел");
-
             h1.StopListen();
             h2.StopListen();
 
         }
-        [Test]
+        [Test, Timeout(6000)]
         public void DurationTest()
         {
             Host h1 = new Host(8080);

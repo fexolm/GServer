@@ -80,7 +80,6 @@ namespace GServer
             return result;
         }
     }
-
     public class Message : ISerializable
     {
         public MessageHeader Header { get; private set; }

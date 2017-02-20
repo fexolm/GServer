@@ -131,7 +131,12 @@ namespace GServer
                 }
                 else if (msg.Header.Ordered)
                 {
-                    connection.InvokeOrdered(msg, () => DatagramHandler(msg, connection));
+                    var toInvoke = connection.MessagesToInvoke(msg);
+                    if (toInvoke == null)
+                    {
+                        return;
+                    }
+                    DatagramHandler(toInvoke, connection);
                 }
                 else
                 {
@@ -163,6 +168,42 @@ namespace GServer
                     {
                         if (ErrLog != null)
                             ErrLog.Invoke(ex.Message);
+                    }
+                }
+                connection.UpdateActivity();
+            }
+        }
+        private void DatagramHandler(List<Message> messages, Connection connection)
+        {
+            IList<ReceiveHandler> handlers = null;
+            if (messages.Count == 0)
+            {
+                return;
+            }
+            var msg = messages[0];
+            lock (_receiveHandlers)
+            {
+                if (_receiveHandlers.ContainsKey((short)msg.Header.Type))
+                {
+                    handlers = _receiveHandlers[(short)msg.Header.Type];
+                }
+            }
+            if (handlers != null)
+            {
+                connection = _connectionManager[msg.Header.ConnectionToken];
+                foreach (var h in handlers)
+                {
+                    foreach (var m in messages)
+                    {
+                        try
+                        {
+                            h.Invoke(m, connection);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ErrLog != null)
+                                ErrLog.Invoke(ex.Message);
+                        }
                     }
                 }
                 connection.UpdateActivity();
