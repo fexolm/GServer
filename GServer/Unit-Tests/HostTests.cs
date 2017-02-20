@@ -147,7 +147,7 @@ namespace Unit_Tests
             h1.StopListen();
             h2.StopListen();
         }
-        [Test, Timeout(6000)]
+        [Test]
         public void HostConversationSequenced()
         {
             Host h1 = new Host(8080);
@@ -181,7 +181,7 @@ namespace Unit_Tests
             {
                 h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Sequenced, null, i, null));
             }
-            Thread.Sleep(4000);
+            Thread.Sleep(1000);
 
             Assert.AreEqual(string.Empty, err);
             Assert.AreEqual(100, h1Messages.Count, "Сообщение не пришло");
