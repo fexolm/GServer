@@ -7,14 +7,14 @@ namespace GServer.Messages
 {
     public class Ack
     {
-        private short _lastMessageNum;
+        private MessageCounter _lastMessageNum;
         private int _lastMessagesStat;
-        public Ack(int _lastMessagesStat)
+        public Ack()
         {
             _lastMessageNum = 0;
             _lastMessagesStat = 1;
         }
-        public int GetStatistic(short curNum)
+        public int GetStatistic(MessageCounter curNum)
         {
             int diff = curNum - _lastMessageNum;
             if (diff > 0)

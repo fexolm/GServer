@@ -8,18 +8,18 @@ using System.Text;
 
 namespace GServer
 {
-    public class MessageQueue : IEnumerable<KeyValuePair<short, Message>>
+    public class MessageQueue : IEnumerable<KeyValuePair<MessageCounter, Message>>
     {
-        private SortedList<short, Message> _msgQueue;
+        private SortedList<MessageCounter, Message> _msgQueue;
         public MessageQueue()
         {
-            _msgQueue = new SortedList<short, Message>();
+            _msgQueue = new SortedList<MessageCounter, Message>();
         }
         public void Add(Message msg)
         {
             _msgQueue.Add(msg.Header.MessageId, msg);
         }
-        public IEnumerator<KeyValuePair<short, Message>> GetEnumerator()
+        public IEnumerator<KeyValuePair<MessageCounter, Message>> GetEnumerator()
         {
             return _msgQueue.GetEnumerator();
         }
@@ -47,8 +47,8 @@ namespace GServer
             Token = token;
             LastActivity = DateTime.Now;
             _AckPerMsgType = new Dictionary<short, Ack>();
-            _lastSequencedMessageNumPerType = new Dictionary<short, short>();
-            _lastOrderedMessageNumPerType = new Dictionary<short, short>();
+            _lastSequencedMessageNumPerType = new Dictionary<short, MessageCounter>();
+            _lastOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
             _messageQueuePerType = new SortedDictionary<short, MessageQueue>();
         }
         public void UpdateActivity()
@@ -76,7 +76,7 @@ namespace GServer
                 }
                 else
                 {
-                    _AckPerMsgType.Add((short)msg.Header.Type, new Ack(msg.Header.MessageId));
+                    _AckPerMsgType.Add((short)msg.Header.Type, new Ack());
                     bitField = 1;
                 }
             }
@@ -87,8 +87,8 @@ namespace GServer
 
         #region Sequenced
 
-        private readonly IDictionary<short, short> _lastSequencedMessageNumPerType;
-        public bool IsMessageInItsOrder(short type, short num)
+        public readonly IDictionary<short, MessageCounter> _lastSequencedMessageNumPerType;
+        public bool IsMessageInItsOrder(short type, MessageCounter num)
         {
             lock (_lastSequencedMessageNumPerType)
             {
@@ -115,7 +115,7 @@ namespace GServer
 
         #region Ordered
 
-        private IDictionary<short, short> _lastOrderedMessageNumPerType;
+        public IDictionary<short, MessageCounter> _lastOrderedMessageNumPerType;
         private SortedDictionary<short, MessageQueue> _messageQueuePerType;
         public List<Message> MessagesToInvoke(Message msg)
         {
@@ -123,21 +123,18 @@ namespace GServer
 
             lock (_lastOrderedMessageNumPerType)
             {
-                if (!_lastOrderedMessageNumPerType.ContainsKey((short)msg.Header.Type))
-                {
-                    _lastOrderedMessageNumPerType.Add((short)msg.Header.Type, 0);
-                    lock (_messageQueuePerType)
-                    {
-                        _messageQueuePerType.Add((short)msg.Header.Type, new MessageQueue());
-                    }
-                }
                 lock (_messageQueuePerType)
                 {
+                    if (!_lastOrderedMessageNumPerType.ContainsKey((short)msg.Header.Type))
+                    {
+                        _lastOrderedMessageNumPerType.Add((short)msg.Header.Type, 0);
+                        _messageQueuePerType.Add((short)msg.Header.Type, new MessageQueue());
+                    }
                     var currentTypeQueue = _messageQueuePerType[(short)msg.Header.Type];
                     currentTypeQueue.Add(msg);
                     foreach (var element in currentTypeQueue)
                     {
-                        if (element.Key == _lastOrderedMessageNumPerType[(short)msg.Header.Type] + 1)
+                        if (element.Key == _lastOrderedMessageNumPerType[(short)msg.Header.Type])
                         {
                             messagesToInvoke.Add(element.Value);
                             _lastOrderedMessageNumPerType[(short)msg.Header.Type]++;
@@ -147,10 +144,40 @@ namespace GServer
                     {
                         currentTypeQueue.Remove(element);
                     }
+                    return messagesToInvoke;
                 }
-                return messagesToInvoke;
             }
+        }
         #endregion
+
+        public MessageCounter GetMessageId(Message msg)
+        {
+            MessageCounter result = MessageCounter.Default;
+            if (msg.Ordered)
+            {
+                lock (_lastOrderedMessageNumPerType)
+                {
+                    if (!_lastOrderedMessageNumPerType.ContainsKey((short)msg.Header.Type))
+                    {
+                        _lastOrderedMessageNumPerType.Add((short)msg.Header.Type, 0);
+                    }
+                    result = _lastOrderedMessageNumPerType[(short)msg.Header.Type];
+                    _lastOrderedMessageNumPerType[(short)msg.Header.Type]++;
+                }
+            }
+            else if (msg.Sequenced)
+            {
+                lock (_lastSequencedMessageNumPerType)
+                {
+                    if (!_lastSequencedMessageNumPerType.ContainsKey((short)msg.Header.Type))
+                    {
+                        _lastSequencedMessageNumPerType.Add((short)msg.Header.Type, 0);
+                    }
+                    result = _lastSequencedMessageNumPerType[(short)msg.Header.Type];
+                    _lastSequencedMessageNumPerType[(short)msg.Header.Type]++;
+                }
+            }
+            return result;
         }
     }
 }

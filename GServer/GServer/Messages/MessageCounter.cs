@@ -5,16 +5,14 @@ using System.Text;
 
 namespace GServer
 {
-    public class MessageCounter : IComparable
+    public struct MessageCounter : IComparable
     {
         private short _count;
+
+        public static readonly MessageCounter Default = new MessageCounter(short.MinValue);
         public MessageCounter(short value)
         {
             _count = value;
-        }
-        public MessageCounter()
-        {
-            _count = short.MinValue;
         }
         public int CompareTo(object obj)
         {
@@ -80,6 +78,10 @@ namespace GServer
         public static explicit operator short(MessageCounter val)
         {
             return val._count;
+        }
+        public override string ToString()
+        {
+            return _count.ToString();
         }
     }
 }

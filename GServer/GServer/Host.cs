@@ -30,6 +30,7 @@ namespace GServer
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
         private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
+        public event Action<IPEndPoint> Connected;
         public Host(int port)
         {
             _listenThread = new Thread(() => Listen(port));
@@ -41,12 +42,11 @@ namespace GServer
             _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
             _connectionManager.HandshakeRecieved += SendToken;
         }
-        private void SendToken(Connection obj)
+        private void SendToken(Connection con)
         {
-            var ds = new DataStorage();
-            ds.Push(obj.Token.Serialize());
-            Message msg = new Message(MessageType.Empty, Mode.None, null, 123, ds);
-            Send(msg, obj.EndPoint);
+            Message msg = new Message(MessageType.Token, Mode.None, null);
+            msg.ConnectionToken = con.Token;
+            Send(msg, con);
         }
         private void CleanConnections()
         {
@@ -62,27 +62,22 @@ namespace GServer
             {
                 if (_client.Available > 0)
                 {
-                    try
+
+                    IPEndPoint endPoint = null;
+                    var buffer = _client.Receive(ref endPoint);
+                    var datagram = new Datagram(buffer, endPoint);
+                    if (_processingThreads.Count > 0)
                     {
-                        IPEndPoint endPoint = null;
-                        var buffer = _client.Receive(ref endPoint);
-                        var datagram = new Datagram(buffer, endPoint);
-                        if (_processingThreads.Count > 0)
+                        lock (_datagrams)
                         {
-                            lock (_datagrams)
-                            {
-                                _datagrams.Enqueue(datagram);
-                            }
-                        }
-                        else
-                        {
-                            ProcessDatagram(datagram);
+                            _datagrams.Enqueue(datagram);
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        ErrLog.Invoke(ex.Message);
+                        ProcessDatagram(datagram);
                     }
+
                 }
             }
         }
@@ -109,13 +104,16 @@ namespace GServer
             if (datagram.Buffer.Length == 0)
                 return;
             var msg = Message.Deserialize(datagram.Buffer);
-
+            if (Connected != null)
+            {
+                Connected.Invoke(datagram.EndPoint);
+            }
             Connection connection;
             if (_connectionManager.TryGetConnection(out connection, msg, datagram.EndPoint))
             {
                 if (msg.Header.Reliable)
                 {
-                    Send(connection.GenerateAck(msg), datagram.EndPoint);
+                    Send(connection.GenerateAck(msg), connection);
                 }
 
                 if (msg.Header.Sequenced)
@@ -230,12 +228,14 @@ namespace GServer
             _processingThreads.Clear();
             _client.Close();
         }
-        public void Send(Message msg, IPEndPoint endPoint)
+        public void Send(Message msg, Connection con)
         {
             try
             {
+                msg.ConnectionToken = con.Token;
+                msg.MessageId = con.GetMessageId(msg);
                 var buffer = msg.Serialize();
-                _client.Send(buffer, buffer.Length, endPoint);
+                _client.Send(buffer, buffer.Length, con.EndPoint);
             }
             catch (Exception ex)
             {
@@ -246,7 +246,13 @@ namespace GServer
         {
             try
             {
-                msg.Header.ConnectionToken = _hostToken;
+                Connection connection;
+                lock (_connectionManager)
+                {
+                    connection = _connectionManager[_hostToken];
+                }
+                msg.MessageId = connection.GetMessageId(msg);
+                msg.ConnectionToken = _hostToken;
                 var buffer = msg.Serialize();
                 _client.Send(buffer, buffer.Length);
             }
@@ -271,9 +277,16 @@ namespace GServer
                 }
             }
         }
-        public void Connect(IPEndPoint ep)
+        public bool Connect(IPEndPoint ep)
         {
-            _client.Connect(ep);
+            try
+            {
+                _client.Connect(ep);
+            }
+            catch
+            {
+                return false;
+            }
             var buffer = Message.Handshake.Serialize();
             _client.Send(buffer, buffer.Length);
             IPEndPoint remoteEp = null;
@@ -283,8 +296,7 @@ namespace GServer
                 if (remoteEp.Address.ToString() == ep.Address.ToString() && remoteEp.Port == ep.Port)
                 {
                     var msg = Message.Deserialize(recieved);
-                    var ds = new DataStorage(msg.Body);
-                    _hostToken = new Token(ds.ReadInt32());
+                    _hostToken = msg.ConnectionToken;
                     Connection con = new Connection(ep, _hostToken);
                     lock (_connectionManager)
                     {
@@ -293,8 +305,8 @@ namespace GServer
                     break;
                 }
             }
+            return true;
         }
-
         public Action<string> ErrLog;
         public Action<string> DebugLog;
     }

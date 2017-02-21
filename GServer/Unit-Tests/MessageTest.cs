@@ -33,7 +33,7 @@ namespace Unit_Tests
             ds.Push("hello world");
             ds.Push(13.221F);
             ds.Push(14.32D);
-            var msg = new Message(MessageType.Ack, Mode.Reliable | Mode.Sequenced, token, 123, ds);
+            var msg = new Message(MessageType.Ack, Mode.Reliable | Mode.Sequenced, ds);
             var bytes = msg.Serialize();
             var newMsg = Message.Deserialize(bytes);
 
