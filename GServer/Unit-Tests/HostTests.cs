@@ -230,8 +230,8 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + '\n';
             h2.DebugLog = s => debug += s + '\n';
-            h1.StartListen(48);
-            h2.StartListen(0);
+            h1.StartListen(8);
+            h2.StartListen(8);
             List<Message> h2Messages = new List<Message>();
             List<Message> h1Messages = new List<Message>();
             h2.AddHandler((short)MessageType.Ack, (m, e) =>

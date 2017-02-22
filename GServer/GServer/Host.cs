@@ -95,10 +95,7 @@ namespace GServer
                             }
                             if (_processingThreads.Count > 0)
                             {
-                                lock (_handlerQueue)
-                                {
-                                    _handlerQueue.Enqueue(() => DatagramHandler(msg, connection));
-                                }
+                                ThreadPool.QueueUserWorkItem((o) => DatagramHandler(toInvoke, connection));
                             }
                             else
                             {
@@ -107,10 +104,7 @@ namespace GServer
                         }
                         else if (_processingThreads.Count > 0)
                         {
-                            lock (_handlerQueue)
-                            {
-                                _handlerQueue.Enqueue(() => DatagramHandler(msg, connection));
-                            }
+                            ThreadPool.QueueUserWorkItem((o) => DatagramHandler(msg, connection));
                         }
                         else
                         {
@@ -119,24 +113,6 @@ namespace GServer
                     }
 
                 }
-            }
-        }
-        private void ProcessQueue()
-        {
-            while (_isListening)
-            {
-                Action callback = null;
-                lock (_handlerQueue)
-                {
-                    if (_handlerQueue.Count != 0)
-                    {
-                        callback = _handlerQueue.Dequeue();
-                    }
-                }
-                if (callback == null)
-                    Thread.Sleep(0);
-                else
-                    callback.Invoke();
             }
         }
         private void DatagramHandler(Message msg, Connection connection)
@@ -206,11 +182,7 @@ namespace GServer
         }
         public void StartListen(int threadCount)
         {
-            for (int i = 0; i < threadCount; i++)
-            {
-                var thread = new Thread(ProcessQueue);
-                _processingThreads.Add(thread);
-            }
+            ThreadPool.SetMinThreads(threadCount, threadCount);
             _isListening = true;
             foreach (var thread in _processingThreads)
             {
