@@ -78,17 +78,20 @@ namespace Unit_Tests
             Connection con = new Connection(null);
             cm.Add(con.Token, con);
 
-            var dm = new Datagram(new Message(MessageType.Ack, Mode.Reliable | Mode.Sequenced, null).Serialize(), new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8091));
+            var msg2 = new Message(MessageType.Ack, Mode.None, null);
+            msg2.MessageId = 0;
+            msg2.ConnectionToken = con.Token;
+            var dm = new Datagram(msg2.Serialize(), new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8091));
             host.AddHandler((short)MessageType.Ack, (m, e) =>
             {
                 msg = m;
             });
             po.Invoke("ProcessDatagram", dm);
             Assert.AreEqual(msg.Header.Type, MessageType.Ack, "Неверный тип сообщения");
-            Assert.AreEqual(msg.Header.Reliable, true, "Пришло не Reliable");
-            Assert.AreEqual(msg.Header.Sequenced, true, "Пришло не Sequenced");
+            Assert.AreEqual(msg.Header.Reliable, false, "Пришло не Reliable");
+            Assert.AreEqual(msg.Header.Sequenced, false, "Пришло не Sequenced");
             Assert.AreEqual(msg.Header.Ordered, false, "Пришло Ordered");
-            Assert.AreEqual(msg.Header.MessageId, new MessageCounter(123));
+            Assert.AreEqual(msg.Header.MessageId, new MessageCounter(0));
             Assert.AreEqual(msg.Header.ConnectionToken, con.Token);
             host.StopListen();
         }
@@ -127,9 +130,9 @@ namespace Unit_Tests
             string err = string.Empty;
             string debug = string.Empty;
             h2.ErrLog = s => err += s + "\n";
-            h1.DebugLog = s => debug += s + '\n';
-            h2.DebugLog = s => debug += s + '\n';
-            h1.StartListen(30);
+            h1.DebugLog = s => debug += s + ' ';
+            h2.DebugLog = s => debug += s + ' ';
+            h1.StartListen(1);
             h2.StartListen(0);
             List<Message> h2Messages = new List<Message>();
             List<Message> h1Messages = new List<Message>();
@@ -151,19 +154,19 @@ namespace Unit_Tests
 
             for (short i = 0; i < 100; i++)
             {
-                h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+                h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Sequenced, null));
             }
             Thread.Sleep(1000);
 
             Assert.AreEqual(string.Empty, err);
             Assert.AreEqual(100, h1Messages.Count, "Сообщение не пришло");
-            Assert.AreEqual(100, h2Messages.Count, "Arc не пришел");
+            Assert.AreEqual(100, h2Messages.Count, "Akc не пришел");
 
             h1.StopListen();
             h2.StopListen();
 
         }
-        [Test, Timeout(3000)]
+        [Test]
         public void HostConversationOrdered()
         {
             Host h1 = new Host(8080);
@@ -209,7 +212,7 @@ namespace Unit_Tests
             h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
             h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
-            Thread.Sleep(1000);
+            Thread.Sleep(2000);
             Assert.AreEqual(string.Empty, err);
             Assert.AreEqual(9, h1Messages.Count, "Сообщение не пришло");
             Assert.AreEqual(9, h2Messages.Count, "Ack не пришел");
@@ -227,7 +230,7 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + '\n';
             h2.DebugLog = s => debug += s + '\n';
-            h1.StartListen(30);
+            h1.StartListen(2);
             h2.StartListen(0);
             List<Message> h2Messages = new List<Message>();
             List<Message> h1Messages = new List<Message>();

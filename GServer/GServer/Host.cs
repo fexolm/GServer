@@ -94,7 +94,7 @@ namespace GServer
                     }
                 }
                 if (prcessDgram == null)
-                    Thread.Sleep(1000);
+                    Thread.Sleep(0);
                 else
                     ProcessDatagram(prcessDgram);
             }
@@ -254,6 +254,7 @@ namespace GServer
                 msg.MessageId = connection.GetMessageId(msg);
                 msg.ConnectionToken = _hostToken;
                 var buffer = msg.Serialize();
+                DebugLog.Invoke(msg.MessageId.ToString());
                 _client.Send(buffer, buffer.Length);
             }
             catch (Exception ex)
