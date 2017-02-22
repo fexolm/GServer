@@ -34,6 +34,8 @@ namespace Unit_Tests
             ds.Push(13.221F);
             ds.Push(14.32D);
             var msg = new Message(MessageType.Ack, Mode.Reliable | Mode.Sequenced, ds);
+            msg.MessageId = 123;
+            msg.ConnectionToken = token;
             var bytes = msg.Serialize();
             var newMsg = Message.Deserialize(bytes);
 

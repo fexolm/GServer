@@ -22,7 +22,7 @@ namespace GServer
     public class Host
     {
         private Token _hostToken;
-        private readonly Queue<Datagram> _datagrams;
+        private readonly Queue<Action> _handlerQueue;
         private UdpClient _client;
         private readonly Thread _listenThread;
         private readonly Thread _connectionCleaningThread;
@@ -34,7 +34,7 @@ namespace GServer
         public Host(int port)
         {
             _listenThread = new Thread(() => Listen(port));
-            _datagrams = new Queue<Datagram>();
+            _handlerQueue = new Queue<Action>();
             _processingThreads = new List<Thread>();
             _isListening = false;
             _connectionManager = new ConnectionManager();
@@ -65,17 +65,57 @@ namespace GServer
 
                     IPEndPoint endPoint = null;
                     var buffer = _client.Receive(ref endPoint);
-                    var datagram = new Datagram(buffer, endPoint);
-                    if (_processingThreads.Count > 0)
+
+                    if (buffer.Length == 0)
+                        return;
+
+                    var msg = Message.Deserialize(buffer);
+
+                    Connection connection;
+                    if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
                     {
-                        lock (_datagrams)
+                        if (msg.Header.Reliable)
                         {
-                            _datagrams.Enqueue(datagram);
+                            Send(connection.GenerateAck(msg), connection);
                         }
-                    }
-                    else
-                    {
-                        ProcessDatagram(datagram);
+
+                        if (msg.Header.Sequenced)
+                        {
+                            if (connection.IsMessageInItsOrder((short)msg.Header.Type, msg.Header.MessageId))
+                            {
+                                DatagramHandler(msg, connection);
+                            }
+                        }
+                        else if (msg.Header.Ordered)
+                        {
+                            var toInvoke = connection.MessagesToInvoke(msg);
+                            if (toInvoke == null)
+                            {
+                                return;
+                            }
+                            if (_processingThreads.Count > 0)
+                            {
+                                lock (_handlerQueue)
+                                {
+                                    _handlerQueue.Enqueue(() => DatagramHandler(msg, connection));
+                                }
+                            }
+                            else
+                            {
+                                DatagramHandler(msg, connection);
+                            }
+                        }
+                        else if (_processingThreads.Count > 0)
+                        {
+                            lock (_handlerQueue)
+                            {
+                                _handlerQueue.Enqueue(() => DatagramHandler(msg, connection));
+                            }
+                        }
+                        else
+                        {
+                            DatagramHandler(msg, connection);
+                        }
                     }
 
                 }
@@ -85,57 +125,18 @@ namespace GServer
         {
             while (_isListening)
             {
-                Datagram prcessDgram = null;
-                lock (_datagrams)
+                Action callback = null;
+                lock (_handlerQueue)
                 {
-                    if (_datagrams.Count != 0)
+                    if (_handlerQueue.Count != 0)
                     {
-                        prcessDgram = _datagrams.Dequeue();
+                        callback = _handlerQueue.Dequeue();
                     }
                 }
-                if (prcessDgram == null)
+                if (callback == null)
                     Thread.Sleep(0);
                 else
-                    ProcessDatagram(prcessDgram);
-            }
-        }
-        private void ProcessDatagram(Datagram datagram)
-        {
-            if (datagram.Buffer.Length == 0)
-                return;
-            var msg = Message.Deserialize(datagram.Buffer);
-            if (Connected != null)
-            {
-                Connected.Invoke(datagram.EndPoint);
-            }
-            Connection connection;
-            if (_connectionManager.TryGetConnection(out connection, msg, datagram.EndPoint))
-            {
-                if (msg.Header.Reliable)
-                {
-                    Send(connection.GenerateAck(msg), connection);
-                }
-
-                if (msg.Header.Sequenced)
-                {
-                    if (connection.IsMessageInItsOrder((short)msg.Header.Type, msg.Header.MessageId))
-                    {
-                        DatagramHandler(msg, connection);
-                    }
-                }
-                else if (msg.Header.Ordered)
-                {
-                    var toInvoke = connection.MessagesToInvoke(msg);
-                    if (toInvoke == null)
-                    {
-                        return;
-                    }
-                    DatagramHandler(toInvoke, connection);
-                }
-                else
-                {
-                    DatagramHandler(msg, connection);
-                }
+                    callback.Invoke();
             }
         }
         private void DatagramHandler(Message msg, Connection connection)

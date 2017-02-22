@@ -132,7 +132,7 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + ' ';
             h2.DebugLog = s => debug += s + ' ';
-            h1.StartListen(1);
+            h1.StartListen(48);
             h2.StartListen(0);
             List<Message> h2Messages = new List<Message>();
             List<Message> h1Messages = new List<Message>();
@@ -230,7 +230,7 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + '\n';
             h2.DebugLog = s => debug += s + '\n';
-            h1.StartListen(2);
+            h1.StartListen(48);
             h2.StartListen(0);
             List<Message> h2Messages = new List<Message>();
             List<Message> h1Messages = new List<Message>();
