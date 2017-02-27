@@ -70,6 +70,15 @@ namespace GServer
                 }
                 return true;
             }
+            if (msg.Header.Type == (short)MessageType.Token)
+            {
+                con = new Connection(endPoint, msg.ConnectionToken);
+                lock (_connections)
+                {
+                    _connections.Add(con.Token, con);
+                }
+                return true;
+            }
             con = null;
             return false;
         }

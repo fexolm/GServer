@@ -25,7 +25,12 @@ namespace Unit_Tests
             bool successArc = false;
             h2.AddHandler((short)MessageType.Ack, (m, e) => { successArc = true; });
             h1.AddHandler((short)MessageType.Rpc, (m, e) => { successMessage = true; });
-            h2.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+            bool connected = false;
+            h2.OnConnect = () => { connected = true; };
+            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+
+            while (!connected)
+                ;
             h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable, null));
             Thread.Sleep(4000);
 
@@ -64,7 +69,12 @@ namespace Unit_Tests
                     h1Messages.Add(m);
                 }
             });
-            h2.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+            bool connected = false;
+            h2.OnConnect = () => { connected = true; };
+            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+
+            while (!connected)
+                ;
 
             for (short i = 0; i < 100; i++)
             {
@@ -108,7 +118,13 @@ namespace Unit_Tests
                     h1Messages.Add(m);
                 }
             });
-            h2.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+            bool connected = false;
+            h2.OnConnect = () => { connected = true; };
+            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+
+            while (!connected)
+                ;
+
             h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
             h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
@@ -132,7 +148,6 @@ namespace Unit_Tests
             Assert.AreEqual(9, h2Messages.Count, "Ack не пришел");
             h1.StopListen();
             h2.StopListen();
-
         }
         [Test]
         public void DurationTest()
@@ -164,7 +179,12 @@ namespace Unit_Tests
                         ;
                 }
             });
-            h2.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+            bool connected = false;
+            h2.OnConnect = () => {connected = true;};
+            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+
+            while (!connected)
+                ;
 
             for (short i = 0; i < 10000; i++)
             {

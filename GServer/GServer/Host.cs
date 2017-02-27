@@ -24,7 +24,18 @@ namespace GServer
             _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
             _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
-            _connectionManager.HandshakeRecieved += SendToken;
+            AddHandler((short)MessageType.Token, (m, c) =>
+            {
+                _hostToken = m.ConnectionToken;
+                if (OnConnect != null)
+                {
+                    OnConnect.Invoke();
+                }
+            });
+            AddHandler((short)MessageType.Handshake, (m, c) =>
+            {
+                SendToken(c);
+            });
         }
         private void SendToken(Connection con)
         {
@@ -53,7 +64,6 @@ namespace GServer
                         return;
 
                     var msg = Message.Deserialize(buffer);
-
                     Connection connection;
                     if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
                     {
@@ -113,7 +123,6 @@ namespace GServer
             }
             if (handlers != null)
             {
-                connection = _connectionManager[msg.Header.ConnectionToken];
                 foreach (var h in handlers)
                 {
                     try
@@ -234,7 +243,7 @@ namespace GServer
                 }
             }
         }
-        public bool Connect(IPEndPoint ep)
+        public bool BeginConnect(IPEndPoint ep)
         {
             try
             {
@@ -246,22 +255,6 @@ namespace GServer
             }
             var buffer = Message.Handshake.Serialize();
             _client.Send(buffer, buffer.Length);
-            IPEndPoint remoteEp = null;
-            while (true)
-            {
-                byte[] recieved = _client.Receive(ref remoteEp);
-                if (remoteEp.Address.ToString() == ep.Address.ToString() && remoteEp.Port == ep.Port)
-                {
-                    var msg = Message.Deserialize(recieved);
-                    _hostToken = msg.ConnectionToken;
-                    Connection con = new Connection(ep, _hostToken);
-                    lock (_connectionManager)
-                    {
-                        _connectionManager.Add(con.Token, con);
-                    }
-                    break;
-                }
-            }
             return true;
         }
         internal void WriteError(string error)
@@ -280,5 +273,6 @@ namespace GServer
         }
         public Action<string> ErrLog;
         public Action<string> DebugLog;
+        public Action OnConnect;
     }
 }
