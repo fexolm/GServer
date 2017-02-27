@@ -15,7 +15,6 @@ namespace GServer
         Message,
         Token
     }
-
     [Flags]
     public enum Mode : byte
     {
@@ -27,7 +26,7 @@ namespace GServer
 
     public class MessageHeader : ISerializable
     {
-        public MessageType Type { get; private set; }
+        public short Type { get; private set; }
         private Mode _mode;
         public Token ConnectionToken { get; set; }
         public MessageCounter MessageId { get; set; }
@@ -35,7 +34,7 @@ namespace GServer
         public bool Sequenced { get { return (_mode & Mode.Sequenced) == Mode.Sequenced; } }
         public bool Ordered { get { return (_mode & Mode.Ordered) == Mode.Ordered; } }
         private MessageHeader() { }
-        public MessageHeader(MessageType type, Mode mode)
+        public MessageHeader(short type, Mode mode)
         {
             Type = type;
             _mode = mode;
@@ -48,7 +47,7 @@ namespace GServer
                 {
                     writer.Write((short)Type);
                     writer.Write((byte)_mode);
-                    if (Type != MessageType.Empty && Type != MessageType.Handshake)
+                    if (Type != (short)MessageType.Empty && Type != (short)MessageType.Handshake)
                     {
                         writer.Write(ConnectionToken.Serialize());
                     }
@@ -64,9 +63,9 @@ namespace GServer
         {
             var result = new MessageHeader();
             BinaryReader reader = new BinaryReader(m);
-            result.Type = (MessageType)reader.ReadInt16();
+            result.Type = reader.ReadInt16();
             result._mode = (Mode)reader.ReadByte();
-            if (result.Type != MessageType.Empty && result.Type != MessageType.Handshake)
+            if (result.Type != (short)MessageType.Empty && result.Type != (short)MessageType.Handshake)
             {
                 result.ConnectionToken = new Token(reader.ReadInt32());
             }
@@ -152,7 +151,7 @@ namespace GServer
             }
             return result;
         }
-        public Message(MessageType type, Mode mode, ISerializable body)
+        public Message(short type, Mode mode, ISerializable body)
         {
             Header = new MessageHeader(type, mode);
             if (body != null)
@@ -163,14 +162,14 @@ namespace GServer
                 Body = null;
         }
 
-        private static readonly Message _handshake = new Message(MessageType.Handshake, Mode.None, null);
+        private static readonly Message _handshake = new Message((short)MessageType.Handshake, Mode.None, null);
         public static Message Handshake { get { return _handshake; } }
         public static Message Ack(MessageHeader header, int ackBitField)
         {
             var ds = new DataStorage();
             ds.Push(ackBitField);
             ds.Push((short)header.Type);
-            return new Message(MessageType.Ack, Mode.None, ds);
+            return new Message((short)MessageType.Ack, Mode.None, ds);
         }
         private Message() { }
     }

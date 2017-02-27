@@ -35,7 +35,6 @@ namespace GServer
                 _connections.Remove(key);
             }
         }
-
         public Connection this[Token key]
         {
             get
@@ -58,7 +57,7 @@ namespace GServer
                     return true;
                 }
             }
-            if (msg.Header.Type == MessageType.Handshake)
+            if (msg.Header.Type == (short)MessageType.Handshake)
             {
                 con = new Connection(endPoint);
                 lock (_connections)

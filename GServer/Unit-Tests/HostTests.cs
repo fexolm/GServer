@@ -26,7 +26,7 @@ namespace Unit_Tests
             h2.AddHandler((short)MessageType.Ack, (m, e) => { successArc = true; });
             h1.AddHandler((short)MessageType.Rpc, (m, e) => { successMessage = true; });
             h2.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable, null));
             Thread.Sleep(4000);
 
             Assert.AreEqual(string.Empty, err);
@@ -68,7 +68,7 @@ namespace Unit_Tests
 
             for (short i = 0; i < 100; i++)
             {
-                h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Sequenced, null));
+                h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced, null));
             }
             Thread.Sleep(1000);
 
@@ -109,23 +109,23 @@ namespace Unit_Tests
                 }
             });
             h2.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
 
-            h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
             Thread.Sleep(2000);
             Assert.AreEqual(string.Empty, err);
             Assert.AreEqual(9, h1Messages.Count, "Сообщение не пришло");
@@ -168,7 +168,7 @@ namespace Unit_Tests
 
             for (short i = 0; i < 10000; i++)
             {
-                h2.Send(new Message(MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
+                h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered, null));
             }
             while (!(h1Messages.Count == 10000) || !(h2Messages.Count == 10000))
                 ;

@@ -28,7 +28,7 @@ namespace GServer
         }
         private void SendToken(Connection con)
         {
-            Message msg = new Message(MessageType.Token, Mode.None, null);
+            Message msg = new Message((short)MessageType.Token, Mode.None, null);
             msg.ConnectionToken = con.Token;
             Send(msg, con);
         }
@@ -46,7 +46,6 @@ namespace GServer
             {
                 if (_client.Available > 0)
                 {
-
                     IPEndPoint endPoint = null;
                     var buffer = _client.Receive(ref endPoint);
 
