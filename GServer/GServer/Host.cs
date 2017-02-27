@@ -265,14 +265,14 @@ namespace GServer
             }
             return true;
         }
-        public void WriteError(string error)
+        internal void WriteError(string error)
         {
             if (ErrLog != null)
             {
                 ErrLog.Invoke(error);
             }
         }
-        public void WriteDebug(string error)
+        internal void WriteDebug(string error)
         {
             if (DebugLog != null)
             {

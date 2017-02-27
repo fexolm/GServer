@@ -4,7 +4,7 @@ using System.Net;
 
 namespace GServer
 {
-    public class ConnectionManager
+    internal class ConnectionManager
     {
         private IDictionary<Token, Connection> _connections;
         public ConnectionManager()

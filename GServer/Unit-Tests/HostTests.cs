@@ -10,23 +10,6 @@ namespace Unit_Tests
     class HostTests
     {
         [Test]
-        public void ConnectionRemoveNotActive()
-        {
-            var con = new Connection(null);
-            var pcon = new PrivateObject(con);
-            var manager = new ConnectionManager();
-            var pmanager = new PrivateObject(manager);
-
-            manager.Add(Token.GenerateToken(), con);
-            var dic = (IDictionary<Token, Connection>)pmanager.GetField("_connections");
-            Assert.AreEqual(1, dic.Count);
-            manager.RemoveNotActive();
-            Assert.AreEqual(1, dic.Count);
-            pcon.SetProperty("LastActivity", DateTime.Now - TimeSpan.FromSeconds(31));
-            manager.RemoveNotActive();
-            Assert.AreEqual(0, dic.Count);
-        }
-        [Test]
         public void HostConversationAck()
         {
             Host h1 = new Host(8080);

@@ -1,7 +1,7 @@
 ﻿
 namespace GServer
 {
-    public class Ack
+    internal class Ack
     {
         private MessageCounter _lastMessageNum;
         private int _lastMessagesStat;

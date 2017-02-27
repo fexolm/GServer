@@ -5,7 +5,7 @@ using System.Net;
 
 namespace GServer
 {
-    public class MessageQueue : IEnumerable<KeyValuePair<MessageCounter, Message>>
+    internal class MessageQueue : IEnumerable<KeyValuePair<MessageCounter, Message>>
     {
         private SortedList<MessageCounter, Message> _msgQueue;
         public MessageQueue()
@@ -48,12 +48,12 @@ namespace GServer
             _lastOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
             _messageQueuePerType = new SortedDictionary<short, MessageQueue>();
         }
-        public void UpdateActivity()
+        internal void UpdateActivity()
         {
             LastActivity = DateTime.Now;
         }
         public event Action<Connection> Disconnected;
-        public void Disconnect()
+        internal void Disconnect()
         {
             if (Disconnected != null)
                 Disconnected.Invoke(this);
@@ -62,7 +62,7 @@ namespace GServer
         #region Reliable
 
         private readonly IDictionary<short, Ack> _AckPerMsgType;
-        public Message GenerateAck(Message msg)
+        internal Message GenerateAck(Message msg)
         {
             int bitField;
             lock (_AckPerMsgType)
@@ -84,8 +84,8 @@ namespace GServer
 
         #region Sequenced
 
-        public readonly IDictionary<short, MessageCounter> _lastSequencedMessageNumPerType;
-        public bool IsMessageInItsOrder(short type, MessageCounter num)
+        private readonly IDictionary<short, MessageCounter> _lastSequencedMessageNumPerType;
+        internal bool IsMessageInItsOrder(short type, MessageCounter num)
         {
             lock (_lastSequencedMessageNumPerType)
             {
@@ -112,9 +112,9 @@ namespace GServer
 
         #region Ordered
 
-        public IDictionary<short, MessageCounter> _lastOrderedMessageNumPerType;
+        private IDictionary<short, MessageCounter> _lastOrderedMessageNumPerType;
         private SortedDictionary<short, MessageQueue> _messageQueuePerType;
-        public List<Message> MessagesToInvoke(Message msg)
+        internal List<Message> MessagesToInvoke(Message msg)
         {
             List<Message> messagesToInvoke = new List<Message>();
 
@@ -146,7 +146,7 @@ namespace GServer
             }
         }
         #endregion
-        public MessageCounter GetMessageId(Message msg)
+        internal MessageCounter GetMessageId(Message msg)
         {
             MessageCounter result = MessageCounter.Default;
             if (msg.Ordered)
