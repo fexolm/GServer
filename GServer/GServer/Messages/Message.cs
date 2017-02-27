@@ -23,7 +23,6 @@ namespace GServer
         Sequenced = 0x2,
         Ordered = 0x4,
     }
-
     public class MessageHeader : ISerializable
     {
         public short Type { get; private set; }
