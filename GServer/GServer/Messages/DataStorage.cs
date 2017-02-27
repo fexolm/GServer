@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 
-namespace GServer.Messages
+namespace GServer
 {
     public class DataStorage : ISerializable, IDisposable
     {

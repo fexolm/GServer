@@ -1,12 +1,9 @@
-﻿using GServer.Messages;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 
-namespace GServer.Connections
+namespace GServer
 {
     public class MessageQueue : IEnumerable<KeyValuePair<MessageCounter, Message>>
     {

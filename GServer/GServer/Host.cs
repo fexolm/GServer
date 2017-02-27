@@ -1,6 +1,4 @@
-﻿using GServer.Connections;
-using GServer.Messages;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;

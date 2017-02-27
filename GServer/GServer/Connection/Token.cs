@@ -1,11 +1,6 @@
-﻿using GServer.Messages;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 
-namespace GServer.Connections
+namespace GServer
 {
     public class Token : ISerializable
     {
