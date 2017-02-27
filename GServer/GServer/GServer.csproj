@@ -43,8 +43,8 @@
     <Compile Include="Connection\Connection.cs" />
     <Compile Include="Host.cs" />
     <Compile Include="Messages\Ack.cs" />
-    <Compile Include="Messages\DataStorage.cs" />
-    <Compile Include="Messages\ISerializable.cs" />
+    <Compile Include="Serialization\DataStorage.cs" />
+    <Compile Include="Serialization\ISerializable.cs" />
     <Compile Include="Messages\Message.cs" />
     <Compile Include="Messages\MessageCounter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
