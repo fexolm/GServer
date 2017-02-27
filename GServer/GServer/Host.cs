@@ -1,4 +1,5 @@
-﻿#define DEBUG
+﻿using GServer.Connections;
+using GServer.Messages;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -7,35 +8,20 @@ using System.Threading;
 
 namespace GServer
 {
-    public class Datagram
-    {
-        public readonly byte[] Buffer;
-        public readonly IPEndPoint EndPoint;
-        public Datagram(byte[] buffer, IPEndPoint ipEndpoint)
-        {
-            Buffer = buffer;
-            EndPoint = ipEndpoint;
-        }
-    }
-
     public delegate void ReceiveHandler(Message msg, Connection con);
     public class Host
     {
         private Token _hostToken;
-        private readonly Queue<Action> _handlerQueue;
         private UdpClient _client;
         private readonly Thread _listenThread;
         private readonly Thread _connectionCleaningThread;
-        private readonly List<Thread> _processingThreads;
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
         private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
-        public event Action<IPEndPoint> Connected;
+        private int _threadCount;
         public Host(int port)
         {
             _listenThread = new Thread(() => Listen(port));
-            _handlerQueue = new Queue<Action>();
-            _processingThreads = new List<Thread>();
             _isListening = false;
             _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
@@ -74,48 +60,51 @@ namespace GServer
                     Connection connection;
                     if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
                     {
-                        if (msg.Header.Reliable)
-                        {
-                            Send(connection.GenerateAck(msg), connection);
-                        }
-
-                        if (msg.Header.Sequenced)
-                        {
-                            if (connection.IsMessageInItsOrder((short)msg.Header.Type, msg.Header.MessageId))
-                            {
-                                DatagramHandler(msg, connection);
-                            }
-                        }
-                        else if (msg.Header.Ordered)
-                        {
-                            var toInvoke = connection.MessagesToInvoke(msg);
-                            if (toInvoke == null)
-                            {
-                                return;
-                            }
-                            if (_processingThreads.Count > 0)
-                            {
-                                ThreadPool.QueueUserWorkItem((o) => DatagramHandler(toInvoke, connection));
-                            }
-                            else
-                            {
-                                DatagramHandler(msg, connection);
-                            }
-                        }
-                        else if (_processingThreads.Count > 0)
-                        {
-                            ThreadPool.QueueUserWorkItem((o) => DatagramHandler(msg, connection));
-                        }
-                        else
-                        {
-                            DatagramHandler(msg, connection);
-                        }
+                        ProcessDatagram(msg, connection);
                     }
-
                 }
             }
         }
-        private void DatagramHandler(Message msg, Connection connection)
+        private void ProcessDatagram(Message msg, Connection connection)
+        {
+            if (msg.Header.Reliable)
+            {
+                Send(connection.GenerateAck(msg), connection);
+            }
+
+            if (msg.Header.Sequenced)
+            {
+                if (connection.IsMessageInItsOrder((short)msg.Header.Type, msg.Header.MessageId))
+                {
+                    ProcessHandler(msg, connection);
+                }
+            }
+            else if (msg.Header.Ordered)
+            {
+                var toInvoke = connection.MessagesToInvoke(msg);
+                if (toInvoke == null)
+                {
+                    return;
+                }
+                if (_threadCount > 0)
+                {
+                    ThreadPool.QueueUserWorkItem((o) => ProcessHandlerList(toInvoke, connection));
+                }
+                else
+                {
+                    ProcessHandler(msg, connection);
+                }
+            }
+            else if (_threadCount > 0)
+            {
+                ThreadPool.QueueUserWorkItem((o) => ProcessHandler(msg, connection));
+            }
+            else
+            {
+                ProcessHandler(msg, connection);
+            }
+        }
+        private void ProcessHandler(Message msg, Connection connection)
         {
             IList<ReceiveHandler> handlers = null;
             lock (_receiveHandlers)
@@ -137,14 +126,13 @@ namespace GServer
                     }
                     catch (Exception ex)
                     {
-                        if (ErrLog != null)
-                            ErrLog.Invoke(ex.Message);
+                        WriteError(ex.Message);
                     }
                 }
                 connection.UpdateActivity();
             }
         }
-        private void DatagramHandler(List<Message> messages, Connection connection)
+        private void ProcessHandlerList(List<Message> messages, Connection connection)
         {
             IList<ReceiveHandler> handlers = null;
             if (messages.Count == 0)
@@ -172,8 +160,7 @@ namespace GServer
                         }
                         catch (Exception ex)
                         {
-                            if (ErrLog != null)
-                                ErrLog.Invoke(ex.Message);
+                            WriteError(ex.Message);
                         }
                     }
                 }
@@ -182,12 +169,12 @@ namespace GServer
         }
         public void StartListen(int threadCount)
         {
-            ThreadPool.SetMinThreads(threadCount, threadCount);
-            _isListening = true;
-            foreach (var thread in _processingThreads)
+            if (threadCount > 0)
             {
-                thread.Start();
+                ThreadPool.SetMinThreads(threadCount, threadCount);
             }
+            _threadCount = threadCount;
+            _isListening = true;
             _client = new UdpClient();
             _client.ExclusiveAddressUse = false;
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
@@ -198,7 +185,6 @@ namespace GServer
         public void StopListen()
         {
             _isListening = false;
-            _processingThreads.Clear();
             _client.Close();
         }
         public void Send(Message msg, Connection con)
@@ -280,6 +266,20 @@ namespace GServer
                 }
             }
             return true;
+        }
+        public void WriteError(string error)
+        {
+            if (ErrLog != null)
+            {
+                ErrLog.Invoke(error);
+            }
+        }
+        public void WriteDebug(string error)
+        {
+            if (DebugLog != null)
+            {
+                DebugLog.Invoke(error);
+            }
         }
         public Action<string> ErrLog;
         public Action<string> DebugLog;

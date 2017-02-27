@@ -4,6 +4,8 @@ using NUnit.Framework;
 using System.Linq;
 using System.Text;
 using GServer;
+using GServer.Messages;
+using GServer.Connections;
 
 namespace Unit_Tests
 {

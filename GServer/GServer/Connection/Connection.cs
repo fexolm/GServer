@@ -6,7 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 
-namespace GServer
+namespace GServer.Connections
 {
     public class MessageQueue : IEnumerable<KeyValuePair<MessageCounter, Message>>
     {
@@ -149,7 +149,6 @@ namespace GServer
             }
         }
         #endregion
-
         public MessageCounter GetMessageId(Message msg)
         {
             MessageCounter result = MessageCounter.Default;

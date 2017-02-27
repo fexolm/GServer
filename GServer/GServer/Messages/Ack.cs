@@ -39,8 +39,4 @@ namespace GServer.Messages
             return _lastMessagesStat;
         }
     }
-    public class AckManager
-    {
-
-    }
 }

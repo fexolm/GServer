@@ -6,9 +6,10 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using System.Collections;
+using GServer.Connections;
 
 
-namespace GServer
+namespace GServer.Messages
 {
     public enum MessageType : short
     {
