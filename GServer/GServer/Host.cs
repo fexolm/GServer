@@ -10,13 +10,14 @@ namespace GServer
     public class Host
     {
         private Token _hostToken;
-        private UdpClient _client;
+        private ISocket _client;
         private readonly Thread _listenThread;
         private readonly Thread _connectionCleaningThread;
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
         private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
         private int _threadCount;
+        private bool _isClinet = false;
         public Host(int port)
         {
             _listenThread = new Thread(() => Listen(port));
@@ -39,7 +40,7 @@ namespace GServer
         }
         private void SendToken(Connection con)
         {
-            Message msg = new Message((short)MessageType.Token, Mode.None, null);
+            Message msg = new Message((short)MessageType.Token, Mode.None);
             msg.ConnectionToken = con.Token;
             Send(msg, con);
         }
@@ -76,12 +77,22 @@ namespace GServer
         {
             if (msg.Header.Reliable)
             {
-                Send(connection.GenerateAck(msg), connection);
+                var ack = connection.GenerateAck(msg);
+                var bitField = new DataStorage(ack.Body).ReadInt32();
+                if (!_isClinet)
+                {
+                    Send(ack, connection);
+                }
+                else
+                {
+                    Send(ack);
+                }
+                Console.WriteLine(bitField);
             }
 
             if (msg.Header.Sequenced)
             {
-                if (connection.IsMessageInItsOrder((short)msg.Header.Type, msg.Header.MessageId))
+                if (connection.IsMessageInItsOrder(msg.Header.Type, msg.Header.MessageId))
                 {
                     ProcessHandler(msg, connection);
                 }
@@ -173,7 +184,7 @@ namespace GServer
                 connection.UpdateActivity();
             }
         }
-        public void StartListen(int threadCount)
+        public void StartListen(int threadCount, ISocket host)
         {
             if (threadCount > 0)
             {
@@ -181,12 +192,16 @@ namespace GServer
             }
             _threadCount = threadCount;
             _isListening = true;
-            _client = new UdpClient();
+            _client = host;
             _client.ExclusiveAddressUse = false;
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _listenThread.Start();
             _connectionCleaningThread.Start();
+        }
+        public void StartListen(int threadCount)
+        {
+            StartListen(threadCount, new HostImpl());
         }
         public void StopListen()
         {
@@ -219,7 +234,7 @@ namespace GServer
                 msg.MessageId = connection.GetMessageId(msg);
                 msg.ConnectionToken = _hostToken;
                 var buffer = msg.Serialize();
-                DebugLog.Invoke(msg.MessageId.ToString());
+                DebugLog?.Invoke(msg.MessageId.ToString());
                 _client.Send(buffer, buffer.Length);
             }
             catch (Exception ex)
@@ -248,6 +263,7 @@ namespace GServer
             try
             {
                 _client.Connect(ep);
+                _isClinet = true;
             }
             catch
             {

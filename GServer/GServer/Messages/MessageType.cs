@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 
 namespace GServer.Messages
 {
     public class MType
     {
         private byte _header { get { return new FlagContainer(Private, Reliable, Sequenced, Ordered, RequireToken).GetByte(); } }
-        private byte[] _buffer;
         public bool Private { get; set; }
         public bool Reliable { get; set; }
         public bool Sequenced { get; set; }
