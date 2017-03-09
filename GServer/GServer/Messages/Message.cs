@@ -121,7 +121,7 @@ namespace GServer
                 return Header.Sequenced;
             }
         }
-        public byte[] Body { get; private set; }
+        public byte[] Body { get; set; }
         public byte[] Serialize()
         {
             using (MemoryStream m = new MemoryStream())
@@ -160,14 +160,24 @@ namespace GServer
             else
                 Body = null;
         }
+        public Message(short type, Mode mode, byte[] body)
+        {
+            Header = new MessageHeader(type, mode);
+            Body = body;
+        }
+        public Message(short type, Mode mode)
+        {
+            Header = new MessageHeader(type, mode);
+            Body = new byte[0];
+        }
 
-        private static readonly Message _handshake = new Message((short)MessageType.Handshake, Mode.None, null);
+        private static readonly Message _handshake = new Message((short)MessageType.Handshake, Mode.None);
         public static Message Handshake { get { return _handshake; } }
         public static Message Ack(MessageHeader header, int ackBitField)
         {
             var ds = new DataStorage();
             ds.Push(ackBitField);
-            ds.Push((short)header.Type);
+            ds.Push(header.Type);
             return new Message((short)MessageType.Ack, Mode.None, ds);
         }
         private Message() { }

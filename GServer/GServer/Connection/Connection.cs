@@ -29,6 +29,7 @@ namespace GServer
             _msgQueue.Remove(msg.Header.MessageId);
         }
     }
+
     public class Connection
     {
         public readonly IPEndPoint EndPoint;
@@ -43,7 +44,7 @@ namespace GServer
             EndPoint = endPoint;
             Token = token;
             LastActivity = DateTime.Now;
-            _AckPerMsgType = new Dictionary<short, Ack>();
+            _ackPerMsgType = new Dictionary<short, Ack>();
             _lastSequencedMessageNumPerType = new Dictionary<short, MessageCounter>();
             _lastOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
             _messageQueuePerType = new SortedDictionary<short, MessageQueue>();
@@ -61,25 +62,34 @@ namespace GServer
 
         #region Reliable
 
-        private readonly IDictionary<short, Ack> _AckPerMsgType;
+        private readonly IDictionary<short, Ack> _ackPerMsgType;
         internal Message GenerateAck(Message msg)
         {
             int bitField;
-            lock (_AckPerMsgType)
+            lock (_ackPerMsgType)
             {
-                if (_AckPerMsgType.ContainsKey((short)msg.Header.Type))
+                if (_ackPerMsgType.ContainsKey(msg.Header.Type))
                 {
-                    bitField = _AckPerMsgType[(short)msg.Header.Type].GetStatistic(msg.Header.MessageId);
+                    bitField = _ackPerMsgType[msg.Header.Type].GetStatistic(msg.MessageId);
                 }
                 else
                 {
-                    _AckPerMsgType.Add((short)msg.Header.Type, new Ack());
+                    var ack = new Ack();
+                    ack.PacketLost += PacketLostHandler;
+                    _ackPerMsgType.Add((short)msg.Header.Type, ack);
                     bitField = 1;
                 }
             }
             return Message.Ack(msg.Header, bitField);
         }
 
+        private void PacketLostHandler(List<MessageCounter> obj)
+        {
+            foreach (var element in obj)
+            {
+                Console.WriteLine(element);
+            }
+        }
         #endregion
 
         #region Sequenced
@@ -122,10 +132,13 @@ namespace GServer
             {
                 lock (_messageQueuePerType)
                 {
-                    if (!_lastOrderedMessageNumPerType.ContainsKey((short)msg.Header.Type))
+                    if (!_lastOrderedMessageNumPerType.ContainsKey(msg.Header.Type))
                     {
-                        _lastOrderedMessageNumPerType.Add((short)msg.Header.Type, 0);
-                        _messageQueuePerType.Add((short)msg.Header.Type, new MessageQueue());
+                        _lastOrderedMessageNumPerType.Add(msg.Header.Type, 0);
+                    }
+                    if (!_messageQueuePerType.ContainsKey((short)msg.Header.Type))
+                    {
+                        _messageQueuePerType.Add(msg.Header.Type, new MessageQueue());
                     }
                     var currentTypeQueue = _messageQueuePerType[(short)msg.Header.Type];
                     currentTypeQueue.Add(msg);

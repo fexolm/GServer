@@ -1,8 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace GServer
 {
-    public class Token : ISerializable
+    public class Token : ISerializable, IComparable
     {
         private static int _globalNum = 0;
 
@@ -60,6 +61,12 @@ namespace GServer
         public override int GetHashCode()
         {
             return _tempNum.GetHashCode();
+        }
+
+        public int CompareTo(object obj)
+        {
+            var other = (Token)obj;
+            return this._tempNum.CompareTo(other._tempNum);
         }
     }
 }

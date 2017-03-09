@@ -112,6 +112,14 @@ namespace GServer
                 throw new Exception("DataStorage in write only mode");
             return Reader.ReadByte();
         }
+        public byte[] ReadBytes(int count)
+        {
+            if (Reader == null)
+            {
+                throw new Exception("DataStorage in write only mode");
+            }
+            return Reader.ReadBytes(count);
+        }
         public short ReadInt16()
         {
             if (Reader == null)
