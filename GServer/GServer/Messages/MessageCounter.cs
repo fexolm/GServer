@@ -52,9 +52,46 @@ namespace GServer
             }
             return mc;
         }
+
+        public static MessageCounter operator --(MessageCounter mc)
+        {
+            if (mc._count > short.MinValue)
+            {
+                mc._count--;
+            }
+            else
+            {
+                mc._count = short.MaxValue;
+            }
+            return mc;
+        }
         public static int operator -(MessageCounter left, MessageCounter right)
         {
             var dif = left._count - right._count;
+            if (Math.Abs(dif) > (1 + short.MaxValue))
+            {
+                return Math.Abs(dif) - short.MaxValue - 1;
+            }
+            else
+            {
+                return dif;
+            }
+        }
+        public static int operator -(MessageCounter left, short right)
+        {
+            var dif = left._count - right;
+            if (Math.Abs(dif) > (1 + short.MaxValue))
+            {
+                return Math.Abs(dif) - short.MaxValue - 1;
+            }
+            else
+            {
+                return dif;
+            }
+        }
+        public static int operator -(MessageCounter left, int right)
+        {
+            var dif = left._count - right;
             if (Math.Abs(dif) > (1 + short.MaxValue))
             {
                 return Math.Abs(dif) - short.MaxValue - 1;
@@ -71,6 +108,10 @@ namespace GServer
         public static implicit operator MessageCounter(short val)
         {
             return new MessageCounter(val);
+        }
+        public static implicit operator MessageCounter(int val)
+        {
+            return new MessageCounter((short)val);
         }
         public static explicit operator short(MessageCounter val)
         {

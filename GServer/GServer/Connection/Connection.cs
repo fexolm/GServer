@@ -70,28 +70,64 @@ namespace GServer
             {
                 if (_ackPerMsgType.ContainsKey(msg.Header.Type))
                 {
-                    bitField = _ackPerMsgType[msg.Header.Type].GetStatistic(msg.MessageId);
+                    bitField = _ackPerMsgType[msg.Header.Type].ReceiveReliable(msg);
                 }
                 else
                 {
                     var ack = new Ack();
-                    ack.PacketLost += PacketLostHandler;
                     _ackPerMsgType.Add((short)msg.Header.Type, ack);
                     bitField = 1;
                 }
             }
             return Message.Ack(msg.Header, bitField);
         }
-
-        private void PacketLostHandler(List<MessageCounter> obj)
+        internal void ProcessAck(Message msg)
         {
-            foreach (var element in obj)
+            Ack ack = null;
+            var ds = new DataStorage(msg.Body);
+            int bitField = ds.ReadInt32();
+            short msgType = ds.ReadInt16();
+            lock (_ackPerMsgType)
             {
-                Console.WriteLine(element);
+                if (_ackPerMsgType.ContainsKey(msgType))
+                {
+                    ack = _ackPerMsgType[msgType];
+                }
+            }
+            ack?.ProcessReceivedAckBitfield(bitField, msg.MessageId);
+        }
+        internal void StoreReliable(Message msg)
+        {
+            Ack ack;
+            lock (_ackPerMsgType)
+            {
+                if (_ackPerMsgType.ContainsKey(msg.Header.Type))
+                {
+                    ack = _ackPerMsgType[msg.Header.Type];
+                }
+                else
+                {
+                    ack = new Ack();
+                    _ackPerMsgType.Add((short)msg.Header.Type, ack);
+                }
+            }
+            ack.StoreReliable(msg);
+            ack.PacketLost += PacketLostHander;
+        }
+        private void PacketLostHander(Message obj)
+        {
+            if (obj.Header.Ordered)
+            {
+                OrderedLost?.Invoke(this, obj);
+                return;
+            }
+            if (obj.Header.Sequenced)
+            {
+                SequencedLost?.Invoke(this, obj);
+                return;
             }
         }
         #endregion
-
         #region Sequenced
 
         private readonly IDictionary<short, MessageCounter> _lastSequencedMessageNumPerType;
@@ -188,5 +224,7 @@ namespace GServer
             }
             return result;
         }
+        internal Action<Connection, Message> OrderedLost;
+        internal Action<Connection, Message> SequencedLost;
     }
 }

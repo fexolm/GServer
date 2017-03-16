@@ -1,78 +1,95 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using System.Linq;
 namespace GServer
 {
     internal class Ack
     {
-        private MessageCounter _lastMessageNum;
-        private int _lastMessagesStat;
+        private MessageCounter _lastMessageNum = 0;
         public Ack()
         {
-            _lastMessageNum = 0;
-            _lastMessagesStat = -1;
+            _pendingMessages = new Dictionary<MessageCounter, Message>();
+            _notYetArrivedMessages = new List<MessageCounter>();
         }
-        public int GetStatistic(MessageCounter curNum)
+        private IDictionary<MessageCounter, Message> _pendingMessages;
+        private MessageCounter _lastRecievedMessage;
+        private List<MessageCounter> _notYetArrivedMessages;
+        public void StoreReliable(Message msg)
         {
-            int diff = curNum - _lastMessageNum;
-            if (diff > 0)
+            lock (_pendingMessages)
             {
-                int lostPackets;
-                if (diff >= 32)
+                if (!_pendingMessages.ContainsKey(msg.MessageId))
                 {
-                    lostPackets = ~_lastMessagesStat;
-                    _lastMessagesStat = 1;
-                    List<MessageCounter> lostMessages = new List<MessageCounter>();
-                    for (int i = 0; i < diff; i++)
+                    _pendingMessages.Add(msg.MessageId, msg);
+                }
+            }
+        }
+        public int ReceiveReliable(Message msg)
+        {
+            int bitField = 0;
+            lock (_notYetArrivedMessages)
+            {
+                MessageCounter counter;
+                if (msg.MessageId > _lastRecievedMessage)
+                {
+                    counter = _lastRecievedMessage;
+                    counter++;
+                    while (counter != msg.MessageId)
                     {
-                        bool isLost = (lostPackets & 1) == 1;
-                        lostPackets = lostPackets << 1;
-                        i++;
-                        if (isLost)
-                        {
-                            short lostPacketNumber = (short)((short)curNum - diff - (32 - i));
-                            lostMessages.Add(lostPacketNumber);
-                        }
+                        _notYetArrivedMessages.Add(counter);
+                        counter++;
                     }
-                    for (int i = (short)curNum - diff; i < (short)curNum - 32; i++)
-                    {
-                        lostMessages.Add((short)i);
-                    }
-                    PacketLost?.Invoke(lostMessages);
+                    _lastRecievedMessage = msg.MessageId;
                 }
                 else
                 {
-                    lostPackets = ~(_lastMessagesStat >> (32 - diff));
-                    _lastMessagesStat = (_lastMessagesStat << diff) | 1;
-                    if (lostPackets != 0)
+                    if (_notYetArrivedMessages.Contains(msg.MessageId))
                     {
-                        List<MessageCounter> lostMessages = new List<MessageCounter>();
-
-                        for (int i = 0; i < diff; i++)
-                        {
-                            bool isLost = (lostPackets & 1) == 1;
-                            lostPackets = lostPackets << 1;
-                            i++;
-                            if (isLost)
-                            {
-                                short lostPacketNumber = (short)((short)curNum - diff - (32 - i));
-                                lostMessages.Add(lostPacketNumber);
-                            }
-                        }
-                        PacketLost?.Invoke(lostMessages);
+                        _notYetArrivedMessages.Remove(msg.MessageId);
                     }
                 }
-                _lastMessageNum = curNum;
-            }
-            else
-            {
-                if (diff > -32)
+                counter = msg.MessageId;
+                for (int i = 0; i < 32; i++)
                 {
-                    _lastMessagesStat = _lastMessagesStat | (1 << (-diff));
+                    if (!_notYetArrivedMessages.Contains(counter))
+                    {
+                        bitField |= 1 << i;
+                    }
+                    counter--;
                 }
             }
-            return _lastMessagesStat;
+            return bitField;
         }
-        public event Action<List<MessageCounter>> PacketLost;
+        public void ProcessReceivedAckBitfield(int bitField, MessageCounter msgId)
+        {
+            IEnumerable<KeyValuePair<MessageCounter, Message>> toRemove = null;
+
+            lock (_pendingMessages)
+            {
+                while (bitField != 0)
+                {
+                    if ((bitField & 1) == 1)
+                    {
+                        if (_pendingMessages.ContainsKey(msgId))
+                        {
+                            _pendingMessages.Remove(msgId);
+                        }
+                        msgId--;
+                    }
+                    bitField <<= 1;
+                }
+                toRemove = _pendingMessages.Where(x => msgId - x.Key > 30).ToArray();
+                foreach (var element in toRemove)
+                {
+                    _pendingMessages.Remove(element);
+                }
+            }
+            foreach (var element in toRemove)
+            {
+                PacketLost?.Invoke(element.Value);
+            }
+        }
+        public event Action<Message> PacketLost;
     }
 }
+

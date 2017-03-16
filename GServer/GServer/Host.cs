@@ -37,6 +37,10 @@ namespace GServer
             {
                 SendToken(c);
             });
+            AddHandler((short)MessageType.Ack, (m, c) =>
+            {
+                c.ProcessAck(m);
+            });
         }
         private void SendToken(Connection con)
         {
@@ -68,6 +72,17 @@ namespace GServer
                     Connection connection;
                     if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
                     {
+                        connection.OrderedLost = (con, mes) =>
+                        {
+                            if (_isClinet)
+                            {
+                                Send(mes);
+                            }
+                            else
+                            {
+                                Send(mes, con);
+                            }
+                        };
                         ProcessDatagram(msg, connection);
                     }
                 }
@@ -216,6 +231,10 @@ namespace GServer
                 msg.MessageId = con.GetMessageId(msg);
                 var buffer = msg.Serialize();
                 _client.Send(buffer, buffer.Length, con.EndPoint);
+                if (msg.Header.Reliable)
+                {
+                    con.StoreReliable(msg);
+                }
             }
             catch (Exception ex)
             {
@@ -234,8 +253,11 @@ namespace GServer
                 msg.MessageId = connection.GetMessageId(msg);
                 msg.ConnectionToken = _hostToken;
                 var buffer = msg.Serialize();
-                DebugLog?.Invoke(msg.MessageId.ToString());
                 _client.Send(buffer, buffer.Length);
+                if (msg.Header.Reliable)
+                {
+                    connection.StoreReliable(msg);
+                }
             }
             catch (Exception ex)
             {
@@ -290,5 +312,9 @@ namespace GServer
         public Action<string> ErrLog;
         public Action<string> DebugLog;
         public Action OnConnect;
+        ~Host()
+        {
+            StopListen();
+        }
     }
 }
