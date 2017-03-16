@@ -9,83 +9,94 @@ namespace Unit_Tests
         [Test]
         public void IfNoLostPackages()
         {
-            Ack ack = new Ack();
-            bool packetLost = false;
-            ack.PacketLost += (p) => packetLost = true;
+            Ack receiver = new Ack();
+            Ack sender = new Ack();
+            List<Message> lostMessages = new List<Message>();
+            sender.PacketLost += (m) =>
+            {
+                lostMessages.Add(m);
+            };
+            Message msg = new Message(1, Mode.Reliable | Mode.Ordered);
             for (MessageCounter mc = 0; mc < 32; mc++)
             {
-                Assert.AreEqual(-1, ack.GetStatistic(mc));
+                msg.MessageId = mc;
+                sender.StoreReliable(msg);
+                int stat = receiver.ReceiveReliable(msg);
+                Assert.AreEqual(-1, stat);
+                sender.ProcessReceivedAckBitfield(stat, msg.MessageId);
             }
-            Assert.AreEqual(false, packetLost);
+            Assert.AreEqual(0, lostMessages.Count);
         }
-
         [Test]
         public void IfSomePackageNotEvenSent()
         {
-            Ack ack = new Ack();
-            int lostPackagesCount = 0;
-            ack.PacketLost += (p) => lostPackagesCount++;
+            Ack receiver = new Ack();
+            Ack sender = new Ack();
+            List<Message> lostMessages = new List<Message>();
+            sender.PacketLost += (m) =>
+            {
+                lostMessages.Add(m);
+            };
+            Message msg = new Message(1, Mode.Reliable | Mode.Ordered);
             for (MessageCounter mc = 0; mc < 16; mc++)
             {
-                Assert.AreEqual(-1, ack.GetStatistic(mc));
+                msg.MessageId = mc;
+                sender.StoreReliable(msg);
+                int stat = receiver.ReceiveReliable(msg);
+                Assert.AreEqual(-1, stat);
+                sender.ProcessReceivedAckBitfield(stat, msg.MessageId);
             }
             int i = 0;
+            msg.MessageId = 16;
+            sender.StoreReliable(msg);
             for (MessageCounter mc = 17; mc < 32; mc++)
             {
-                Assert.AreEqual((~(1 << ++i)), ack.GetStatistic(mc));
+                msg.MessageId = mc;
+                sender.StoreReliable(msg);
+                int stat = receiver.ReceiveReliable(msg);
+                Assert.AreEqual((~(1 << ++i)), stat);
+                sender.ProcessReceivedAckBitfield(stat, msg.MessageId);
             }
-            Assert.AreEqual(0, lostPackagesCount);
+            Assert.AreEqual(0, lostMessages.Count);
         }
         [Test]
         public void IfSomePackageLost()
         {
-            Ack ack = new Ack();
-            int lostPackagesCount = 0;
-            ack.PacketLost += (p) => lostPackagesCount++;
+            int stat;
+            Ack receiver = new Ack();
+            Ack sender = new Ack();
+            List<Message> lostMessages = new List<Message>();
+            sender.PacketLost += (m) =>
+            {
+                lostMessages.Add(m);
+            };
+            Message msg = new Message(1, Mode.Reliable | Mode.Ordered);
             for (MessageCounter mc = 0; mc < 16; mc++)
             {
-                Assert.AreEqual(-1, ack.GetStatistic(mc));
+                msg.MessageId = mc;
+                sender.StoreReliable(msg);
+                stat = receiver.ReceiveReliable(msg);
+                Assert.AreEqual(-1, stat);
+                sender.ProcessReceivedAckBitfield(stat, msg.MessageId);
             }
+            msg.MessageId = 16;
+            sender.StoreReliable(msg);
             int i = 0;
             for (MessageCounter mc = 17; mc < 17 + 31; mc++)
             {
-                Assert.AreEqual((~(1 << ++i)), ack.GetStatistic(mc));
+                msg.MessageId = mc;
+                sender.StoreReliable(msg);
+                stat = receiver.ReceiveReliable(msg);
+                Assert.AreEqual((~(1 << ++i)), stat);
+                sender.ProcessReceivedAckBitfield(stat, msg.MessageId);
             }
             MessageCounter lostCounter = 17 + 31;
-            Assert.AreEqual(-1, ack.GetStatistic(lostCounter));
-            Assert.AreEqual(1, lostPackagesCount);
-        }
-        [Test]
-        public void IfSomePackageAlmostLost()
-        {
-            Ack ack = new Ack();
-            int lostPackagesCount = 0;
-            ack.PacketLost += (p) => lostPackagesCount++;
-            for (MessageCounter mc = 0; mc < 16; mc++)
-            {
-                Assert.AreEqual(-1, ack.GetStatistic(mc));
-            }
-            int i = 0;
-            for (MessageCounter mc = 17; mc < 17 + 29; mc++)
-            {
-                Assert.AreEqual((~(1 << ++i)), ack.GetStatistic(mc));
-            }
-            Assert.AreEqual(-1, ack.GetStatistic(16));
-            for (MessageCounter mc = 17 + 29; mc < 100; mc++)
-            {
-                Assert.AreEqual(-1, ack.GetStatistic(mc));
-            }
-            Assert.AreEqual(0, lostPackagesCount);
-        }
-        [Test]
-        public void IfManyPackagesLost()
-        {
-            Ack ack = new Ack();
-            List<MessageCounter> lostPackages = null;
-            ack.PacketLost += (p) => lostPackages = p;
-            Assert.AreEqual(-1, ack.GetStatistic(1));
-            Assert.AreEqual(1, ack.GetStatistic(65));
-            Assert.AreEqual(32, lostPackages.Count);
+            msg.MessageId = lostCounter;
+            sender.StoreReliable(msg);
+            stat = receiver.ReceiveReliable(msg);
+            Assert.AreEqual(-1, stat);
+            sender.ProcessReceivedAckBitfield(stat, msg.MessageId);
+            Assert.AreEqual(1, lostMessages.Count);
         }
     }
 }
