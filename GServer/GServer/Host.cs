@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 
 namespace GServer
@@ -15,16 +14,30 @@ namespace GServer
         private readonly Thread _connectionCleaningThread;
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
+        private int _port;
         private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
         private int _threadCount;
         private bool _isClinet = false;
         public Host(int port)
         {
             _listenThread = new Thread(() => Listen(port));
+            _port = port;
             _isListening = false;
             _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
             _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
+            Connection.OrderedLost = (con, msg) =>
+            {
+                if (_isClinet)
+                {
+                    Send(msg);
+                }
+                else
+                {
+                    Send(msg, con);
+                }
+                PacketLost?.Invoke();
+            };
             AddHandler((short)MessageType.Token, (m, c) =>
             {
                 _hostToken = m.ConnectionToken;
@@ -57,7 +70,7 @@ namespace GServer
         }
         private void Listen(int port)
         {
-            _client.Client.Bind(new IPEndPoint(IPAddress.Any, port));
+            _client.Bind(new IPEndPoint(IPAddress.Any, port));
             while (_isListening)
             {
                 if (_client.Available > 0)
@@ -72,17 +85,6 @@ namespace GServer
                     Connection connection;
                     if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
                     {
-                        connection.OrderedLost = (con, mes) =>
-                        {
-                            if (_isClinet)
-                            {
-                                Send(mes);
-                            }
-                            else
-                            {
-                                Send(mes, con);
-                            }
-                        };
                         ProcessDatagram(msg, connection);
                     }
                 }
@@ -208,9 +210,6 @@ namespace GServer
             _threadCount = threadCount;
             _isListening = true;
             _client = host;
-            _client.ExclusiveAddressUse = false;
-            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
-            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _listenThread.Start();
             _connectionCleaningThread.Start();
         }
@@ -228,9 +227,10 @@ namespace GServer
             try
             {
                 msg.ConnectionToken = con.Token;
-                msg.MessageId = con.GetMessageId(msg);
+                if (msg.Header.Type != (short)MessageType.Ack)
+                    msg.MessageId = con.GetMessageId(msg);
                 var buffer = msg.Serialize();
-                _client.Send(buffer, buffer.Length, con.EndPoint);
+                _client.Send(buffer, con.EndPoint);
                 if (msg.Header.Reliable)
                 {
                     con.StoreReliable(msg);
@@ -250,10 +250,11 @@ namespace GServer
                 {
                     connection = _connectionManager[_hostToken];
                 }
-                msg.MessageId = connection.GetMessageId(msg);
+                if (msg.Header.Type != (short)MessageType.Ack)
+                    msg.MessageId = connection.GetMessageId(msg);
                 msg.ConnectionToken = _hostToken;
                 var buffer = msg.Serialize();
-                _client.Send(buffer, buffer.Length);
+                _client.Send(buffer);
                 if (msg.Header.Reliable)
                 {
                     connection.StoreReliable(msg);
@@ -292,7 +293,7 @@ namespace GServer
                 return false;
             }
             var buffer = Message.Handshake.Serialize();
-            _client.Send(buffer, buffer.Length);
+            _client.Send(buffer);
             return true;
         }
         internal void WriteError(string error)
@@ -312,6 +313,7 @@ namespace GServer
         public Action<string> ErrLog;
         public Action<string> DebugLog;
         public Action OnConnect;
+        public event Action PacketLost;
         ~Host()
         {
             StopListen();

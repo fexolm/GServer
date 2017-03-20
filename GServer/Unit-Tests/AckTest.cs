@@ -28,7 +28,7 @@ namespace Unit_Tests
             Assert.AreEqual(0, lostMessages.Count);
         }
         [Test]
-        public void IfSomePackageNotEvenSent()
+        public void IfSomePackageNotYetSent()
         {
             Ack receiver = new Ack();
             Ack sender = new Ack();
