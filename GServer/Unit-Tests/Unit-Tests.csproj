@@ -51,6 +51,7 @@
     <Compile Include="PrimitivesTest.cs" />
     <Compile Include="PrivateObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestSocket.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GServer\GServer.csproj">

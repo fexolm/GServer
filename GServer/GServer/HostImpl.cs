@@ -9,55 +9,21 @@ namespace GServer
         public HostImpl()
         {
             _client = new UdpClient();
-        }
-
-        public bool MulticastLoopback
-        {
-            get => _client.MulticastLoopback;
-            set => _client.MulticastLoopback = value;
-        }
-        public bool DontFragment
-        {
-            get => _client.DontFragment;
-            set => _client.DontFragment = value;
-        }
-        public short Ttl
-        {
-            get => _client.Ttl;
-            set => _client.Ttl = value;
+            _client.ExclusiveAddressUse = false;
+            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
+            _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
         }
 
         public int Available => _client.Available;
 
-        public Socket Client
+        public void Bind(IPEndPoint localEP)
         {
-            get => _client.Client;
-            set => _client.Client = value;
-        }
-        public bool EnableBroadcast
-        {
-            get => _client.EnableBroadcast;
-            set => _client.EnableBroadcast = value;
-        }
-        public bool ExclusiveAddressUse
-        {
-            get => _client.ExclusiveAddressUse;
-            set => _client.ExclusiveAddressUse = value;
+            _client.Client.Bind(localEP);
         }
 
         public void Close()
         {
             _client.Close();
-        }
-
-        public void Connect(string hostname, int port)
-        {
-            _client.Connect(hostname, port);
-        }
-
-        public void Connect(IPAddress addr, int port)
-        {
-            _client.Connect(addr, port);
         }
 
         public void Connect(IPEndPoint endPoint)
@@ -70,19 +36,13 @@ namespace GServer
             return _client.Receive(ref remoteEP);
         }
 
-        public int Send(byte[] dgram, int bytes, string hostname, int port)
+        public int Send(byte[] dgram)
         {
-            return Send(dgram, bytes, hostname, port);
+            return _client.Send(dgram, dgram.Length);
         }
-
-        public int Send(byte[] dgram, int bytes, IPEndPoint endPoint)
+        public int Send(byte[] dgram, IPEndPoint endPoint)
         {
-            return _client.Send(dgram, bytes, endPoint);
-        }
-
-        public int Send(byte[] dgram, int bytes)
-        {
-            return _client.Send(dgram, bytes);
+            return _client.Send(dgram, dgram.Length, endPoint);
         }
     }
 }

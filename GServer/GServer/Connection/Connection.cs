@@ -109,10 +109,10 @@ namespace GServer
                 {
                     ack = new Ack();
                     _ackPerMsgType.Add((short)msg.Header.Type, ack);
+                    ack.PacketLost += PacketLostHander;
                 }
             }
             ack.StoreReliable(msg);
-            ack.PacketLost += PacketLostHander;
         }
         private void PacketLostHander(Message obj)
         {
@@ -224,7 +224,7 @@ namespace GServer
             }
             return result;
         }
-        internal Action<Connection, Message> OrderedLost;
-        internal Action<Connection, Message> SequencedLost;
+        internal static Action<Connection, Message> OrderedLost;
+        internal static Action<Connection, Message> SequencedLost;
     }
 }

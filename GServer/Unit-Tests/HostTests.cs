@@ -9,6 +9,7 @@ namespace Unit_Tests
     class HostTests
     {
         [Test]
+        [Timeout(6000)]
         public void HostConversationAck()
         {
             Host h1 = new Host(8080);
@@ -18,15 +19,15 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + '\n';
             h2.DebugLog = s => debug += s + '\n';
-            h1.StartListen(4);
-            h2.StartListen(0);
+            h1.StartListen(4, new TestSocketRnd());
+            h2.StartListen(0, new TestSocketRnd());
             bool successMessage = false;
             bool successArc = false;
             h2.AddHandler((short)MessageType.Ack, (m, e) => { successArc = true; });
             h1.AddHandler((short)MessageType.Rpc, (m, e) => { successMessage = true; });
             bool connected = false;
             h2.OnConnect = () => { connected = true; };
-            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
 
             while (!connected)
                 ;
@@ -41,6 +42,7 @@ namespace Unit_Tests
             h2.StopListen();
         }
         [Test]
+        [Timeout(6000)]
         public void HostConversationSequenced()
         {
             Host h1 = new Host(8080);
@@ -50,8 +52,8 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + ' ';
             h2.DebugLog = s => debug += s + ' ';
-            h1.StartListen(48);
-            h2.StartListen(0);
+            h1.StartListen(48, new TestSocketRnd());
+            h2.StartListen(0, new TestSocketRnd());
             List<Message> h2Messages = new List<Message>();
             List<Message> h1Messages = new List<Message>();
             h2.AddHandler((short)MessageType.Ack, (m, e) =>
@@ -70,7 +72,7 @@ namespace Unit_Tests
             });
             bool connected = false;
             h2.OnConnect = () => { connected = true; };
-            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
 
             while (!connected)
                 ;
@@ -90,6 +92,7 @@ namespace Unit_Tests
 
         }
         [Test]
+        [Timeout(6000)]
         public void HostConversationOrdered()
         {
             Host h1 = new Host(8080);
@@ -99,8 +102,8 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + '\n';
             h2.DebugLog = s => debug += s + '\n';
-            h1.StartListen(100);
-            h2.StartListen(1);
+            h1.StartListen(100, new TestSocketRnd());
+            h2.StartListen(1, new TestSocketRnd());
             List<Message> h2Messages = new List<Message>();
             List<Message> h1Messages = new List<Message>();
             h2.AddHandler((short)MessageType.Ack, (m, e) =>
@@ -119,11 +122,10 @@ namespace Unit_Tests
             });
             bool connected = false;
             h2.OnConnect = () => { connected = true; };
-            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
 
             while (!connected)
                 ;
-
             h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
 
             h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
@@ -194,6 +196,34 @@ namespace Unit_Tests
 
             h1.StopListen();
             h2.StopListen();
+        }
+        [Test]
+        public void OrderedIfPacketsLost()
+        {
+            Host server = new Host(8080);
+            Host client = new Host(8081);
+            int messageCount = 0;
+            server.AddHandler(1023, (m, e) =>
+            {
+                messageCount++;
+            });
+            bool connected = false;
+            client.OnConnect = () => { connected = true; };
+            server.StartListen(0, new TestSocket());
+            client.StartListen(0, new TestSocketFixed(64));
+            client.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
+
+            while (!connected)
+                ;
+            for (int i = 0; i < 3000; i++)
+            {
+                client.Send(new Message(1023, Mode.Reliable | Mode.Ordered));
+            }
+
+            Thread.Sleep(3000);
+
+            Assert.GreaterOrEqual(messageCount, 2900);
+            System.Console.WriteLine(messageCount);
         }
     }
 }

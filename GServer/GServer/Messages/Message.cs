@@ -50,10 +50,7 @@ namespace GServer
                     {
                         writer.Write(ConnectionToken.Serialize());
                     }
-                    if (Ordered || Sequenced)
-                    {
-                        writer.Write(MessageId.ToShort());
-                    }
+                    writer.Write(MessageId.ToShort());
                 }
                 return m.ToArray();
             }
@@ -68,10 +65,7 @@ namespace GServer
             {
                 result.ConnectionToken = new Token(reader.ReadInt32());
             }
-            if (result.Ordered || result.Sequenced)
-            {
-                result.MessageId = reader.ReadInt16();
-            }
+            result.MessageId = reader.ReadInt16();
             return result;
         }
     }
@@ -178,7 +172,9 @@ namespace GServer
             var ds = new DataStorage();
             ds.Push(ackBitField);
             ds.Push(header.Type);
-            return new Message((short)MessageType.Ack, Mode.None, ds);
+            var res = new Message((short)MessageType.Ack, Mode.None, ds);
+            res.MessageId = header.MessageId;
+            return res;
         }
         private Message() { }
     }
