@@ -1,5 +1,6 @@
 ﻿using GServer;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
@@ -209,21 +210,21 @@ namespace Unit_Tests
             });
             bool connected = false;
             client.OnConnect = () => { connected = true; };
-            server.StartListen(0, new TestSocket());
-            client.StartListen(0, new TestSocketFixed(64));
-            client.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
+            server.StartListen(0, new TestSocketRnd(0.7));
+            client.StartListen(0, new TestSocketRnd(0.3));
 
             while (!connected)
-                ;
+            {
+                client.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
+                Thread.Sleep(1000);
+            }
             for (int i = 0; i < 3000; i++)
             {
                 client.Send(new Message(1023, Mode.Reliable | Mode.Ordered));
             }
-
-            Thread.Sleep(3000);
-
+            Thread.Sleep(6000);
             Assert.GreaterOrEqual(messageCount, 2900);
-            System.Console.WriteLine(messageCount);
+            Console.WriteLine("Пришло сообщений: {0}", messageCount);
         }
     }
 }

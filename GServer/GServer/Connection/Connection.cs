@@ -14,7 +14,8 @@ namespace GServer
         }
         public void Add(Message msg)
         {
-            _msgQueue.Add(msg.Header.MessageId, msg);
+            if (!_msgQueue.ContainsKey(msg.MessageId))
+                _msgQueue.Add(msg.Header.MessageId, msg);
         }
         public IEnumerator<KeyValuePair<MessageCounter, Message>> GetEnumerator()
         {

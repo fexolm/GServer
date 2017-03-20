@@ -14,6 +14,7 @@ namespace GServer
         private IDictionary<MessageCounter, Message> _pendingMessages;
         private MessageCounter _lastRecievedMessage;
         private List<MessageCounter> _notYetArrivedMessages;
+        private Queue<MessageCounter> _last30 = new Queue<MessageCounter>();
         public void StoreReliable(Message msg)
         {
             lock (_pendingMessages)
@@ -21,6 +22,9 @@ namespace GServer
                 if (!_pendingMessages.ContainsKey(msg.MessageId))
                 {
                     _pendingMessages.Add(msg.MessageId, msg);
+                    _last30.Enqueue(msg.MessageId);
+                    if (_last30.Count > 30)
+                        _last30.Dequeue();
                 }
             }
         }
@@ -73,12 +77,13 @@ namespace GServer
                         if (_pendingMessages.ContainsKey(msgId))
                         {
                             _pendingMessages.Remove(msgId);
+                            Console.WriteLine("Пришло потеряное сообщение {0}", msgId);
                         }
-                        msgId--;
                     }
                     bitField <<= 1;
+                    msgId--;
                 }
-                toRemove = _pendingMessages.Where(x => msgId - x.Key > 30).ToArray();
+                toRemove = _pendingMessages.Where(x => msgId - x.Key > 30 && !_last30.Contains(x.Key)).ToArray();
                 foreach (var element in toRemove)
                 {
                     _pendingMessages.Remove(element);
@@ -87,6 +92,7 @@ namespace GServer
             foreach (var element in toRemove)
             {
                 PacketLost?.Invoke(element.Value);
+                Console.WriteLine("---------------Потерялось сообщение {0}", element.Value.MessageId);
             }
         }
         public event Action<Message> PacketLost;
