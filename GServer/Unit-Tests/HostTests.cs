@@ -28,10 +28,11 @@ namespace Unit_Tests
             h1.AddHandler((short)MessageType.Rpc, (m, e) => { successMessage = true; });
             bool connected = false;
             h2.OnConnect = () => { connected = true; };
-            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
-
             while (!connected)
-                ;
+            {
+                h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
+                Thread.Sleep(1000);
+            }
             h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
             Thread.Sleep(4000);
 
@@ -73,10 +74,11 @@ namespace Unit_Tests
             });
             bool connected = false;
             h2.OnConnect = () => { connected = true; };
-            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
-
             while (!connected)
-                ;
+            {
+                h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
+                Thread.Sleep(1000);
+            }
 
             for (short i = 0; i < 100; i++)
             {
@@ -123,10 +125,11 @@ namespace Unit_Tests
             });
             bool connected = false;
             h2.OnConnect = () => { connected = true; };
-            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
-
             while (!connected)
-                ;
+            {
+                h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
+                Thread.Sleep(1000);
+            }
             h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
 
             h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
@@ -151,53 +154,53 @@ namespace Unit_Tests
             h1.StopListen();
             h2.StopListen();
         }
-        [Test]
-        public void DurationTest()
-        {
-            Host h1 = new Host(8080);
-            Host h2 = new Host(8081);
-            string err = string.Empty;
-            string debug = string.Empty;
-            h2.ErrLog = s => err += s + "\n";
-            h1.DebugLog = s => debug += s + '\n';
-            h2.DebugLog = s => debug += s + '\n';
-            h1.StartListen(3);
-            h2.StartListen(3);
-            List<Message> h2Messages = new List<Message>();
-            List<Message> h1Messages = new List<Message>();
-            h2.AddHandler((short)MessageType.Ack, (m, e) =>
-            {
-                lock (h2Messages)
-                {
-                    h2Messages.Add(m);
-                }
-            });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
-            {
-                lock (h1Messages)
-                {
-                    h1Messages.Add(m);
-                    for (int i = 0; i < 100000; i++)
-                        ;
-                }
-            });
-            bool connected = false;
-            h2.OnConnect = () => { connected = true; };
-            h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
+        //[Test]
+        //public void DurationTest()
+        //{
+        //    Host h1 = new Host(8080);
+        //    Host h2 = new Host(8081);
+        //    string err = string.Empty;
+        //    string debug = string.Empty;
+        //    h2.ErrLog = s => err += s + "\n";
+        //    h1.DebugLog = s => debug += s + '\n';
+        //    h2.DebugLog = s => debug += s + '\n';
+        //    h1.StartListen(3);
+        //    h2.StartListen(3);
+        //    List<Message> h2Messages = new List<Message>();
+        //    List<Message> h1Messages = new List<Message>();
+        //    h2.AddHandler((short)MessageType.Ack, (m, e) =>
+        //    {
+        //        lock (h2Messages)
+        //        {
+        //            h2Messages.Add(m);
+        //        }
+        //    });
+        //    h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+        //    {
+        //        lock (h1Messages)
+        //        {
+        //            h1Messages.Add(m);
+        //            for (int i = 0; i < 100000; i++)
+        //                ;
+        //        }
+        //    });
+        //    bool connected = false;
+        //    h2.OnConnect = () => { connected = true; };
+        //    h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
 
-            while (!connected)
-                ;
+        //    while (!connected)
+        //        ;
 
-            for (short i = 0; i < 10000; i++)
-            {
-                h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            }
-            while (!(h1Messages.Count == 10000) || !(h2Messages.Count == 10000))
-                ;
+        //    for (short i = 0; i < 10000; i++)
+        //    {
+        //        h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
+        //    }
+        //    while (!(h1Messages.Count == 10000) || !(h2Messages.Count == 10000))
+        //        ;
 
-            h1.StopListen();
-            h2.StopListen();
-        }
+        //    h1.StopListen();
+        //    h2.StopListen();
+        //}
         [Test]
         public void OrderedIfPacketsLost()
         {
