@@ -28,14 +28,7 @@ namespace GServer
             _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
             Connection.OrderedLost = (con, msg) =>
             {
-                if (_isClinet)
-                {
-                    Send(msg);
-                }
-                else
-                {
-                    Send(msg, con);
-                }
+                RowSend(msg, con);
                 PacketLost?.Invoke();
             };
             AddHandler((short)MessageType.Token, (m, c) =>
@@ -104,7 +97,6 @@ namespace GServer
                 {
                     Send(ack);
                 }
-                Console.WriteLine(bitField);
             }
 
             if (msg.Header.Sequenced)
@@ -263,6 +255,22 @@ namespace GServer
             catch (Exception ex)
             {
                 ErrLog.Invoke(ex.Message);
+            }
+        }
+        internal void RowSend(Message msg, Connection con)
+        {
+            var buffer = msg.Serialize();
+            if (_isClinet)
+            {
+                _client.Send(buffer);
+            }
+            else
+            {
+                _client.Send(buffer, con.EndPoint);
+            }
+            if (msg.Header.Reliable)
+            {
+                con.StoreReliable(msg);
             }
         }
         public void AddHandler(short type, ReceiveHandler handler)
