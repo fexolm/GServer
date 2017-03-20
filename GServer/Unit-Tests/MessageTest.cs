@@ -1,5 +1,5 @@
-﻿using NUnit.Framework;
-using GServer;
+﻿using GServer;
+using NUnit.Framework;
 
 namespace Unit_Tests
 {
@@ -17,7 +17,6 @@ namespace Unit_Tests
             Assert.AreEqual(dmsg.Header.Sequenced, msg.Header.Sequenced);
             Assert.AreEqual(dmsg.Header.Type, msg.Header.Type);
         }
-
         [Test]
         public void SerializationTest()
         {
