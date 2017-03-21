@@ -1,6 +1,5 @@
 ﻿using GServer;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
@@ -20,8 +19,11 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + '\n';
             h2.DebugLog = s => debug += s + '\n';
-            h1.StartListen(4, new TestSocketRnd());
-            h2.StartListen(0, new TestSocketRnd());
+            var ts1 = new TestSocketRnd();
+            var ts2 = new TestSocketRnd();
+            h1.StartListen(4, ts1);
+            h2.StartListen(0, ts2);
+            TestSocket.Join(ts1, ts2);
             bool successMessage = false;
             bool successArc = false;
             h2.AddHandler((short)MessageType.Ack, (m, e) => { successArc = true; });
@@ -54,8 +56,11 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + ' ';
             h2.DebugLog = s => debug += s + ' ';
-            h1.StartListen(48, new TestSocketRnd());
-            h2.StartListen(0, new TestSocketRnd());
+            var ts1 = new TestSocketRnd();
+            var ts2 = new TestSocketRnd();
+            h1.StartListen(48, ts1);
+            h2.StartListen(0, ts2);
+            TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
             List<Message> h1Messages = new List<Message>();
             h2.AddHandler((short)MessageType.Ack, (m, e) =>
@@ -105,8 +110,11 @@ namespace Unit_Tests
             h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => debug += s + '\n';
             h2.DebugLog = s => debug += s + '\n';
-            h1.StartListen(100, new TestSocketRnd());
-            h2.StartListen(1, new TestSocketRnd());
+            var ts1 = new TestSocketRnd();
+            var ts2 = new TestSocketRnd();
+            h1.StartListen(100, ts1);
+            h2.StartListen(1, ts2);
+            TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
             List<Message> h1Messages = new List<Message>();
             h2.AddHandler((short)MessageType.Ack, (m, e) =>
@@ -207,27 +215,32 @@ namespace Unit_Tests
             Host server = new Host(8080);
             Host client = new Host(8081);
             int messageCount = 0;
+            MessageCounter lastMsg = 0;
             server.AddHandler(1023, (m, e) =>
             {
+                Assert.AreEqual(lastMsg, m.MessageId);
+                lastMsg++;
                 messageCount++;
             });
             bool connected = false;
             client.OnConnect = () => { connected = true; };
-            server.StartListen(0, new TestSocketRnd(0.7));
-            client.StartListen(0, new TestSocketRnd(0.3));
-
+            var ts1 = new TestSocketRnd(1);
+            var ts2 = new TestSocketRnd(0.7);
+            server.StartListen(0, ts1);
+            client.StartListen(0, ts2);
+            TestSocket.Join(ts1, ts2);
             while (!connected)
             {
                 client.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
                 Thread.Sleep(1000);
             }
-            for (int i = 0; i < 3000; i++)
+
+            for (int i = 0; i < 300; i++)
             {
                 client.Send(new Message(1023, Mode.Reliable | Mode.Ordered));
             }
             Thread.Sleep(6000);
-            Assert.GreaterOrEqual(messageCount, 2900);
-            Console.WriteLine("Пришло сообщений: {0}", messageCount);
+            Assert.GreaterOrEqual(messageCount, 260);
         }
     }
 }

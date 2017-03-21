@@ -31,6 +31,11 @@ namespace GServer
             _client.Connect(endPoint);
         }
 
+        public void Dispose()
+        {
+            _client.Close();
+        }
+
         public byte[] Receive(ref IPEndPoint remoteEP)
         {
             return _client.Receive(ref remoteEP);

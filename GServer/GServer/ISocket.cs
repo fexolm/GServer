@@ -1,8 +1,9 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 
 namespace GServer
 {
-    public interface ISocket
+    public interface ISocket : IDisposable
     {
         int Available { get; }
         void Bind(IPEndPoint localEP);

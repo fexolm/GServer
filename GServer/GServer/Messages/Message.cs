@@ -164,7 +164,6 @@ namespace GServer
             Header = new MessageHeader(type, mode);
             Body = new byte[0];
         }
-
         private static readonly Message _handshake = new Message((short)MessageType.Handshake, Mode.None);
         public static Message Handshake { get { return _handshake; } }
         public static Message Ack(MessageHeader header, int ackBitField)

@@ -14,7 +14,7 @@ namespace GServer
         private IDictionary<MessageCounter, Message> _pendingMessages;
         private MessageCounter _lastRecievedMessage;
         private List<MessageCounter> _notYetArrivedMessages;
-        private Queue<MessageCounter> _last30 = new Queue<MessageCounter>();
+        private Queue<MessageCounter> _resendInterval = new Queue<MessageCounter>();
         public void StoreReliable(Message msg)
         {
             lock (_pendingMessages)
@@ -22,9 +22,9 @@ namespace GServer
                 if (!_pendingMessages.ContainsKey(msg.MessageId))
                 {
                     _pendingMessages.Add(msg.MessageId, msg);
-                    _last30.Enqueue(msg.MessageId);
-                    if (_last30.Count > 30)
-                        _last30.Dequeue();
+                    _resendInterval.Enqueue(msg.MessageId);
+                    if (_resendInterval.Count > 5)
+                        _resendInterval.Dequeue();
                 }
             }
         }
@@ -70,20 +70,20 @@ namespace GServer
 
             lock (_pendingMessages)
             {
+                var tmp = msgId;
                 while (bitField != 0)
                 {
                     if ((bitField & 1) == 1)
                     {
-                        if (_pendingMessages.ContainsKey(msgId))
+                        if (_pendingMessages.ContainsKey(tmp))
                         {
-                            _pendingMessages.Remove(msgId);
-                            Console.WriteLine("Пришло потеряное сообщение {0}", msgId);
+                            _pendingMessages.Remove(tmp);
                         }
                     }
                     bitField <<= 1;
-                    msgId--;
+                    tmp--;
                 }
-                toRemove = _pendingMessages.Where(x => msgId - x.Key > 30 && !_last30.Contains(x.Key)).ToArray();
+                toRemove = _pendingMessages.Where(x => msgId - x.Key > 30 && !_resendInterval.Contains(x.Key)).ToArray();
                 foreach (var element in toRemove)
                 {
                     _pendingMessages.Remove(element);
@@ -92,7 +92,6 @@ namespace GServer
             foreach (var element in toRemove)
             {
                 PacketLost?.Invoke(element.Value);
-                Console.WriteLine("---------------Потерялось сообщение {0}", element.Value.MessageId);
             }
         }
         public event Action<Message> PacketLost;
