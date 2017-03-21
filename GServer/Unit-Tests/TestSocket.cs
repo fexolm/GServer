@@ -1,6 +1,7 @@
 ﻿using GServer;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 
 namespace Unit_Tests
@@ -21,7 +22,7 @@ namespace Unit_Tests
         protected IPEndPoint _endPoint;
         protected IPEndPoint _serverEp = null;
         protected readonly Queue<Datagram> _messages = new Queue<Datagram>();
-        protected readonly static IDictionary<IPEndPoint, TestSocket> _sockets = new Dictionary<IPEndPoint, TestSocket>();
+        protected readonly IDictionary<IPEndPoint, TestSocket> _sockets = new Dictionary<IPEndPoint, TestSocket>();
         public int Available
         {
             get
@@ -32,7 +33,6 @@ namespace Unit_Tests
                 }
             }
         }
-
         public void Bind(IPEndPoint localEP)
         {
             _endPoint = localEP;
@@ -41,7 +41,6 @@ namespace Unit_Tests
                 _sockets.Add(localEP, this);
             }
         }
-
         public void Close()
         {
             lock (_sockets)
@@ -49,12 +48,10 @@ namespace Unit_Tests
                 _sockets.Remove(_endPoint);
             }
         }
-
         public void Connect(IPEndPoint endPoint)
         {
             _serverEp = endPoint;
         }
-
         public byte[] Receive(ref IPEndPoint remoteEP)
         {
             lock (_messages)
@@ -64,7 +61,6 @@ namespace Unit_Tests
                 return msg.Buffer;
             }
         }
-
         public virtual int Send(byte[] dgram, IPEndPoint endPoint)
         {
             var dm = new Datagram(dgram, _endPoint);
@@ -74,7 +70,6 @@ namespace Unit_Tests
             }
             return 0;
         }
-
         public virtual int Send(byte[] dgram)
         {
             var dm = new Datagram(dgram, _endPoint);
@@ -89,6 +84,21 @@ namespace Unit_Tests
             lock (_messages)
             {
                 _messages.Enqueue(dm);
+            }
+        }
+        public void Dispose()
+        {
+            Close();
+        }
+        public static void Join(params TestSocket[] sockets)
+        {
+            foreach (var socket in sockets)
+            {
+                var toAdd = sockets.Where(s => s != socket);
+                foreach (var element in toAdd)
+                {
+                    socket._sockets.Add(element._endPoint, element);
+                }
             }
         }
     }
@@ -107,18 +117,31 @@ namespace Unit_Tests
         }
         public override int Send(byte[] dgram, IPEndPoint endPoint)
         {
+            var msg = Message.Deserialize(dgram);
             if (rnd.NextDouble() < _lossRate)
             {
+                Console.WriteLine("Отправлено сообщение {0}, {1}", msg.MessageId, msg.Header.Type);
                 return base.Send(dgram, endPoint);
+            }
+            else
+            {
+
+                //Console.WriteLine("Потерян пакет {0}, {1}", msg.MessageId, msg.Header.Type);
             }
             return 0;
         }
 
         public override int Send(byte[] dgram)
         {
+            var msg = Message.Deserialize(dgram);
             if (rnd.NextDouble() < _lossRate)
             {
+                Console.WriteLine("Отправлено сообщение {0}, {1}", msg.MessageId, msg.Header.Type);
                 return base.Send(dgram);
+            }
+            else
+            {
+                //Console.WriteLine("Потерян пакет {0}, {1}", msg.MessageId, msg.Header.Type);
             }
             return 0;
         }

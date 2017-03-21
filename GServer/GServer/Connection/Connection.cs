@@ -60,9 +60,7 @@ namespace GServer
             if (Disconnected != null)
                 Disconnected.Invoke(this);
         }
-
         #region Reliable
-
         private readonly IDictionary<short, Ack> _ackPerMsgType;
         internal Message GenerateAck(Message msg)
         {
@@ -127,6 +125,7 @@ namespace GServer
                 SequencedLost?.Invoke(this, obj);
                 return;
             }
+            UnOrderedLost?.Invoke(this, obj);
         }
         #endregion
         #region Sequenced
@@ -156,9 +155,7 @@ namespace GServer
             }
         }
         #endregion
-
         #region Ordered
-
         private IDictionary<short, MessageCounter> _lastOrderedMessageNumPerType;
         private SortedDictionary<short, MessageQueue> _messageQueuePerType;
         internal List<Message> MessagesToInvoke(Message msg)
@@ -173,18 +170,22 @@ namespace GServer
                     {
                         _lastOrderedMessageNumPerType.Add(msg.Header.Type, 0);
                     }
-                    if (!_messageQueuePerType.ContainsKey((short)msg.Header.Type))
+                    if (!_messageQueuePerType.ContainsKey(msg.Header.Type))
                     {
                         _messageQueuePerType.Add(msg.Header.Type, new MessageQueue());
                     }
-                    var currentTypeQueue = _messageQueuePerType[(short)msg.Header.Type];
+                    if (msg.MessageId < _lastOrderedMessageNumPerType[msg.Header.Type])
+                    {
+                        return messagesToInvoke;
+                    }
+                    var currentTypeQueue = _messageQueuePerType[msg.Header.Type];
                     currentTypeQueue.Add(msg);
                     foreach (var element in currentTypeQueue)
                     {
-                        if (element.Key == _lastOrderedMessageNumPerType[(short)msg.Header.Type])
+                        if (element.Key == _lastOrderedMessageNumPerType[msg.Header.Type])
                         {
                             messagesToInvoke.Add(element.Value);
-                            _lastOrderedMessageNumPerType[(short)msg.Header.Type]++;
+                            _lastOrderedMessageNumPerType[msg.Header.Type]++;
                         }
                     }
                     foreach (var element in messagesToInvoke)
@@ -227,5 +228,6 @@ namespace GServer
         }
         internal static Action<Connection, Message> OrderedLost;
         internal static Action<Connection, Message> SequencedLost;
+        internal static Action<Connection, Message> UnOrderedLost;
     }
 }

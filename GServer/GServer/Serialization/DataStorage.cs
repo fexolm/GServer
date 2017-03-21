@@ -182,10 +182,9 @@ namespace GServer
         }
         public void Dispose()
         {
-            if (Reader != null)
-                Reader.Close();
-            if (Writer != null)
-                Writer.Close();
+            Reader?.Close();
+            Writer?.Close();
+            Stream?.Close();
         }
         ~DataStorage()
         {

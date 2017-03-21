@@ -6,7 +6,7 @@ using System.Threading;
 namespace GServer
 {
     public delegate void ReceiveHandler(Message msg, Connection con);
-    public class Host
+    public class Host : IDisposable
     {
         private Token _hostToken;
         private ISocket _client;
@@ -29,6 +29,18 @@ namespace GServer
             Connection.OrderedLost = (con, msg) =>
             {
                 RowSend(msg, con);
+                PacketLost?.Invoke();
+            };
+            Connection.UnOrderedLost = (con, msg) =>
+            {
+                if (_isClinet)
+                {
+                    Send(msg);
+                }
+                else
+                {
+                    Send(msg, con);
+                }
                 PacketLost?.Invoke();
             };
             AddHandler((short)MessageType.Token, (m, c) =>
@@ -54,7 +66,7 @@ namespace GServer
             msg.ConnectionToken = con.Token;
             Send(msg, con);
         }
-        private void CleanConnections()
+        public void CleanConnections()
         {
             lock (_connectionManager)
             {
@@ -98,7 +110,6 @@ namespace GServer
                     Send(ack);
                 }
             }
-
             if (msg.Header.Sequenced)
             {
                 if (connection.IsMessageInItsOrder(msg.Header.Type, msg.Header.MessageId))
@@ -119,7 +130,7 @@ namespace GServer
                 }
                 else
                 {
-                    ProcessHandler(msg, connection);
+                    ProcessHandlerList(toInvoke, connection);
                 }
             }
             else if (_threadCount > 0)
@@ -317,6 +328,10 @@ namespace GServer
             {
                 DebugLog.Invoke(error);
             }
+        }
+        public void Dispose()
+        {
+            StopListen();
         }
         public Action<string> ErrLog;
         public Action<string> DebugLog;
