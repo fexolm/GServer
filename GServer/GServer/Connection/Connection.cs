@@ -54,11 +54,11 @@ namespace GServer
         {
             LastActivity = DateTime.Now;
         }
-        public event Action<Connection> Disconnected;
+        public event Action Disconnected;
         internal void Disconnect()
         {
             if (Disconnected != null)
-                Disconnected.Invoke(this);
+                Disconnected.Invoke();
         }
         #region Reliable
         private readonly IDictionary<short, Ack> _ackPerMsgType;

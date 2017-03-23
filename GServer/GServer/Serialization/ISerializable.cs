@@ -5,4 +5,8 @@ namespace GServer
     {
         byte[] Serialize();
     }
+    public interface IDeserializable
+    {
+        void FillDeserialize(byte[] buffer);
+    }
 }

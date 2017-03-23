@@ -26,6 +26,7 @@ namespace GServer
             _connectionManager = new ConnectionManager();
             _connectionCleaningThread = new Thread(CleanConnections);
             _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
+            Rnd = new Random();
             Connection.OrderedLost = (con, msg) =>
             {
                 RowSend(msg, con);
@@ -329,6 +330,11 @@ namespace GServer
                 DebugLog.Invoke(error);
             }
         }
+        public void AddModule(IPlugin module)
+        {
+            module.Bind(this);
+        }
+        public readonly Random Rnd;
         public void Dispose()
         {
             StopListen();
