@@ -22,8 +22,8 @@ namespace GServer.Plugins
     {
         enum AccountMessage
         {
-            InfoRequest = 1006,
-            InfoResponse = 1007,
+            InfoRequest = 2000,
+            InfoResponse = 2001,
         }
         private readonly IAuthorization _auth;
         private readonly IDictionary<Token, TModel> _accounts;

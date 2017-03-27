@@ -72,7 +72,7 @@ namespace GServer.Plugins
             var user = _storage.Users.FirstOrDefault(u => u.Login == login);
             if (user == null)
             {
-                _host.Send(new Message((short)AuthMType.ChalangeFailed, Mode.None), c);
+                _host.Send(new Message((short)AuthMType.ChalangeFailed, Mode.Reliable), c);
             }
             else
             {
@@ -84,14 +84,14 @@ namespace GServer.Plugins
                     session.Num = num;
                     _sessions.Add(c.Token, session);
                 }
-                _host.Send(new Message((short)AuthMType.ChalangeSuccess, Mode.None, new DataStorage().Push(num)), c);
+                _host.Send(new Message((short)AuthMType.ChalangeSuccess, Mode.Reliable, new DataStorage().Push(num)), c);
             }
         }
         private void SendPwdHash(Message m, Connection c)
         {
             var num = new DataStorage(m.Body).ReadInt32();
             var hash = Password.GetHashCode();
-            _host.Send(new Message((short)AuthMType.PwdHash, Mode.None, new DataStorage().Push(num ^ hash)));
+            _host.Send(new Message((short)AuthMType.PwdHash, Mode.Reliable, new DataStorage().Push(num ^ hash)));
         }
         private void CheckHash(Message m, Connection c)
         {
@@ -103,18 +103,18 @@ namespace GServer.Plugins
                     var session = _sessions[c.Token];
                     if ((session.User.Password.GetHashCode() ^ session.Num) == hash)
                     {
-                        _host.Send(new Message((short)AuthMType.AuthSuccess, Mode.None), c);
+                        _host.Send(new Message((short)AuthMType.AuthSuccess, Mode.Reliable), c);
                         OnAccountLogin?.Invoke(c, session.User.AccountId);
                     }
                     else
                     {
-                        _host.Send(new Message((short)AuthMType.AuthFailed, Mode.None), c);
+                        _host.Send(new Message((short)AuthMType.AuthFailed, Mode.Reliable), c);
                     }
                     _sessions.Remove(c.Token);
                 }
                 else
                 {
-                    _host.Send(new Message((short)AuthMType.AuthFailed, Mode.None), c);
+                    _host.Send(new Message((short)AuthMType.AuthFailed, Mode.Reliable), c);
                 }
             }
         }
@@ -122,7 +122,7 @@ namespace GServer.Plugins
         {
             Login = login;
             Password = pass;
-            _host.Send(new Message((short)AuthMType.Chalange, Mode.None, new DataStorage().Push(login)));
+            _host.Send(new Message((short)AuthMType.Chalange, Mode.Reliable, new DataStorage().Push(login)));
         }
         public event Action<Connection, Guid> OnAccountLogin;
         public event Action OnAuthSuccess;
