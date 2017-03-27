@@ -13,7 +13,7 @@ namespace GServer
         }
         private IDictionary<MessageCounter, Message> _pendingMessages;
         private MessageCounter _lastRecievedMessage;
-        private List<MessageCounter> _notYetArrivedMessages;
+        private IList<MessageCounter> _notYetArrivedMessages;
         private Queue<MessageCounter> _resendInterval = new Queue<MessageCounter>();
         public void StoreReliable(Message msg)
         {

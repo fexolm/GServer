@@ -6,6 +6,7 @@ namespace GServer
     class HostImpl : ISocket
     {
         private UdpClient _client;
+        private IPEndPoint _connectedEndPoint;
         public HostImpl()
         {
             _client = new UdpClient();
@@ -28,7 +29,7 @@ namespace GServer
 
         public void Connect(IPEndPoint endPoint)
         {
-            _client.Connect(endPoint);
+            _connectedEndPoint = endPoint;
         }
 
         public void Dispose()
@@ -43,7 +44,7 @@ namespace GServer
 
         public int Send(byte[] dgram)
         {
-            return _client.Send(dgram, dgram.Length);
+            return _client.Send(dgram, dgram.Length, _connectedEndPoint);
         }
         public int Send(byte[] dgram, IPEndPoint endPoint)
         {

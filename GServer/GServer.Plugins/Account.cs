@@ -37,7 +37,6 @@ namespace GServer.Plugins
             _storage = storage;
         }
         public Account() { }
-
         private void AccountLoginHandler(Connection connection, Guid accountId)
         {
             lock (_accounts)
@@ -53,28 +52,25 @@ namespace GServer.Plugins
                 }
             }
         }
-
         public void Bind(Host host)
         {
             _host = host;
             host.AddHandler((short)AccountMessage.InfoRequest, InfoRequestHandler);
             host.AddHandler((short)AccountMessage.InfoResponse, InfoResponseHandler);
         }
-
         private void InfoResponseHandler(Message msg, Connection con)
         {
             TModel account = new TModel();
             account.FillDeserialize(msg.Body);
             OnAccountInfoReceived?.Invoke(account);
         }
-
         private void InfoRequestHandler(Message msg, Connection con)
         {
             lock (_accounts)
             {
                 if (_accounts.ContainsKey(con.Token))
                 {
-                    _host.Send(new Message((short)AccountMessage.InfoResponse, Mode.None, _accounts[con.Token]));
+                    _host.Send(new Message((short)AccountMessage.InfoResponse, Mode.None, _accounts[con.Token]), con);
                 }
             }
         }
@@ -83,5 +79,9 @@ namespace GServer.Plugins
             _host.Send(new Message((short)AccountMessage.InfoRequest, Mode.None));
         }
         public event Action<TModel> OnAccountInfoReceived;
+        public bool IsAuthorized(Token token)
+        {
+            return _accounts.ContainsKey(token);
+        }
     }
 }

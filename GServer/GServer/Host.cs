@@ -11,20 +11,19 @@ namespace GServer
         private Token _hostToken;
         private ISocket _client;
         private readonly Thread _listenThread;
-        private readonly Thread _connectionCleaningThread;
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
         private int _port;
         private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
         private int _threadCount;
-        private bool _isClinet = false;
+        private uint _connectionCleaningTick = 0;
+        public uint ConnectionCleaningInterval { get; set; }
         public Host(int port)
         {
             _listenThread = new Thread(() => Listen(port));
             _port = port;
             _isListening = false;
             _connectionManager = new ConnectionManager();
-            _connectionCleaningThread = new Thread(CleanConnections);
             _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
             Rnd = new Random();
             Connection.OrderedLost = (con, msg) =>
@@ -34,14 +33,7 @@ namespace GServer
             };
             Connection.UnOrderedLost = (con, msg) =>
             {
-                if (_isClinet)
-                {
-                    Send(msg);
-                }
-                else
-                {
-                    Send(msg, con);
-                }
+                Send(msg, con);
                 PacketLost?.Invoke();
             };
             AddHandler((short)MessageType.Token, (m, c) =>
@@ -60,6 +52,15 @@ namespace GServer
             {
                 c.ProcessAck(m);
             });
+            ServerTimer.OnTick += () =>
+            {
+                _connectionCleaningTick++;
+                if (_connectionCleaningTick > ConnectionCleaningInterval)
+                {
+                    CleanConnections();
+                    _connectionCleaningTick = 0;
+                }
+            };
         }
         private void SendToken(Connection con)
         {
@@ -102,14 +103,8 @@ namespace GServer
             {
                 var ack = connection.GenerateAck(msg);
                 var bitField = new DataStorage(ack.Body).ReadInt32();
-                if (!_isClinet)
-                {
-                    Send(ack, connection);
-                }
-                else
-                {
-                    Send(ack);
-                }
+                Send(ack, connection);
+
             }
             if (msg.Header.Sequenced)
             {
@@ -215,7 +210,6 @@ namespace GServer
             _isListening = true;
             _client = host;
             _listenThread.Start();
-            _connectionCleaningThread.Start();
         }
         public void StartListen(int threadCount)
         {
@@ -272,14 +266,7 @@ namespace GServer
         internal void RowSend(Message msg, Connection con)
         {
             var buffer = msg.Serialize();
-            if (_isClinet)
-            {
-                _client.Send(buffer);
-            }
-            else
-            {
-                _client.Send(buffer, con.EndPoint);
-            }
+            _client.Send(buffer, con.EndPoint);
             if (msg.Header.Reliable)
             {
                 con.StoreReliable(msg);
@@ -306,7 +293,6 @@ namespace GServer
             try
             {
                 _client.Connect(ep);
-                _isClinet = true;
             }
             catch
             {
@@ -343,6 +329,10 @@ namespace GServer
         public Action<string> DebugLog;
         public Action OnConnect;
         public event Action PacketLost;
+        public void Tick()
+        {
+            ServerTimer.Tick();
+        }
         ~Host()
         {
             StopListen();
