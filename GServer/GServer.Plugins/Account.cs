@@ -7,6 +7,7 @@ namespace GServer.Plugins
     public abstract class AccountModel : ISerializable, IDeserializable
     {
         public Guid AccountId { get; set; }
+        public Connection Connection { get; set; }
         public abstract void FillDeserialize(byte[] buffer);
         public abstract byte[] Serialize();
     }
@@ -44,6 +45,7 @@ namespace GServer.Plugins
                 if (!_accounts.ContainsKey(connection.Token))
                 {
                     var account = _storage.Accounts.FirstOrDefault(a => a.AccountId == accountId);
+                    account.Connection = connection;
                     _accounts.Add(connection.Token, account);
                     connection.Disconnected += () =>
                     {
@@ -82,6 +84,25 @@ namespace GServer.Plugins
         public bool IsAuthorized(Token token)
         {
             return _accounts.ContainsKey(token);
+        }
+        public TModel GetAccount(Token token)
+        {
+            lock (_accounts)
+            {
+                if (_accounts.ContainsKey(token))
+                {
+                    return _accounts[token];
+                }
+            }
+            return null;
+        }
+        public void AddHandler(short messageType, Action<Message, TModel> accountHandler)
+        {
+            _host.AddHandler(messageType, (m, c) =>
+            {
+                var acc = GetAccount(c.Token);
+                accountHandler.Invoke(m, acc);
+            });
         }
     }
 }

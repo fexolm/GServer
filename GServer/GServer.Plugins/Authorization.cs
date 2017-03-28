@@ -76,7 +76,7 @@ namespace GServer.Plugins
             }
             else
             {
-                var num = _host.Rnd.Next(1000000, int.MaxValue);
+                int num = _host.Rnd.Next(1000000, int.MaxValue);
                 lock (_sessions)
                 {
                     var session = new AuthSession();

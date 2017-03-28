@@ -1,101 +1,65 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace GServer.Plugins
 {
-    public class Player
+    public enum MatchmakingMessages
     {
-        public readonly Connection Connection;
-        public Player(Connection connection)
-        {
-            Connection = connection;
-            connection.Disconnected += () => Disconnected.Invoke();
-        }
-        public event Action Disconnected;
+        GameFound = 3000,
+        MatchmakingRequest = 3001,
+        CancelMatchmaking = 3002,
+        RoomClosed = 3003
     }
-
-    public abstract class PlayerQueue
+    public abstract class PlayerQueue<TAccountModel>
+        where TAccountModel : AccountModel, new()
     {
-        public abstract void AddPlayer(Player player);
-        public abstract void RemovePlayer(Connection connection);
-        public Action<Player[]> OnGameFound;
+        public abstract void AddPlayer(TAccountModel player);
+        public abstract void RemovePlayer(TAccountModel player);
+        public Action<TAccountModel[]> OnGameFound;
     }
-
-    public class Room
+    public class Matchmaking<TAccountModel> : IPlugin
+        where TAccountModel : AccountModel, new()
     {
-        public readonly Token RoomToken;
-        private Player[] _players;
-        public Room(Player[] players)
-        {
-            RoomToken = Token.GenerateToken();
-            _players = players;
-        }
-        public event Action RoomClosed;
-    }
-
-    public class Matchmaking : IPlugin
-    {
-        enum MatchmakingMessages
-        {
-            GameFound = 3000,
-            MatchmakingRequest = 3001,
-            CancelMatchmaking = 3002,
-            RoomClosed = 3003
-        }
-
-
         private Host _host;
-        private PlayerQueue _playerQueue;
-        private IDictionary<Token, Room> _rooms;
-
-        public Matchmaking(PlayerQueue playerQueue)
+        private Account<TAccountModel> _account;
+        private PlayerQueue<TAccountModel> _playerQueue;
+        public Matchmaking(Account<TAccountModel> account, PlayerQueue<TAccountModel> playerQueue)
         {
+            _account = account;
             _playerQueue = playerQueue;
-            _rooms = new Dictionary<Token, Room>();
             _playerQueue.OnGameFound += CreateGameSession;
         }
-
         public void Bind(Host host)
         {
             _host = host;
-            _host.AddHandler((short)MatchmakingMessages.GameFound, (m, c) =>
+            _account.AddHandler((short)MatchmakingMessages.GameFound, (m, a) =>
             {
                 var ds = new DataStorage(m.Body);
                 OnGameFound.Invoke(new Token(ds.ReadInt32()));
             });
-            _host.AddHandler((short)MatchmakingMessages.MatchmakingRequest, (m, c) =>
+            _account.AddHandler((short)MatchmakingMessages.MatchmakingRequest, (m, a) =>
+             {
+                 lock (_playerQueue)
+                 {
+                     _playerQueue.AddPlayer(a);
+                 }
+             });
+            _account.AddHandler((short)MatchmakingMessages.CancelMatchmaking, (m, a) =>
             {
                 lock (_playerQueue)
                 {
-                    _playerQueue.AddPlayer(new Player(c));
-                }
-            });
-            _host.AddHandler((short)MatchmakingMessages.CancelMatchmaking, (m, c) =>
-            {
-                lock (_playerQueue)
-                {
-                    _playerQueue.RemovePlayer(c);
+                    _playerQueue.RemovePlayer(a);
                 }
             });
         }
-
-        private void CreateGameSession(Player[] players)
+        private void CreateGameSession(TAccountModel[] players)
         {
-            var room = new Room(players);
-            lock (_rooms)
-            {
-                _rooms.Add(room.RoomToken, room);
-            }
-            foreach (var player in players)
-            {
-                _host.Send(new Message((short)MatchmakingMessages.GameFound, Mode.Reliable, room.RoomToken), player.Connection);
-            }
+            RoomCreated?.Invoke(players);
         }
-
         public void FindGame()
         {
             _host.Send(new Message((short)MatchmakingMessages.MatchmakingRequest, Mode.Reliable));
         }
         public event Action<Token> OnGameFound;
+        public event Action<TAccountModel[]> RoomCreated;
     }
 }
