@@ -63,15 +63,32 @@ namespace Unit_Tests
         }
         public virtual int Send(byte[] dgram, IPEndPoint endPoint)
         {
-            var dm = new Datagram(dgram, _endPoint);
-            lock (_sockets)
+            if (dgram.Length > 0)
             {
-                _sockets[endPoint].Deliver(dm);
+                var ds = new DataStorage(dgram);
+                while (!ds.Empty)
+                {
+                    int len = ds.ReadInt32();
+                    var msg = Message.Deserialize(ds.ReadBytes(len));
+                    System.Console.WriteLine("Sending message {0} {1}", msg.Header.Type, msg.MessageId);
+                }
             }
+            var dm = new Datagram(dgram, _endPoint);
+            _sockets[endPoint].Deliver(dm);
             return 0;
         }
         public virtual int Send(byte[] dgram)
         {
+            if (dgram.Length > 0)
+            {
+                var ds = new DataStorage(dgram);
+                while (!ds.Empty)
+                {
+                    int len = ds.ReadInt32();
+                    var msg = Message.Deserialize(ds.ReadBytes(len));
+                    System.Console.WriteLine("Sending message {0} {1}", msg.Header.Type, msg.MessageId);
+                }
+            }
             var dm = new Datagram(dgram, _endPoint);
             lock (_sockets)
             {
@@ -117,31 +134,44 @@ namespace Unit_Tests
         }
         public override int Send(byte[] dgram, IPEndPoint endPoint)
         {
-            var msg = Message.Deserialize(dgram);
             if (rnd.NextDouble() < _lossRate)
             {
-                Console.WriteLine("Отправлено сообщение {0}, {1}", msg.MessageId, msg.Header.Type);
                 return base.Send(dgram, endPoint);
             }
             else
             {
-
-                //Console.WriteLine("Потерян пакет {0}, {1}", msg.MessageId, msg.Header.Type);
+                if (dgram.Length > 0)
+                {
+                    var ds = new DataStorage(dgram);
+                    while (!ds.Empty)
+                    {
+                        int len = ds.ReadInt32();
+                        var msg = Message.Deserialize(ds.ReadBytes(len));
+                        System.Console.WriteLine("Lost message {0} {1}", msg.Header.Type, msg.MessageId);
+                    }
+                }
             }
             return 0;
         }
 
         public override int Send(byte[] dgram)
         {
-            var msg = Message.Deserialize(dgram);
             if (rnd.NextDouble() < _lossRate)
             {
-                Console.WriteLine("Отправлено сообщение {0}, {1}", msg.MessageId, msg.Header.Type);
                 return base.Send(dgram);
             }
             else
             {
-                //Console.WriteLine("Потерян пакет {0}, {1}", msg.MessageId, msg.Header.Type);
+                if (dgram.Length > 0)
+                {
+                    var ds = new DataStorage(dgram);
+                    while (!ds.Empty)
+                    {
+                        int len = ds.ReadInt32();
+                        var msg = Message.Deserialize(ds.ReadBytes(len));
+                        System.Console.WriteLine("Lost message {0} {1}", msg.Header.Type, msg.MessageId);
+                    }
+                }
             }
             return 0;
         }

@@ -1,10 +1,29 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 
 namespace GServer
 {
+    internal class Packet : ISerializable
+    {
+        public int Priority { get; set; }
+        public Message Msg { get; private set; }
+        public bool Resend => Msg.Reliable && !Msg.Sequenced;
+
+        public byte[] Serialize()
+        {
+            var buffer = Msg.Serialize();
+            return new DataStorage().Push(buffer.Length).Push(buffer).Serialize();
+        }
+        public Packet(Message msg)
+        {
+            Msg = msg;
+            Priority = 0;
+        }
+    }
+
     internal class MessageQueue : IEnumerable<KeyValuePair<MessageCounter, Message>>
     {
         private SortedList<MessageCounter, Message> _msgQueue;
@@ -33,6 +52,57 @@ namespace GServer
 
     public class Connection
     {
+        private List<Packet> _messageBuffer = new List<Packet>();
+
+        public void MarkToSend(Message msg)
+        {
+            var p = new Packet(msg);
+            lock (_messageBuffer)
+            {
+                _messageBuffer.Add(p);
+            }
+        }
+
+        public byte[] GetBytesToSend()
+        {
+            List<Packet> toSend = new List<Packet>();
+            lock (_messageBuffer)
+            {
+                List<Packet> toDelete = new List<Packet>();
+                _messageBuffer.Sort((x, y) =>
+                {
+                    int p = x.Priority.CompareTo(y.Priority);
+                    return p == 0 ? x.Msg.MessageId.CompareTo(y.Msg.MessageId) : -p;
+                });
+                int i = 0;
+                for (; i < 128 && i < _messageBuffer.Count; i++)
+                {
+                    toSend.Add(_messageBuffer[i]);
+                    //ds.Push(_messageBuffer[i].Serialize());
+                    if (!_messageBuffer[i].Resend)
+                    {
+                        toDelete.Add(_messageBuffer[i]);
+                    }
+                }
+                for (; i < _messageBuffer.Count; i++)
+                {
+                    _messageBuffer[i].Priority++;
+                }
+                foreach (var element in toDelete)
+                {
+                    _messageBuffer.Remove(element);
+                }
+            }
+            //toSend.Sort((x, y) => x.Msg.MessageId.CompareTo(y.Msg.MessageId));
+
+            DataStorage ds = new DataStorage();
+            foreach (var element in toSend)
+            {
+                ds.Push(element.Serialize());
+            }
+            return ds.Serialize();
+        }
+
         public readonly IPEndPoint EndPoint;
         public readonly Token Token;
         public DateTime LastActivity { get; private set; }
@@ -48,6 +118,7 @@ namespace GServer
             _ackPerMsgType = new Dictionary<short, Ack>();
             _lastSequencedMessageNumPerType = new Dictionary<short, MessageCounter>();
             _lastOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
+            _lastUnOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
             _messageQueuePerType = new SortedDictionary<short, MessageQueue>();
         }
         internal void UpdateActivity()
@@ -75,11 +146,28 @@ namespace GServer
                 {
                     var ack = new Ack();
                     _ackPerMsgType.Add((short)msg.Header.Type, ack);
+                    ack.MessageArrived += AckArrivedHandler;
                     bitField = 1;
                 }
             }
             return Message.Ack(msg.Header, bitField);
         }
+
+        private void AckArrivedHandler(MessageCounter arg1, short arg2)
+        {
+            lock (_messageBuffer)
+            {
+                var toRemove = _messageBuffer.FirstOrDefault(m =>
+                                                m.Msg.MessageId == arg1
+                                                && m.Msg.Header.Type == arg2);
+                if (toRemove != null)
+                {
+                    Console.WriteLine("Removing {0}, new buffer length: {1}", toRemove.Msg.MessageId, _messageBuffer.Count);
+                    _messageBuffer.Remove(toRemove);
+                }
+            }
+        }
+
         internal void ProcessAck(Message msg)
         {
             Ack ack = null;
@@ -93,39 +181,20 @@ namespace GServer
                     ack = _ackPerMsgType[msgType];
                 }
             }
-            ack?.ProcessReceivedAckBitfield(bitField, msg.MessageId);
+            ack?.ProcessReceivedAckBitfield(bitField, msg.MessageId, msgType);
         }
         internal void StoreReliable(Message msg)
         {
             Ack ack;
             lock (_ackPerMsgType)
             {
-                if (_ackPerMsgType.ContainsKey(msg.Header.Type))
-                {
-                    ack = _ackPerMsgType[msg.Header.Type];
-                }
-                else
+                if (!_ackPerMsgType.ContainsKey(msg.Header.Type))
                 {
                     ack = new Ack();
                     _ackPerMsgType.Add((short)msg.Header.Type, ack);
-                    ack.PacketLost += PacketLostHander;
+                    ack.MessageArrived += AckArrivedHandler;
                 }
             }
-            ack.StoreReliable(msg);
-        }
-        private void PacketLostHander(Message obj)
-        {
-            if (obj.Header.Ordered)
-            {
-                OrderedLost?.Invoke(this, obj);
-                return;
-            }
-            if (obj.Header.Sequenced)
-            {
-                SequencedLost?.Invoke(this, obj);
-                return;
-            }
-            UnOrderedLost?.Invoke(this, obj);
         }
         #endregion
         #region Sequenced
@@ -197,6 +266,9 @@ namespace GServer
             }
         }
         #endregion
+        #region Unordered
+        private IDictionary<short, MessageCounter> _lastUnOrderedMessageNumPerType;
+        #endregion 
         internal MessageCounter GetMessageId(Message msg)
         {
             MessageCounter result = MessageCounter.Default;
@@ -224,10 +296,19 @@ namespace GServer
                     _lastSequencedMessageNumPerType[(short)msg.Header.Type]++;
                 }
             }
+            else
+            {
+                lock (_lastUnOrderedMessageNumPerType)
+                {
+                    if (!_lastUnOrderedMessageNumPerType.ContainsKey((short)msg.Header.Type))
+                    {
+                        _lastUnOrderedMessageNumPerType.Add((short)msg.Header.Type, 0);
+                    }
+                    result = _lastUnOrderedMessageNumPerType[(short)msg.Header.Type];
+                    _lastUnOrderedMessageNumPerType[(short)msg.Header.Type]++;
+                }
+            }
             return result;
         }
-        internal static Action<Connection, Message> OrderedLost;
-        internal static Action<Connection, Message> SequencedLost;
-        internal static Action<Connection, Message> UnOrderedLost;
     }
 }

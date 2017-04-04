@@ -83,5 +83,15 @@ namespace GServer
             return false;
         }
         public event Action<Connection> HandshakeRecieved;
+        public void InvokeForAllConnections(Action<Connection> method)
+        {
+            lock (_connections)
+            {
+                foreach (var element in _connections)
+                {
+                    method.Invoke(element.Value);
+                }
+            }
+        }
     }
 }

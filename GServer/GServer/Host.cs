@@ -26,16 +26,6 @@ namespace GServer
             _connectionManager = new ConnectionManager();
             _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
             Rnd = new Random();
-            Connection.OrderedLost = (con, msg) =>
-            {
-                RowSend(msg, con);
-                PacketLost?.Invoke();
-            };
-            Connection.UnOrderedLost = (con, msg) =>
-            {
-                Send(msg, con);
-                PacketLost?.Invoke();
-            };
             AddHandler((short)MessageType.Token, (m, c) =>
             {
                 _hostToken = m.ConnectionToken;
@@ -52,15 +42,24 @@ namespace GServer
             {
                 c.ProcessAck(m);
             });
-            ServerTimer.OnTick += () =>
+            ServerTimer.OnTick += ServerTick;
+        }
+        private void ServerTick()
+        {
+            //_connectionCleaningTick++;
+            //if (_connectionCleaningTick > ConnectionCleaningInterval)
+            //{
+            //    CleanConnections();
+            //    _connectionCleaningTick = 0;
+            //}
+            _connectionManager.InvokeForAllConnections(c =>
             {
-                _connectionCleaningTick++;
-                if (_connectionCleaningTick > ConnectionCleaningInterval)
+                byte[] buffer = c.GetBytesToSend();
+                if (buffer.Length > 0)
                 {
-                    CleanConnections();
-                    _connectionCleaningTick = 0;
+                    _client.Send(buffer, c.EndPoint);
                 }
-            };
+            });
         }
         private void SendToken(Connection con)
         {
@@ -85,14 +84,20 @@ namespace GServer
                     IPEndPoint endPoint = null;
                     var buffer = _client.Receive(ref endPoint);
 
-                    if (buffer.Length == 0)
-                        return;
 
-                    var msg = Message.Deserialize(buffer);
-                    Connection connection;
-                    if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
+                    if (buffer.Length == 0)
+                        continue;
+                    var ds = new DataStorage(buffer);
+                    while (!ds.Empty)
                     {
-                        ProcessDatagram(msg, connection);
+                        int len = ds.ReadInt32();
+                        var msg = Message.Deserialize(ds.ReadBytes(len));
+                        Console.WriteLine("Recieved message {0} {1}", msg.Header.Type, msg.MessageId);
+                        Connection connection;
+                        if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
+                        {
+                            ProcessDatagram(msg, connection);
+                        }
                     }
                 }
             }
@@ -152,15 +157,7 @@ namespace GServer
             {
                 foreach (var h in handlers)
                 {
-                    try
-                    {
-                        h.Invoke(msg, connection);
-
-                    }
-                    catch (Exception ex)
-                    {
-                        WriteError(ex.Message);
-                    }
+                    h.Invoke(msg, connection);
                 }
                 connection.UpdateActivity();
             }
@@ -182,7 +179,10 @@ namespace GServer
             }
             if (handlers != null)
             {
-                connection = _connectionManager[msg.Header.ConnectionToken];
+                lock (_connectionManager)
+                {
+                    connection = _connectionManager[msg.Header.ConnectionToken];
+                }
                 foreach (var h in handlers)
                 {
                     foreach (var m in messages)
@@ -218,55 +218,40 @@ namespace GServer
         public void StopListen()
         {
             _isListening = false;
+            ServerTimer.OnTick -= ServerTick;
             _client.Close();
         }
         public void Send(Message msg, Connection con)
         {
-            try
+            msg.ConnectionToken = con.Token;
+            if (msg.Header.Type != (short)MessageType.Ack)
+                msg.MessageId = con.GetMessageId(msg);
+            con.MarkToSend(msg);
+            if (msg.Header.Reliable)
             {
-                msg.ConnectionToken = con.Token;
-                if (msg.Header.Type != (short)MessageType.Ack)
-                    msg.MessageId = con.GetMessageId(msg);
-                var buffer = msg.Serialize();
-                _client.Send(buffer, con.EndPoint);
-                if (msg.Header.Reliable)
-                {
-                    con.StoreReliable(msg);
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrLog.Invoke(ex.Message);
+                con.StoreReliable(msg);
             }
         }
         public void Send(Message msg)
         {
-            try
+            Connection connection;
+            lock (_connectionManager)
             {
-                Connection connection;
-                lock (_connectionManager)
-                {
-                    connection = _connectionManager[_hostToken];
-                }
-                if (msg.Header.Type != (short)MessageType.Ack)
-                    msg.MessageId = connection.GetMessageId(msg);
-                msg.ConnectionToken = _hostToken;
-                var buffer = msg.Serialize();
-                _client.Send(buffer);
-                if (msg.Header.Reliable)
-                {
-                    connection.StoreReliable(msg);
-                }
+                connection = _connectionManager[_hostToken];
             }
-            catch (Exception ex)
+            if (msg.Reliable)
+                msg.MessageId = connection.GetMessageId(msg);
+            msg.ConnectionToken = _hostToken;
+            connection.MarkToSend(msg);
+            if (msg.Header.Reliable)
             {
-                ErrLog.Invoke(ex.Message);
+                connection.StoreReliable(msg);
             }
         }
         internal void RowSend(Message msg, Connection con)
         {
             var buffer = msg.Serialize();
-            _client.Send(buffer, con.EndPoint);
+            con.MarkToSend(msg);
             if (msg.Header.Reliable)
             {
                 con.StoreReliable(msg);
@@ -298,8 +283,9 @@ namespace GServer
             {
                 return false;
             }
-            var buffer = Message.Handshake.Serialize();
-            _client.Send(buffer);
+            var buffer = Message.Handshake;
+            Packet p = new Packet(buffer);
+            _client.Send(p.Serialize());
             return true;
         }
         internal void WriteError(string error)

@@ -180,6 +180,7 @@ namespace GServer
                 throw new Exception("DataStorage in write only mode");
             return new Guid(Reader.ReadBytes(16));
         }
+        public bool Empty => Stream.Position == Stream.Length;
         public void Dispose()
         {
             Reader?.Close();

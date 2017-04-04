@@ -45,7 +45,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AckTest.cs" />
     <Compile Include="HostTests.cs" />
     <Compile Include="MessageTest.cs" />
     <Compile Include="PrimitivesTest.cs" />

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 namespace GServer
 {
     internal class Ack
@@ -8,26 +7,11 @@ namespace GServer
         private MessageCounter _lastMessageNum = 0;
         public Ack()
         {
-            _pendingMessages = new Dictionary<MessageCounter, Message>();
             _notYetArrivedMessages = new List<MessageCounter>();
         }
-        private IDictionary<MessageCounter, Message> _pendingMessages;
         private MessageCounter _lastRecievedMessage;
         private IList<MessageCounter> _notYetArrivedMessages;
         private Queue<MessageCounter> _resendInterval = new Queue<MessageCounter>();
-        public void StoreReliable(Message msg)
-        {
-            lock (_pendingMessages)
-            {
-                if (!_pendingMessages.ContainsKey(msg.MessageId))
-                {
-                    _pendingMessages.Add(msg.MessageId, msg);
-                    _resendInterval.Enqueue(msg.MessageId);
-                    if (_resendInterval.Count > 5)
-                        _resendInterval.Dequeue();
-                }
-            }
-        }
         public int ReceiveReliable(Message msg)
         {
             int bitField = 0;
@@ -64,37 +48,20 @@ namespace GServer
             }
             return bitField;
         }
-        public void ProcessReceivedAckBitfield(int bitField, MessageCounter msgId)
+        public void ProcessReceivedAckBitfield(int bitField, MessageCounter msgId, short msgType)
         {
-            IEnumerable<KeyValuePair<MessageCounter, Message>> toRemove = null;
-
-            lock (_pendingMessages)
+            var tmp = msgId;
+            while (bitField != 0)
             {
-                var tmp = msgId;
-                while (bitField != 0)
+                if ((bitField & 1) == 1)
                 {
-                    if ((bitField & 1) == 1)
-                    {
-                        if (_pendingMessages.ContainsKey(tmp))
-                        {
-                            _pendingMessages.Remove(tmp);
-                        }
-                    }
-                    bitField <<= 1;
-                    tmp--;
+                    MessageArrived?.Invoke(msgId, msgType);
                 }
-                toRemove = _pendingMessages.Where(x => msgId - x.Key > 30 && !_resendInterval.Contains(x.Key)).ToArray();
-                foreach (var element in toRemove)
-                {
-                    _pendingMessages.Remove(element);
-                }
-            }
-            foreach (var element in toRemove)
-            {
-                PacketLost?.Invoke(element.Value);
+                bitField <<= 1;
+                tmp--;
             }
         }
-        public event Action<Message> PacketLost;
+        public event Action<MessageCounter, short> MessageArrived;
     }
 }
 
