@@ -40,6 +40,14 @@ namespace GServer
         {
             return left.CompareTo(right) > 0;
         }
+        public static bool operator <=(MessageCounter left, MessageCounter right)
+        {
+            return left.CompareTo(right) < 0 || left.CompareTo(right) == 0;
+        }
+        public static bool operator >=(MessageCounter left, MessageCounter right)
+        {
+            return left.CompareTo(right) > 0 || left.CompareTo(right) == 0;
+        }
         public static MessageCounter operator ++(MessageCounter mc)
         {
             if (mc._count < short.MaxValue)
@@ -68,6 +76,18 @@ namespace GServer
         public static int operator -(MessageCounter left, MessageCounter right)
         {
             var dif = left._count - right._count;
+            if (Math.Abs(dif) > (1 + short.MaxValue))
+            {
+                return Math.Abs(dif) - short.MaxValue - 1;
+            }
+            else
+            {
+                return dif;
+            }
+        }
+        public static int operator +(MessageCounter left, MessageCounter right)
+        {
+            var dif = left._count + right._count;
             if (Math.Abs(dif) > (1 + short.MaxValue))
             {
                 return Math.Abs(dif) - short.MaxValue - 1;

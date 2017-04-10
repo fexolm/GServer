@@ -226,8 +226,8 @@ namespace Unit_Tests
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
 
-            Assert.GreaterOrEqual(h1Messages.Count, 9, "Сообщение не пришло");
-            Assert.GreaterOrEqual(h2Messages.Count, 9, "Ack не пришел");
+            Assert.AreEqual(h1Messages.Count, 9, "Сообщение не пришло");
+            Assert.AreEqual(h2Messages.Count, 9, "Ack не пришел");
             h1.StopListen();
             h2.StopListen();
         }

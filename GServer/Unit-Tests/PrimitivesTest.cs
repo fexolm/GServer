@@ -1,5 +1,7 @@
 ﻿using GServer;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 
 namespace Unit_Tests
 {
@@ -25,6 +27,29 @@ namespace Unit_Tests
             Assert.AreEqual(min - 1, 1);
             Assert.AreEqual(almostMin - 130, 30);
             Assert.AreEqual(mc100 - 100, 0);
+        }
+
+        [Test]
+        public void CustomListTest()
+        {
+            CustomList<int> myList = new CustomList<int>();
+            List<int> defaultList = new List<int>();
+            Random rnd = new Random();
+            for (int i = 0; i < 10; i++)
+            {
+                var val = rnd.Next();
+                defaultList.Add(val);
+                myList.PushBack(val);
+            }
+
+            var mIter = myList.GetEnumerator();
+            var dIter = defaultList.GetEnumerator();
+            for (int i = 0; i < 10; i++)
+            {
+                Assert.AreEqual(mIter.MoveNext(), dIter.MoveNext());
+                Assert.AreEqual(dIter.Current, mIter.Current);
+            }
+            Assert.AreEqual(false, mIter.MoveNext());
         }
     }
 }
