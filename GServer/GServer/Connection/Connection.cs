@@ -141,7 +141,7 @@ namespace GServer
                 else
                 {
                     var ack = new Ack();
-                    _ackPerMsgType.Add((short)msg.Header.Type, ack);
+                    _ackPerMsgType.Add(msg.Header.Type, ack);
                     ack.MessageArrived += AckArrivedHandler;
                     bitField = 1;
                 }

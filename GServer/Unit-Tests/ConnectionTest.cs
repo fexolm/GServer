@@ -38,7 +38,6 @@ namespace Unit_Tests
             Assert.AreEqual(true, con.HasAlreadyArrived(msg));
             msg.MessageId = 0;
             Assert.AreEqual(true, con.HasAlreadyArrived(msg));
-
             msg.MessageId = 4;
             Assert.AreEqual(false, con.HasAlreadyArrived(msg));
             msg.MessageId = 5;

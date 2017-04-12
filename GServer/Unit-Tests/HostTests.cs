@@ -109,7 +109,6 @@ namespace Unit_Tests
             Assert.AreEqual(string.Empty, err);
 
             Assert.AreEqual(h1Messages.Count, 9, "Сообщение не пришло");
-            Assert.GreaterOrEqual(h2Messages.Count, 9, "Ack не пришел");
             h1.StopListen();
             h2.StopListen();
         }
@@ -168,7 +167,6 @@ namespace Unit_Tests
             Assert.AreEqual(string.Empty, err);
 
             Assert.AreEqual(9, h1Messages.Count, "Сообщение не пришло");
-            //Assert.AreEqual(9, h2Messages.Count, "Ack не пришел");
             h1.StopListen();
             h2.StopListen();
         }
@@ -227,7 +225,6 @@ namespace Unit_Tests
             Assert.AreEqual(string.Empty, err);
 
             Assert.AreEqual(h1Messages.Count, 9, "Сообщение не пришло");
-            Assert.AreEqual(h2Messages.Count, 9, "Ack не пришел");
             h1.StopListen();
             h2.StopListen();
         }
@@ -286,7 +283,6 @@ namespace Unit_Tests
             Assert.AreEqual(string.Empty, err);
 
             Assert.AreEqual(h1Messages.Count, 9, "Сообщение не пришло");
-            Assert.GreaterOrEqual(h2Messages.Count, 9, "Ack не пришел");
             h1.StopListen();
             h2.StopListen();
         }

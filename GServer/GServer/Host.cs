@@ -106,6 +106,9 @@ namespace GServer
         {
             if (msg.Header.Reliable)
             {
+                var ack = connection.GenerateAck(msg);
+                var bitField = new DataStorage(ack.Body).ReadInt32();
+                Send(ack, connection);
                 if (!msg.Header.Sequenced && !msg.Header.Ordered)
                 {
                     if (connection.HasAlreadyArrived(msg))
@@ -113,9 +116,6 @@ namespace GServer
                         return;
                     }
                 }
-                var ack = connection.GenerateAck(msg);
-                var bitField = new DataStorage(ack.Body).ReadInt32();
-                Send(ack, connection);
             }
             if (msg.Header.Sequenced)
             {
