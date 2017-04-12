@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
 namespace Unit_Tests
 {
     class PrimitivesTest
@@ -50,6 +50,22 @@ namespace Unit_Tests
                 Assert.AreEqual(dIter.Current, mIter.Current);
             }
             Assert.AreEqual(false, mIter.MoveNext());
+        }
+
+        [Test]
+        public void AckTest()
+        {
+            Ack ack = new Ack();
+
+            Message msg = new Message(123, Mode.Reliable);
+            for(int i=0; i<32; i++)
+            {
+                msg.MessageId = i;
+                ack.ReceiveReliable(msg);
+            }
+            var buffer = ack.GetAcks();
+            Assert.AreEqual(1, buffer.Count());
+            Assert.AreEqual(-1, buffer.First().Val2);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GServer.Containers;
+using System;
 using System.Collections.Generic;
 namespace GServer
 {
@@ -8,45 +9,19 @@ namespace GServer
         public Ack()
         {
             _notYetArrivedMessages = new List<MessageCounter>();
+            _ackBuffer = new List<MessageCounter>();
         }
-        private MessageCounter _lastRecievedMessage;
         private IList<MessageCounter> _notYetArrivedMessages;
-        private Queue<MessageCounter> _resendInterval = new Queue<MessageCounter>();
-        public int ReceiveReliable(Message msg)
+        private List<MessageCounter> _ackBuffer;
+        public void ReceiveReliable(Message msg)
         {
-            int bitField = 0;
-            lock (_notYetArrivedMessages)
+            lock (_ackBuffer)
             {
-                MessageCounter counter;
-                if (msg.MessageId > _lastRecievedMessage)
+                if (!_ackBuffer.Contains(msg.MessageId))
                 {
-                    counter = _lastRecievedMessage;
-                    counter++;
-                    while (counter != msg.MessageId)
-                    {
-                        _notYetArrivedMessages.Add(counter);
-                        counter++;
-                    }
-                    _lastRecievedMessage = msg.MessageId;
-                }
-                else
-                {
-                    if (_notYetArrivedMessages.Contains(msg.MessageId))
-                    {
-                        _notYetArrivedMessages.Remove(msg.MessageId);
-                    }
-                }
-                counter = msg.MessageId;
-                for (int i = 0; i < 32; i++)
-                {
-                    if (!_notYetArrivedMessages.Contains(counter))
-                    {
-                        bitField |= 1 << i;
-                    }
-                    counter--;
+                    _ackBuffer.Add(msg.MessageId);
                 }
             }
-            return bitField;
         }
         public void ProcessReceivedAckBitfield(int bitField, MessageCounter msgId, short msgType)
         {
@@ -62,6 +37,39 @@ namespace GServer
             }
         }
         public event Action<MessageCounter, short> MessageArrived;
+        public static readonly IEnumerable<Pair<MessageCounter, int>> Empty = new List<Pair<MessageCounter, int>>();
+        public IEnumerable<Pair<MessageCounter, int>> GetAcks()
+        {
+            lock (_ackBuffer)
+            {
+                if (_ackBuffer.Count == 0)
+                {
+                    return Empty;
+                }
+                List<Pair<MessageCounter, int>> res = new List<Pair<MessageCounter, int>>();
+                _ackBuffer.Sort((self, other) => other.CompareTo(self));
+                int i = 1;
+                int len = _ackBuffer.Count;
+                int shift = 0;
+                res.Add(new Pair<MessageCounter, int>(_ackBuffer[0], 1));
+                for (; i < len; i++)
+                {
+                    int dif = Math.Abs(_ackBuffer[i] - _ackBuffer[i - 1]);
+                    if (shift + dif < 32)
+                    {
+                        shift += dif;
+                        res[res.Count-1].Val2 |= (1 << shift);
+                    }
+                    else
+                    {
+                        res.Add(new Pair<MessageCounter, int>(_ackBuffer[i], 1));
+                        shift = 1;
+                    }
+                }
+                _ackBuffer.Clear();
+                return res;
+            }
+        }
     }
 }
 

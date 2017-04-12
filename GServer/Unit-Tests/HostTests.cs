@@ -27,12 +27,12 @@ namespace Unit_Tests
             Thread.Sleep(1000);
             TestSocket.Join(ts1, ts2);
             bool successMessage = false;
-            bool successArc = false;
+            bool successAck = false;
             Timer t1 = new Timer((o) => ServerTimer.Tick());
             t1.Change(100, 100);
             h2.AddHandler((short)MessageType.Ack, (m, e) =>
             {
-                successArc = true;
+                successAck = true;
             });
             h1.AddHandler((short)MessageType.Rpc, (m, e) =>
             {
@@ -49,7 +49,7 @@ namespace Unit_Tests
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
             Assert.AreEqual(true, successMessage, "Сообщение не пришло");
-            Assert.AreEqual(true, successArc, "Ack не пришел");
+            Assert.AreEqual(true, successAck, "Ack не пришел");
 
             h1.StopListen();
             h2.StopListen();
@@ -111,6 +111,14 @@ namespace Unit_Tests
             Assert.AreEqual(h1Messages.Count, 9, "Сообщение не пришло");
             h1.StopListen();
             h2.StopListen();
+            foreach (var connection in h1.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount);
+            }
+            foreach (var connection in h2.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount);
+            }
         }
         [Test]
         [Timeout(8000)]
@@ -169,6 +177,14 @@ namespace Unit_Tests
             Assert.AreEqual(9, h1Messages.Count, "Сообщение не пришло");
             h1.StopListen();
             h2.StopListen();
+            foreach (var connection in h1.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount);
+            }
+            foreach (var connection in h2.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount);
+            }
         }
         [Test]
         [Timeout(8000)]
@@ -227,9 +243,16 @@ namespace Unit_Tests
             Assert.AreEqual(h1Messages.Count, 9, "Сообщение не пришло");
             h1.StopListen();
             h2.StopListen();
+            foreach(var connection in h1.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount);
+            }
+            foreach (var connection in h2.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount);
+            }
         }
         [Test]
-        [Timeout(8000)]
         public void HostConversationReliableOrdered()
         {
             Host h1 = new Host(8080);
@@ -285,6 +308,15 @@ namespace Unit_Tests
             Assert.AreEqual(h1Messages.Count, 9, "Сообщение не пришло");
             h1.StopListen();
             h2.StopListen();
+
+            foreach (var connection in h1.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount);
+            }
+            foreach (var connection in h2.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount);
+            }
         }
         [Test]
         public void OrderedIfPacketsLost()
@@ -301,8 +333,8 @@ namespace Unit_Tests
             });
             bool connected = false;
             client.OnConnect = () => { connected = true; };
-            var ts1 = new TestSocketRnd(0.3);
-            var ts2 = new TestSocketRnd(0.3);
+            var ts1 = new TestSocketRnd(0.85);
+            var ts2 = new TestSocketRnd(0.85);
             server.StartListen(0, ts1);
             client.StartListen(0, ts2);
             Timer t1 = new Timer((o) => ServerTimer.Tick());
@@ -318,8 +350,16 @@ namespace Unit_Tests
             {
                 client.Send(new Message(1023, Mode.Reliable | Mode.Ordered));
             }
-            Thread.Sleep(10000);
+            Thread.Sleep(30000);
             Assert.GreaterOrEqual(messageCount, 300);
+            foreach (var connection in client.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount, "client buffer not empty");
+            }
+            foreach (var connection in server.GetConnections())
+            {
+                Assert.AreEqual(0, connection.BufferCount, "server buffer not empty");
+            }
         }
     }
 }

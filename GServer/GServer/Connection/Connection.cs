@@ -51,8 +51,31 @@ namespace GServer
 
     public class Connection
     {
+        public readonly IPEndPoint EndPoint;
+        public readonly Token Token;
+        public DateTime LastActivity { get; private set; }
+        public Connection(IPEndPoint endPoint)
+            : this(endPoint, Token.GenerateToken())
+        {
+        }
+        public Connection(IPEndPoint endPoint, Token token)
+        {
+            EndPoint = endPoint;
+            Token = token;
+            LastActivity = DateTime.Now;
+            _ackPerMsgType = new Dictionary<short, Ack>();
+            _lastSequencedMessageNumPerType = new Dictionary<short, MessageCounter>();
+            _lastOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
+            _lastUnOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
+            _messageQueuePerType = new SortedDictionary<short, MessageQueue>();
+            _arrivedReliableMessagePerType = new Dictionary<short, Pair<CustomList<MessageCounter>, MessageCounter>>();
+        }
+        public event Action Disconnected;
+
+        public int BufferCount => _messageBuffer.Count;
+
         private List<Packet> _messageBuffer = new List<Packet>();
-        public void MarkToSend(Message msg)
+        internal void MarkToSend(Message msg)
         {
             var p = new Packet(msg);
             lock (_messageBuffer)
@@ -60,9 +83,22 @@ namespace GServer
                 _messageBuffer.Add(p);
             }
         }
-        public byte[] GetBytesToSend()
+        internal byte[] GetBytesToSend()
         {
+            int i = 0;
             List<Packet> toSend = new List<Packet>();
+            foreach (var ack in _ackPerMsgType)
+            {
+                var buffer = ack.Value.GetAcks();
+                if (buffer != Ack.Empty)
+                {
+                    foreach (var msg in buffer)
+                    {
+                        i++;
+                        toSend.Add(new Packet(Message.Ack(ack.Key, msg.Val1, Token, msg.Val2)));
+                    }
+                }
+            }
             lock (_messageBuffer)
             {
                 List<Packet> toDelete = new List<Packet>();
@@ -71,7 +107,6 @@ namespace GServer
                     int p = x.Priority.CompareTo(y.Priority);
                     return p == 0 ? x.Msg.MessageId.CompareTo(y.Msg.MessageId) : -p;
                 });
-                int i = 0;
                 for (; i < 128 && i < _messageBuffer.Count; i++)
                 {
                     toSend.Add(_messageBuffer[i]);
@@ -97,30 +132,10 @@ namespace GServer
             }
             return ds.Serialize();
         }
-        public readonly IPEndPoint EndPoint;
-        public readonly Token Token;
-        public DateTime LastActivity { get; private set; }
-        public Connection(IPEndPoint endPoint)
-            : this(endPoint, Token.GenerateToken())
-        {
-        }
-        public Connection(IPEndPoint endPoint, Token token)
-        {
-            EndPoint = endPoint;
-            Token = token;
-            LastActivity = DateTime.Now;
-            _ackPerMsgType = new Dictionary<short, Ack>();
-            _lastSequencedMessageNumPerType = new Dictionary<short, MessageCounter>();
-            _lastOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
-            _lastUnOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
-            _messageQueuePerType = new SortedDictionary<short, MessageQueue>();
-            _arrivedReliableMessagePerType = new Dictionary<short, Pair<CustomList<MessageCounter>, MessageCounter>>();
-        }
         internal void UpdateActivity()
         {
             LastActivity = DateTime.Now;
         }
-        public event Action Disconnected;
         internal void Disconnect()
         {
             if (Disconnected != null)
@@ -129,24 +144,22 @@ namespace GServer
         #region Reliable
         private readonly IDictionary<short, Ack> _ackPerMsgType;
         private readonly IDictionary<short, Pair<CustomList<MessageCounter>, MessageCounter>> _arrivedReliableMessagePerType;
-        internal Message GenerateAck(Message msg)
+        internal void ReceiveReliable(Message msg)
         {
-            int bitField;
             lock (_ackPerMsgType)
             {
                 if (_ackPerMsgType.ContainsKey(msg.Header.Type))
                 {
-                    bitField = _ackPerMsgType[msg.Header.Type].ReceiveReliable(msg);
+                    _ackPerMsgType[msg.Header.Type].ReceiveReliable(msg);
                 }
                 else
                 {
                     var ack = new Ack();
                     _ackPerMsgType.Add(msg.Header.Type, ack);
                     ack.MessageArrived += AckArrivedHandler;
-                    bitField = 1;
+                    ack.ReceiveReliable(msg);
                 }
             }
-            return Message.Ack(msg.Header, bitField);
         }
         internal bool HasAlreadyArrived(Message msg)
         {

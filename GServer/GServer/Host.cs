@@ -46,12 +46,12 @@ namespace GServer
         }
         private void ServerTick()
         {
-            _connectionCleaningTick++;
-            if (_connectionCleaningTick > ConnectionCleaningInterval)
-            {
-                CleanConnections();
-                _connectionCleaningTick = 0;
-            }
+            //_connectionCleaningTick++;
+            //if (_connectionCleaningTick > ConnectionCleaningInterval)
+            //{
+            //    CleanConnections();
+            //    _connectionCleaningTick = 0;
+            //}
             _connectionManager.InvokeForAllConnections(c =>
             {
                 byte[] buffer = c.GetBytesToSend();
@@ -106,9 +106,7 @@ namespace GServer
         {
             if (msg.Header.Reliable)
             {
-                var ack = connection.GenerateAck(msg);
-                var bitField = new DataStorage(ack.Body).ReadInt32();
-                Send(ack, connection);
+                connection.ReceiveReliable(msg);
                 if (!msg.Header.Sequenced && !msg.Header.Ordered)
                 {
                     if (connection.HasAlreadyArrived(msg))
@@ -324,6 +322,15 @@ namespace GServer
         public void Tick()
         {
             ServerTimer.Tick();
+        }
+        public IEnumerable<Connection> GetConnections()
+        {
+            List<Connection> res = new List<Connection>();
+            lock (_connectionManager)
+            {
+                _connectionManager.InvokeForAllConnections(c=> res.Add(c));
+            }
+            return res;
         }
         ~Host()
         {

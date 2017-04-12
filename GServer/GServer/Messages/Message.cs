@@ -166,13 +166,14 @@ namespace GServer
         }
         private static readonly Message _handshake = new Message((short)MessageType.Handshake, Mode.None);
         public static Message Handshake { get { return _handshake; } }
-        public static Message Ack(MessageHeader header, int ackBitField)
+        public static Message Ack(short type, MessageCounter msgId, Token conToken, int ackBitField)
         {
             var ds = new DataStorage();
             ds.Push(ackBitField);
-            ds.Push(header.Type);
+            ds.Push(type);
             var res = new Message((short)MessageType.Ack, Mode.None, ds);
-            res.MessageId = header.MessageId;
+            res.MessageId = msgId;
+            res.ConnectionToken = conToken;
             return res;
         }
         private Message() { }
