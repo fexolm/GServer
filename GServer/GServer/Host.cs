@@ -46,12 +46,12 @@ namespace GServer
         }
         private void ServerTick()
         {
-            //_connectionCleaningTick++;
-            //if (_connectionCleaningTick > ConnectionCleaningInterval)
-            //{
-            //    CleanConnections();
-            //    _connectionCleaningTick = 0;
-            //}
+            _connectionCleaningTick++;
+            if (_connectionCleaningTick > ConnectionCleaningInterval)
+            {
+                CleanConnections();
+                _connectionCleaningTick = 0;
+            }
             _connectionManager.InvokeForAllConnections(c =>
             {
                 byte[] buffer = c.GetBytesToSend();
@@ -69,10 +69,7 @@ namespace GServer
         }
         public void CleanConnections()
         {
-            lock (_connectionManager)
-            {
-                _connectionManager.RemoveNotActive();
-            }
+            _connectionManager.RemoveNotActive();
         }
         private void Listen(int port)
         {
@@ -183,10 +180,7 @@ namespace GServer
             }
             if (handlers != null)
             {
-                lock (_connectionManager)
-                {
-                    connection = _connectionManager[msg.Header.ConnectionToken];
-                }
+                connection = _connectionManager[msg.Header.ConnectionToken];
                 foreach (var h in handlers)
                 {
                     foreach (var m in messages)
@@ -239,10 +233,8 @@ namespace GServer
         public void Send(Message msg)
         {
             Connection connection;
-            lock (_connectionManager)
-            {
-                connection = _connectionManager[_hostToken];
-            }
+
+            connection = _connectionManager[_hostToken];
             if (msg.Reliable)
                 msg.MessageId = connection.GetMessageId(msg);
             msg.ConnectionToken = _hostToken;
@@ -326,10 +318,7 @@ namespace GServer
         public IEnumerable<Connection> GetConnections()
         {
             List<Connection> res = new List<Connection>();
-            lock (_connectionManager)
-            {
-                _connectionManager.InvokeForAllConnections(c=> res.Add(c));
-            }
+            _connectionManager.InvokeForAllConnections(c => res.Add(c));
             return res;
         }
         ~Host()
