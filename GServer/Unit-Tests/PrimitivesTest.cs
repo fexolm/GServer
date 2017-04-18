@@ -63,9 +63,17 @@ namespace Unit_Tests
                 msg.MessageId = i;
                 ack.ReceiveReliable(msg);
             }
+
+            for (int i = 32; i < 64; i++)
+            {
+                msg.MessageId = i;
+                ack.ReceiveReliable(msg);
+            }
+
             var buffer = ack.GetAcks();
-            Assert.AreEqual(1, buffer.Count());
-            Assert.AreEqual(-1, buffer.First().Val2);
+            Assert.AreEqual(2, buffer.Count());
+            Assert.AreEqual(-1, buffer.ToList()[0].Val2);
+            Assert.AreEqual(-1, buffer.ToList()[1].Val2);
         }
     }
 }

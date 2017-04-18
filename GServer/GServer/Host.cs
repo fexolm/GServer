@@ -89,7 +89,8 @@ namespace GServer
                     {
                         int len = ds.ReadInt32();
                         var msg = Message.Deserialize(ds.ReadBytes(len));
-                        Console.WriteLine("Recieved message {0} {1}", msg.Header.Type, msg.MessageId);
+                        if(msg.Header.Type == 5)
+                            Console.WriteLine("Recieved {0}", msg.MessageId);
                         Connection connection;
                         if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
                         {
@@ -310,7 +311,6 @@ namespace GServer
         public Action<string> ErrLog;
         public Action<string> DebugLog;
         public Action OnConnect;
-        public event Action PacketLost;
         public void Tick()
         {
             ServerTimer.Tick();

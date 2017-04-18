@@ -338,7 +338,7 @@ namespace Unit_Tests
             server.StartListen(0, ts1);
             client.StartListen(0, ts2);
             Timer t1 = new Timer((o) => ServerTimer.Tick());
-            t1.Change(100, 100);
+            t1.Change(10, 10);
             Thread.Sleep(1000);
             TestSocket.Join(ts1, ts2);
             while (!connected)
@@ -350,8 +350,8 @@ namespace Unit_Tests
             {
                 client.Send(new Message(1023, Mode.Reliable | Mode.Ordered));
             }
-            Thread.Sleep(30000);
-            Assert.GreaterOrEqual(messageCount, 300);
+            Thread.Sleep(4000);
+            Assert.AreEqual(messageCount, 300);
             foreach (var connection in client.GetConnections())
             {
                 Assert.AreEqual(0, connection.BufferCount, "client buffer not empty");

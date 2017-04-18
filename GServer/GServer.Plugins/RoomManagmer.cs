@@ -18,6 +18,7 @@ namespace GServer.Plugins
         private Host _host;
         public RoomManager(Matchmaking<TAccountModel> matchmaking)
         {
+            _rooms = new Dictionary<Token, Room<TAccountModel, TGame>>();
             _matchmaking = matchmaking;
             _matchmaking.RoomCreated += ManageRoom;
         }

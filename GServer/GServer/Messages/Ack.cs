@@ -26,14 +26,16 @@ namespace GServer
         public void ProcessReceivedAckBitfield(int bitField, MessageCounter msgId, short msgType)
         {
             var tmp = msgId;
-            while (bitField != 0)
+            uint bf = (uint)bitField;
+            while (bf != 0)
             {
-                if ((bitField & 1) == 1)
+                if ((bf & 1) == 1)
                 {
-                    MessageArrived?.Invoke(msgId, msgType);
+                    Console.WriteLine("{0} arrived", tmp);
+                    MessageArrived?.Invoke(tmp, msgType);
                 }
-                bitField <<= 1;
-                tmp--;
+                bf >>= 1;
+                tmp++;
             }
         }
         public event Action<MessageCounter, short> MessageArrived;
@@ -63,7 +65,7 @@ namespace GServer
                     else
                     {
                         res.Add(new Pair<MessageCounter, int>(_ackBuffer[i], 1));
-                        shift = 1;
+                        shift = 0;
                     }
                 }
                 _ackBuffer.Clear();
