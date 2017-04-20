@@ -69,7 +69,7 @@ namespace Unit_Tests
                     recievedMessages.Add(mc);
             };
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 10; i++)
             {
                 for (int j = 0; j < 100; j++)
                 {
@@ -83,44 +83,11 @@ namespace Unit_Tests
                 {
                     sender.ProcessReceivedAckBitfield(ack.Val2, ack.Val1, 123);
                 }
-                recievedMessages.Sort();
-                sendedMessages.Sort();
                 var rErr1 = recievedMessages.Where(m => !sendedMessages.Contains(m)).ToArray();
                 var rErr2 = sendedMessages.Where(m => !recievedMessages.Contains(m)).ToArray();
                 Assert.AreEqual(0, rErr1.Length);
                 Assert.AreEqual(0, rErr2.Length);
             }
-
-            recievedMessages.Sort();
-            sendedMessages.Sort();
-            Assert.AreEqual(recievedMessages.Count, sendedMessages.Count);
-            for (int i = 0; i < recievedMessages.Count; i++)
-            {
-                Assert.AreEqual(recievedMessages[i], sendedMessages[i]);
-            }
-
-
-            //Message msg = new Message(123, Mode.Reliable);
-            //for(int i=0; i<32; i++)
-            //{
-            //    msg.MessageId = i;
-            //    ack.ReceiveReliable(msg);
-            //}
-
-            //for (int i = 32; i < 64; i++)
-            //{
-            //    msg.MessageId = i;
-            //    ack.ReceiveReliable(msg);
-            //}
-
-            //var buffer = ack.GetAcks();
-            //Assert.AreEqual(2, buffer.Count());
-            //Assert.AreEqual(-1, buffer.ToList()[0].Val2);
-            //Assert.AreEqual(-1, buffer.ToList()[1].Val2);
-
-
-
-
         }
     }
 }
