@@ -28,21 +28,26 @@ namespace GServer.Plugins
             _playerQueue = playerQueue;
             _playerQueue.OnGameFound += CreateGameSession;
         }
+        public Matchmaking(Account<TAccountModel> account)
+        {
+            _account = account;
+        }
         public void Bind(Host host)
         {
             _host = host;
-            _account.AddHandler((short)MatchmakingMessages.GameFound, (m, a) =>
+            _host.AddHandler((short)MatchmakingMessages.GameFound, (m, c) =>
             {
                 var ds = new DataStorage(m.Body);
                 OnGameFound.Invoke(new Token(ds.ReadInt32()));
             });
             _account.AddHandler((short)MatchmakingMessages.MatchmakingRequest, (m, a) =>
-             {
-                 lock (_playerQueue)
+            {
+                Console.WriteLine("matchmaking request from {0}", a.Connection.EndPoint.ToString());
+                lock (_playerQueue)
                  {
                      _playerQueue.AddPlayer(a);
                  }
-             });
+            });
             _account.AddHandler((short)MatchmakingMessages.CancelMatchmaking, (m, a) =>
             {
                 lock (_playerQueue)

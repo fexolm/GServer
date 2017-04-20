@@ -70,7 +70,6 @@ namespace Unit_Tests
                 {
                     int len = ds.ReadInt32();
                     var msg = Message.Deserialize(ds.ReadBytes(len));
-                    System.Console.WriteLine("Sending message {0} {1}", msg.Header.Type, msg.MessageId);
                 }
             }
             var dm = new Datagram(dgram, _endPoint);
@@ -86,7 +85,6 @@ namespace Unit_Tests
                 {
                     int len = ds.ReadInt32();
                     var msg = Message.Deserialize(ds.ReadBytes(len));
-                    System.Console.WriteLine("Sending message {0} {1}", msg.Header.Type, msg.MessageId);
                 }
             }
             var dm = new Datagram(dgram, _endPoint);
@@ -147,7 +145,6 @@ namespace Unit_Tests
                     {
                         int len = ds.ReadInt32();
                         var msg = Message.Deserialize(ds.ReadBytes(len));
-                        System.Console.WriteLine("Lost message {0} {1}", msg.Header.Type, msg.MessageId);
                     }
                 }
             }
@@ -169,7 +166,6 @@ namespace Unit_Tests
                     {
                         int len = ds.ReadInt32();
                         var msg = Message.Deserialize(ds.ReadBytes(len));
-                        System.Console.WriteLine("Lost message {0} {1}", msg.Header.Type, msg.MessageId);
                     }
                 }
             }

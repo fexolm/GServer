@@ -72,7 +72,16 @@ namespace GServer
         }
         public event Action Disconnected;
 
-        public int BufferCount => _messageBuffer.Count;
+        public int BufferCount
+        {
+            get
+            {
+                lock (_messageBuffer)
+                {
+                    return _messageBuffer.Count;
+                }
+            }
+        }
 
         private List<Packet> _messageBuffer = new List<Packet>();
         internal void MarkToSend(Message msg)
@@ -87,15 +96,18 @@ namespace GServer
         {
             int i = 0;
             List<Packet> toSend = new List<Packet>();
-            foreach (var ack in _ackPerMsgType)
+            lock (_ackPerMsgType)
             {
-                var buffer = ack.Value.GetAcks();
-                if (buffer != Ack.Empty)
+                foreach (var ack in _ackPerMsgType)
                 {
-                    foreach (var msg in buffer)
+                    var buffer = ack.Value.GetAcks();
+                    if (buffer != Ack.Empty)
                     {
-                        i++;
-                        toSend.Add(new Packet(Message.Ack(ack.Key, msg.Val1, Token, msg.Val2)));
+                        foreach (var msg in buffer)
+                        {
+                            i++;
+                            toSend.Add(new Packet(Message.Ack(ack.Key, msg.Val1, Token, msg.Val2)));
+                        }
                     }
                 }
             }
@@ -175,7 +187,6 @@ namespace GServer
                 var arrivedMessages = pair.Val1;
 
                 var node = arrivedMessages.First;
-                Console.WriteLine("Recieved {0}, buffer was {1}", msgId, arrivedMessages.ToString());
                 CustomNode<MessageCounter> res = null;
                 int pos = 0;
                 if (msgId >= pair.Val2)
@@ -255,7 +266,6 @@ namespace GServer
                                                 && m.Msg.Header.Type == arg2);
                 if (toRemove != null)
                 {
-                    Console.WriteLine("Removing {0}, new buffer length: {1}", toRemove.Msg.MessageId, _messageBuffer.Count);
                     _messageBuffer.Remove(toRemove);
                 }
             }

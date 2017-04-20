@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GServer.Plugins
 {
@@ -7,9 +8,11 @@ namespace GServer.Plugins
         where TAccountModel : AccountModel, new()
     {
         public AccountModel[] Players { get; set; }
+        public Action<Message, Connection> Send;
+        public abstract void InitGame();
     }
 
-    class RoomManager<TGame, TAccountModel> : IPlugin
+    public class RoomManager<TGame, TAccountModel> : IPlugin
         where TAccountModel : AccountModel, new()
         where TGame : Game<TAccountModel>, new()
     {
@@ -18,12 +21,15 @@ namespace GServer.Plugins
         private Host _host;
         public RoomManager(Matchmaking<TAccountModel> matchmaking)
         {
+            _rooms = new Dictionary<Token, Room<TAccountModel, TGame>>();
             _matchmaking = matchmaking;
             _matchmaking.RoomCreated += ManageRoom;
         }
         private void ManageRoom(TAccountModel[] clients)
         {
             var room = new Room<TAccountModel, TGame>(clients);
+            room.Send = (msg, con) => _host.Send(msg, con);
+            room.InitRoom();
             lock (_rooms)
             {
                 foreach (var client in clients)
@@ -53,7 +59,7 @@ namespace GServer.Plugins
         {
             _host = host;
         }
-        public void AddHandler(short messageType, Action<Message, Room<TAccountModel, TGame>> roomHandler)
+        public void AddHandler(short messageType, Action<Message, Room<TAccountModel, TGame>, TAccountModel> roomHandler)
         {
             _host.AddHandler(messageType, (m, c) =>
             {
@@ -61,7 +67,8 @@ namespace GServer.Plugins
                 {
                     if (_rooms.ContainsKey(c.Token))
                     {
-                        roomHandler.Invoke(m, _rooms[c.Token]);
+                        var room = _rooms[c.Token];
+                    roomHandler.Invoke(m, room, room.Players.FirstOrDefault(p=>p.Connection.Token == c.Token));
                     }
                 }
             });

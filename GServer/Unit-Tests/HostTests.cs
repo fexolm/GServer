@@ -338,7 +338,7 @@ namespace Unit_Tests
             server.StartListen(0, ts1);
             client.StartListen(0, ts2);
             Timer t1 = new Timer((o) => ServerTimer.Tick());
-            t1.Change(100, 100);
+            t1.Change(10, 10);
             Thread.Sleep(1000);
             TestSocket.Join(ts1, ts2);
             while (!connected)
@@ -346,12 +346,12 @@ namespace Unit_Tests
                 client.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
                 Thread.Sleep(1000);
             }
-            for (int i = 0; i < 300; i++)
+            for (int i = 0; i < 500; i++)
             {
-                client.Send(new Message(1023, Mode.Reliable | Mode.Ordered));
+                client.Send(new Message(1023, Mode.Reliable | Mode.Ordered, new byte[100]));
             }
-            Thread.Sleep(30000);
-            Assert.GreaterOrEqual(messageCount, 300);
+            Thread.Sleep(5000);
+            Assert.AreEqual(messageCount, 500);
             foreach (var connection in client.GetConnections())
             {
                 Assert.AreEqual(0, connection.BufferCount, "client buffer not empty");
