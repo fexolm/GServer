@@ -34,7 +34,7 @@ namespace GServer
                     MessageArrived?.Invoke(tmp, msgType);
                 }
                 bf >>= 1;
-                tmp++;
+                tmp--;
             }
         }
         public event Action<MessageCounter, short> MessageArrived;
@@ -56,6 +56,12 @@ namespace GServer
                 for (; i < len; i++)
                 {
                     int dif = Math.Abs(_ackBuffer[i] - _ackBuffer[i - 1]);
+                    if(dif == 0)
+                    {
+                        len--;
+                        i--;
+                        continue;
+                    }
                     if (shift + dif < 32)
                     {
                         shift += dif;

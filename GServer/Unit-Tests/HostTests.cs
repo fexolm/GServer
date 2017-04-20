@@ -346,12 +346,12 @@ namespace Unit_Tests
                 client.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
                 Thread.Sleep(1000);
             }
-            for (int i = 0; i < 300; i++)
+            for (int i = 0; i < 500; i++)
             {
-                client.Send(new Message(1023, Mode.Reliable | Mode.Ordered));
+                client.Send(new Message(1023, Mode.Reliable | Mode.Ordered, new byte[100]));
             }
-            Thread.Sleep(4000);
-            Assert.AreEqual(messageCount, 300);
+            Thread.Sleep(5000);
+            Assert.AreEqual(messageCount, 500);
             foreach (var connection in client.GetConnections())
             {
                 Assert.AreEqual(0, connection.BufferCount, "client buffer not empty");

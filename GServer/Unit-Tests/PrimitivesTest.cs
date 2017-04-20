@@ -55,25 +55,72 @@ namespace Unit_Tests
         [Test]
         public void AckTest()
         {
-            Ack ack = new Ack();
+            Ack sender = new Ack();
+            Ack receiver = new Ack();
+            var msg = new Message(123, Mode.Reliable);
+            Random rnd = new Random();
 
-            Message msg = new Message(123, Mode.Reliable);
-            for(int i=0; i<32; i++)
+            List<MessageCounter> sendedMessages = new List<MessageCounter>();
+            List<MessageCounter> recievedMessages = new List<MessageCounter>();
+
+            sender.MessageArrived += (mc, type) =>
             {
-                msg.MessageId = i;
-                ack.ReceiveReliable(msg);
+                if (!recievedMessages.Contains(mc))
+                    recievedMessages.Add(mc);
+            };
+
+            for (int i = 0; i < 100; i++)
+            {
+                for (int j = 0; j < 100; j++)
+                {
+                    msg.MessageId = (short)rnd.Next(0, 10000);
+                    if (!sendedMessages.Contains(msg.MessageId))
+                        sendedMessages.Add(msg.MessageId);
+                    receiver.ReceiveReliable(msg);
+                }
+                var acks = receiver.GetAcks();
+                foreach (var ack in acks)
+                {
+                    sender.ProcessReceivedAckBitfield(ack.Val2, ack.Val1, 123);
+                }
+                recievedMessages.Sort();
+                sendedMessages.Sort();
+                var rErr1 = recievedMessages.Where(m => !sendedMessages.Contains(m)).ToArray();
+                var rErr2 = sendedMessages.Where(m => !recievedMessages.Contains(m)).ToArray();
+                Assert.AreEqual(0, rErr1.Length);
+                Assert.AreEqual(0, rErr2.Length);
             }
 
-            for (int i = 32; i < 64; i++)
+            recievedMessages.Sort();
+            sendedMessages.Sort();
+            Assert.AreEqual(recievedMessages.Count, sendedMessages.Count);
+            for (int i = 0; i < recievedMessages.Count; i++)
             {
-                msg.MessageId = i;
-                ack.ReceiveReliable(msg);
+                Assert.AreEqual(recievedMessages[i], sendedMessages[i]);
             }
 
-            var buffer = ack.GetAcks();
-            Assert.AreEqual(2, buffer.Count());
-            Assert.AreEqual(-1, buffer.ToList()[0].Val2);
-            Assert.AreEqual(-1, buffer.ToList()[1].Val2);
+
+            //Message msg = new Message(123, Mode.Reliable);
+            //for(int i=0; i<32; i++)
+            //{
+            //    msg.MessageId = i;
+            //    ack.ReceiveReliable(msg);
+            //}
+
+            //for (int i = 32; i < 64; i++)
+            //{
+            //    msg.MessageId = i;
+            //    ack.ReceiveReliable(msg);
+            //}
+
+            //var buffer = ack.GetAcks();
+            //Assert.AreEqual(2, buffer.Count());
+            //Assert.AreEqual(-1, buffer.ToList()[0].Val2);
+            //Assert.AreEqual(-1, buffer.ToList()[1].Val2);
+
+
+
+
         }
     }
 }
