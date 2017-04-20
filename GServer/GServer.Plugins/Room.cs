@@ -6,20 +6,29 @@ namespace GServer.Plugins
         where TAccountModel : AccountModel, new()
         where TGame : Game<TAccountModel>, new()
     {
-        public readonly TGame Game;
+        public TGame Game;
         public readonly Token RoomToken;
         public TAccountModel[] Players;
         public Room(TAccountModel[] players)
         {
             RoomToken = Token.GenerateToken();
             Players = players;
+        }
+        public void InitRoom()
+        {
             Game = new TGame();
-            Game.Players = players;
+            Game.Players = Players;
+            Game.Send = (msg, con) =>
+            {
+                Send?.Invoke(msg, con);
+            };
+            Game.InitGame();
         }
         public Action RoomClosed;
         public void Close()
         {
             RoomClosed?.Invoke();
         }
+        public Action<Message, Connection> Send;
     }
 }

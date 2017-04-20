@@ -96,15 +96,18 @@ namespace GServer
         {
             int i = 0;
             List<Packet> toSend = new List<Packet>();
-            foreach (var ack in _ackPerMsgType)
+            lock (_ackPerMsgType)
             {
-                var buffer = ack.Value.GetAcks();
-                if (buffer != Ack.Empty)
+                foreach (var ack in _ackPerMsgType)
                 {
-                    foreach (var msg in buffer)
+                    var buffer = ack.Value.GetAcks();
+                    if (buffer != Ack.Empty)
                     {
-                        i++;
-                        toSend.Add(new Packet(Message.Ack(ack.Key, msg.Val1, Token, msg.Val2)));
+                        foreach (var msg in buffer)
+                        {
+                            i++;
+                            toSend.Add(new Packet(Message.Ack(ack.Key, msg.Val1, Token, msg.Val2)));
+                        }
                     }
                 }
             }
@@ -264,7 +267,6 @@ namespace GServer
                 if (toRemove != null)
                 {
                     _messageBuffer.Remove(toRemove);
-                    Console.WriteLine("Removing {0}", toRemove.Msg.MessageId);
                 }
             }
         }

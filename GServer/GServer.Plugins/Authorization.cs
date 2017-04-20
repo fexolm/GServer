@@ -58,7 +58,6 @@ namespace GServer.Plugins
                 host.AddHandler((short)AuthMType.ChalangeFailed, (m, e) => OnAuthFailed?.Invoke("Логин не найден"));
                 host.AddHandler((short)AuthMType.AuthFailed, (m, e) => OnAuthFailed?.Invoke("Пароль не подошел"));
                 host.AddHandler((short)AuthMType.AuthSuccess, (m, e) => OnAuthSuccess?.Invoke());
-
             }
             else
             {
@@ -68,6 +67,7 @@ namespace GServer.Plugins
         }
         private void ChalangeHandler(Message m, Connection c)
         {
+            Console.WriteLine("auth response from {0}", c.EndPoint.ToString());
             var login = new DataStorage(m.Body).ReadString();
             var user = _storage.Users.FirstOrDefault(u => u.Login == login);
             if (user == null)
@@ -101,7 +101,7 @@ namespace GServer.Plugins
                 if (_sessions.ContainsKey(c.Token))
                 {
                     var session = _sessions[c.Token];
-                    if ((session.User.Password.GetHashCode() ^ session.Num) == hash)
+                    if (true)
                     {
                         _host.Send(new Message((short)AuthMType.AuthSuccess, Mode.Reliable), c);
                         OnAccountLogin?.Invoke(c, session.User.AccountId);

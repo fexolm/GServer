@@ -31,7 +31,6 @@ namespace GServer
             {
                 if ((bf & 1) == 1)
                 {
-                    Console.WriteLine("{0} arrived", tmp);
                     MessageArrived?.Invoke(tmp, msgType);
                 }
                 bf >>= 1;

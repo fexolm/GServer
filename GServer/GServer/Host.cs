@@ -46,12 +46,12 @@ namespace GServer
         }
         private void ServerTick()
         {
-            _connectionCleaningTick++;
-            if (_connectionCleaningTick > ConnectionCleaningInterval)
-            {
-                CleanConnections();
-                _connectionCleaningTick = 0;
-            }
+            //_connectionCleaningTick++;
+            //if (_connectionCleaningTick > ConnectionCleaningInterval)
+            //{
+            //    CleanConnections();
+            //    _connectionCleaningTick = 0;
+            //}
             _connectionManager.InvokeForAllConnections(c =>
             {
                 byte[] buffer = c.GetBytesToSend();
@@ -81,7 +81,7 @@ namespace GServer
                     IPEndPoint endPoint = null;
                     var buffer = _client.Receive(ref endPoint);
 
-
+                    Console.WriteLine(endPoint.ToString());
                     if (buffer.Length == 0)
                         continue;
                     var ds = new DataStorage(buffer);
@@ -89,8 +89,6 @@ namespace GServer
                     {
                         int len = ds.ReadInt32();
                         var msg = Message.Deserialize(ds.ReadBytes(len));
-                        if(msg.Header.Type == 5)
-                            Console.WriteLine("Recieved {0}", msg.MessageId);
                         Connection connection;
                         if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
                         {
