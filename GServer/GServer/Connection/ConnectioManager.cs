@@ -22,7 +22,11 @@ namespace GServer
         {
             lock (_connections)
             {
-                _connections.Remove(token);
+                if (_connections.ContainsKey(token))
+                {
+                    _connections[token].Disconnect();
+                    _connections.Remove(token);
+                }
             }
         }
         public void RemoveNotActive()

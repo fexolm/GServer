@@ -39,7 +39,14 @@ namespace GServer
 
         public byte[] Receive(ref IPEndPoint remoteEP)
         {
-            return _client.Receive(ref remoteEP);
+            try
+            {
+                return _client.Receive(ref remoteEP);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public int Send(byte[] dgram)

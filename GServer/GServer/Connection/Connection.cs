@@ -86,6 +86,7 @@ namespace GServer
         }
 
         private List<Packet> _messageBuffer = new List<Packet>();
+
         internal void MarkToSend(Message msg)
         {
             var p = new Packet(msg);

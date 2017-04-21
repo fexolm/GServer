@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
-
+using GServer.Containers;
 namespace GServer
 {
     public delegate void ReceiveHandler(Message msg, Connection con);
@@ -44,6 +44,10 @@ namespace GServer
             });
             ServerTimer.OnTick += ServerTick;
         }
+        public void ForceDisconnect(Connection con)
+        {
+            _connectionManager.Remove(con.Token);
+        }
         private void ServerTick()
         {
             //_connectionCleaningTick++;
@@ -81,8 +85,10 @@ namespace GServer
                 {
                     IPEndPoint endPoint = null;
                     var buffer = _client.Receive(ref endPoint);
-
-                    Console.WriteLine(endPoint.ToString());
+                    if (buffer == null)
+                    {
+                        continue;
+                    }
                     if (buffer.Length == 0)
                         continue;
                     var ds = new DataStorage(buffer);

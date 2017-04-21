@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using GServer.Containers;
 
 namespace GServer.Plugins
 {
@@ -72,7 +73,7 @@ namespace GServer.Plugins
             {
                 if (_accounts.ContainsKey(con.Token))
                 {
-                    _host.Send(new Message((short)AccountMessage.InfoResponse, Mode.None, _accounts[con.Token]), con);
+                    _host.Send(new Message((short)AccountMessage.InfoResponse, Mode.None, _accounts[con.Token].Serialize()), con);
                 }
             }
         }

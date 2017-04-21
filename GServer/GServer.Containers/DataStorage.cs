@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace GServer
+namespace GServer.Containers
 {
     public class DataStorage : ISerializable, IDisposable
     {

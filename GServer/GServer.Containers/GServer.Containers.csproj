@@ -44,6 +44,8 @@
   <ItemGroup>
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="CustomList.cs" />
+    <Compile Include="DataStorage.cs" />
+    <Compile Include="ISerializable.cs" />
     <Compile Include="Pair.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

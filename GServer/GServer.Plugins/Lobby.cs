@@ -27,6 +27,7 @@ namespace GServer.Plugins
         private int _ticks = 0;
         public Lobby(TAccountModel[] players, Host host)
         {
+            Console.WriteLine("Lobby created");
             _host = host;
             _players = players.Select(p => new __PlayerStatus(p)).ToArray();
             foreach (var player in _players)
@@ -50,11 +51,20 @@ namespace GServer.Plugins
                 _host.OnTick -= Tick;
                 if (_players.FirstOrDefault(p => !p.Active) != null)
                 {
-                    BackToQueue?.Invoke(this, _players.Where(p => p.Active).Select(p=>p.Account).ToArray());
+                    BackToQueue?.Invoke(this, _players.Where(p => p.Active).Select(p => p.Account).ToArray());
+                    foreach (var p in _players.Where(p => !p.Active))
+                    {
+                        _host.ForceDisconnect(p.Account.Connection);
+                        Console.WriteLine("disconnecting {0}", p.Account.Connection.EndPoint.ToString());
+                    }
                 }
                 else
                 {
                     OnValidateSuccess?.Invoke(this, _players.Select(p => p.Account).ToArray());
+                }
+                foreach (var p in _players)
+                {
+                    p.Account.Connection.RemoveHandler((short)MatchmakingMessages.ValidateActivitySuccess);
                 }
             }
         }

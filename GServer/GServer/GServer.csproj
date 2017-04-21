@@ -47,8 +47,6 @@
     <Compile Include="IPlugin.cs" />
     <Compile Include="ISocket.cs" />
     <Compile Include="Messages\Ack.cs" />
-    <Compile Include="Serialization\DataStorage.cs" />
-    <Compile Include="Serialization\ISerializable.cs" />
     <Compile Include="Messages\Message.cs" />
     <Compile Include="Messages\MessageCounter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
