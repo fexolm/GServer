@@ -145,6 +145,7 @@ namespace GServer
         }
         private void ProcessHandler(Message msg, Connection connection)
         {
+            connection.InvokeIfBinded(msg);
             IList<ReceiveHandler> handlers = null;
             lock (_receiveHandlers)
             {

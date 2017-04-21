@@ -69,6 +69,7 @@ namespace GServer
             _lastUnOrderedMessageNumPerType = new Dictionary<short, MessageCounter>();
             _messageQueuePerType = new SortedDictionary<short, MessageQueue>();
             _arrivedReliableMessagePerType = new Dictionary<short, Pair<CustomList<MessageCounter>, MessageCounter>>();
+            _handlers = new Dictionary<short, Action<Message>>();
         }
         public event Action Disconnected;
 
@@ -411,6 +412,40 @@ namespace GServer
                 }
             }
             return result;
+        }
+
+        private IDictionary<short, Action<Message>> _handlers;
+
+        public void AddHandler(short type, Action<Message> callback)
+        {
+            lock (_handlers)
+            {
+                if (!_handlers.ContainsKey(type))
+                {
+                    _handlers.Add(type, callback);
+                }
+            }
+        }
+        public void RemoveHandler(short type)
+        {
+            lock (_handlers)
+            {
+                if (_handlers.ContainsKey(type))
+                {
+                    _handlers.Remove(type);
+                }
+            }
+        }
+
+        public void InvokeIfBinded(Message msg)
+        {
+            lock (_handlers)
+            {
+                if (_handlers.ContainsKey(msg.Header.Type))
+                {
+                    _handlers[msg.Header.Type].Invoke(msg);
+                }
+            }
         }
     }
 }
