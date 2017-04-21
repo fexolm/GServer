@@ -12,6 +12,8 @@ namespace GServer.Containers
                 action.Invoke(element);
             }
         }
+
+        #region IEnumerable Serialization
         public static byte[] Serialize(this IEnumerable<int> collection)
         {
             var ds = new DataStorage();
@@ -159,5 +161,6 @@ namespace GServer.Containers
             }
             return res;
         }
+#endregion
     }
 }
