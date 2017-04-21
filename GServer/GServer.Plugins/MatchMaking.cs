@@ -7,7 +7,9 @@ namespace GServer.Plugins
         GameFound = 3000,
         MatchmakingRequest = 3001,
         CancelMatchmaking = 3002,
-        RoomClosed = 3003
+        RoomClosed = 3003,
+        ValidateActivity = 3004,
+        ValidateActivitySuccess = 3005,
     }
     public abstract class PlayerQueue<TAccountModel>
         where TAccountModel : AccountModel, new()
@@ -26,7 +28,7 @@ namespace GServer.Plugins
         {
             _account = account;
             _playerQueue = playerQueue;
-            _playerQueue.OnGameFound += CreateGameSession;
+            _playerQueue.OnGameFound += ValidateGameSession;
         }
         public Matchmaking(Account<TAccountModel> account)
         {
@@ -39,6 +41,10 @@ namespace GServer.Plugins
             {
                 var ds = new DataStorage(m.Body);
                 OnGameFound.Invoke(new Token(ds.ReadInt32()));
+            });
+            _host.AddHandler((short)MatchmakingMessages.ValidateActivity, (m, c) =>
+            {
+                _host.Send(new Message((short)MatchmakingMessages.ValidateActivitySuccess, Mode.Reliable));
             });
             _account.AddHandler((short)MatchmakingMessages.MatchmakingRequest, (m, a) =>
             {
@@ -56,10 +62,30 @@ namespace GServer.Plugins
                 }
             });
         }
-        private void CreateGameSession(TAccountModel[] players)
+        private void ValidateGameSession(TAccountModel[] players)
         {
+            Lobby<TAccountModel> lobby = new Lobby<TAccountModel>(players, _host);
+            lobby.OnValidateSuccess += CreateGameSession;
+            lobby.BackToQueue += ReturnToQueue;
+        }
+
+        private void ReturnToQueue(Lobby<TAccountModel> sender, TAccountModel[] players)
+        {
+            sender.BackToQueue -= ReturnToQueue;
+            sender.OnValidateSuccess -= CreateGameSession;
+            foreach (var p in players)
+            {
+                _playerQueue.AddPlayer(p);
+            }
+        }
+
+        private void CreateGameSession(Lobby<TAccountModel> sender, TAccountModel[] players)
+        {
+            sender.BackToQueue -= ReturnToQueue;
+            sender.OnValidateSuccess -= CreateGameSession;
             RoomCreated?.Invoke(players);
         }
+
         public void FindGame()
         {
             _host.Send(new Message((short)MatchmakingMessages.MatchmakingRequest, Mode.Reliable));

@@ -60,6 +60,7 @@ namespace GServer
                     _client.Send(buffer, c.EndPoint);
                 }
             });
+            OnTick?.Invoke();
         }
         private void SendToken(Connection con)
         {
@@ -324,5 +325,6 @@ namespace GServer
         {
             StopListen();
         }
+        public event Action OnTick;
     }
 }
