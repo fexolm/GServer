@@ -8,6 +8,14 @@ namespace GServer.Containers
         private MemoryStream Stream;
         private BinaryReader Reader;
         private BinaryWriter Writer;
+        public DataStorage(BinaryReader reader)
+        {
+            Reader = reader;
+        }
+        public DataStorage(BinaryWriter writer)
+        {
+            Writer = writer;
+        }
         public DataStorage(byte[] buffer)
         {
             Stream = new MemoryStream(buffer);
@@ -18,6 +26,7 @@ namespace GServer.Containers
             Stream = new MemoryStream();
             Writer = new BinaryWriter(Stream);
         }
+
         public byte[] Serialize()
         {
             return Stream.ToArray();
@@ -104,6 +113,13 @@ namespace GServer.Containers
             if (Writer == null)
                 throw new Exception("DataStorage in read only mode");
             Writer.Write(val);
+            return this;
+        }
+        public DataStorage Push(IDeepSerializable val)
+        {
+            if(Writer == null)
+                throw new Exception("DataStorage in read only mode");
+            val.PushToDs(this);
             return this;
         }
         public byte ReadByte()

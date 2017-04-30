@@ -45,6 +45,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Room.cs" />
     <Compile Include="RoomManagmer.cs" />
+    <Compile Include="StateSync.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GServer.Containers\GServer.Containers.csproj">

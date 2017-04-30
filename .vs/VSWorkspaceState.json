@@ -1,8 +1,7 @@
 {
   "ExpandedNodes": [
     "",
-    "\\GServer",
-    "\\GServer\\Unit-Tests"
+    "\\GServer"
   ],
   "SelectedNode": "\\GServer\\GServer.sln",
   "PreviewInSolutionExplorer": false
