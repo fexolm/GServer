@@ -47,6 +47,10 @@ namespace GServer
             });
             ServerTimer.OnTick += ServerTick;
         }
+        /// <summary>
+        /// Disconnect connection
+        /// </summary>
+        /// <param name="con">Connection to disconnect</param>
         public void ForceDisconnect(Connection con)
         {
             _connectionManager.Remove(con.Token);

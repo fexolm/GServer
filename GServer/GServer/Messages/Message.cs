@@ -29,9 +29,9 @@ namespace GServer
         private Mode _mode;
         public Token ConnectionToken { get; set; }
         public MessageCounter MessageId { get; set; }
-        public bool Reliable { get { return (_mode & Mode.Reliable) == Mode.Reliable; } }
-        public bool Sequenced { get { return (_mode & Mode.Sequenced) == Mode.Sequenced; } }
-        public bool Ordered { get { return (_mode & Mode.Ordered) == Mode.Ordered; } }
+        internal bool Reliable { get { return (_mode & Mode.Reliable) == Mode.Reliable; } }
+        internal bool Sequenced { get { return (_mode & Mode.Sequenced) == Mode.Sequenced; } }
+        internal bool Ordered { get { return (_mode & Mode.Ordered) == Mode.Ordered; } }
         private MessageHeader() { }
         public MessageHeader(short type, Mode mode)
         {
@@ -94,21 +94,21 @@ namespace GServer
                 Header.MessageId = value;
             }
         }
-        public bool Reliable
+        internal bool Reliable
         {
             get
             {
                 return Header.Reliable;
             }
         }
-        public bool Ordered
+        internal bool Ordered
         {
             get
             {
                 return Header.Ordered;
             }
         }
-        public bool Sequenced
+        internal bool Sequenced
         {
             get
             {
