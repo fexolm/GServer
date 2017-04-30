@@ -17,6 +17,9 @@ namespace GServer
         private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
         private int _threadCount;
         private uint _connectionCleaningTick = 0;
+        /// <summary>
+        /// Interval in server ticks of disconnecting inactive connections 
+        /// </summary>
         public uint ConnectionCleaningInterval { get; set; }
         public Host(int port)
         {
@@ -72,6 +75,9 @@ namespace GServer
             msg.ConnectionToken = con.Token;
             Send(msg, con);
         }
+        /// <summary>
+        /// Cleaning inactive connections
+        /// </summary>
         public void CleanConnections()
         {
             _connectionManager.RemoveNotActive();
@@ -205,6 +211,11 @@ namespace GServer
                 connection.UpdateActivity();
             }
         }
+        /// <summary>
+        /// Begin listening (use this if u need to substitude socket implementation)
+        /// </summary>
+        /// <param name="threadCount">Number of processing threads</param>
+        /// <param name="host">Socket implementation</param>
         public void StartListen(int threadCount, ISocket host)
         {
             if (threadCount > 0)
@@ -216,16 +227,28 @@ namespace GServer
             _client = host;
             _listenThread.Start();
         }
+        /// <summary>
+        ///  Begin listening
+        /// </summary>
+        /// <param name="threadCount">Number of processing threads</param>
         public void StartListen(int threadCount)
         {
             StartListen(threadCount, new HostImpl());
         }
+        /// <summary>
+        /// Stop all server threads
+        /// </summary>
         public void StopListen()
         {
             _isListening = false;
             ServerTimer.OnTick -= ServerTick;
             _client.Close();
         }
+        /// <summary>
+        /// Sending message to specific connection
+        /// </summary>
+        /// <param name="msg">Message to send</param>
+        /// <param name="con">Destination connection</param>
         public void Send(Message msg, Connection con)
         {
             msg.ConnectionToken = con.Token;
@@ -237,6 +260,10 @@ namespace GServer
                 con.StoreReliable(msg);
             }
         }
+        /// <summary>
+        /// Send message to connected connection
+        /// </summary>
+        /// <param name="msg">Message to send</param>
         public void Send(Message msg)
         {
             Connection connection;
@@ -260,6 +287,11 @@ namespace GServer
                 con.StoreReliable(msg);
             }
         }
+        /// <summary>
+        /// Add handler to message specific message type
+        /// </summary>
+        /// <param name="type">Message type</param>
+        /// <param name="handler">handler to process messages with selected type</param>
         public void AddHandler(short type, ReceiveHandler handler)
         {
             lock (_receiveHandlers)
@@ -276,6 +308,11 @@ namespace GServer
                 }
             }
         }
+        /// <summary>
+        /// Send to server request to connect
+        /// </summary>
+        /// <param name="ep">server endpoint</param>
+        /// <returns></returns>
         public bool BeginConnect(IPEndPoint ep)
         {
             try
@@ -305,22 +342,45 @@ namespace GServer
                 DebugLog.Invoke(error);
             }
         }
+        /// <summary>
+        /// Add plugin
+        /// </summary>
+        /// <param name="module">Plugin implementation</param>
         public void AddModule(IPlugin module)
         {
             module.Bind(this);
         }
+        /// <summary>
+        /// Server random
+        /// </summary>
         public readonly Random Rnd;
         public void Dispose()
         {
             StopListen();
         }
+        /// <summary>
+        /// Host errors
+        /// </summary>
         public Action<string> ErrLog;
+        /// <summary>
+        /// Host debug messages
+        /// </summary>
         public Action<string> DebugLog;
+        /// <summary>
+        /// Handle server response before BeginConnect
+        /// </summary>
         public Action OnConnect;
+        /// <summary>
+        /// Perform host tick
+        /// </summary>
         public void Tick()
         {
             ServerTimer.Tick();
         }
+        /// <summary>
+        /// Shows all connected to host connections 
+        /// </summary>
+        /// <returns>Connected to host connections</returns>
         public IEnumerable<Connection> GetConnections()
         {
             List<Connection> res = new List<Connection>();
