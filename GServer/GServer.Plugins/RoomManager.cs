@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GServer.Plugins
 {
@@ -7,8 +8,8 @@ namespace GServer.Plugins
         where TAccountModel : AccountModel, new()
     {
         public AccountModel[] Players { get; set; }
-
-
+        public Action<Message, Connection> Send;
+        public abstract void InitGame();
     }
 
     public class RoomManager<TGame, TAccountModel> : IPlugin
@@ -18,16 +19,17 @@ namespace GServer.Plugins
         private IDictionary<Token, Room<TAccountModel, TGame>> _rooms;
         private Matchmaking<TAccountModel> _matchmaking;
         private Host _host;
-        private Account<TAccountModel> _account;
-        public RoomManager(Matchmaking<TAccountModel> matchmaking, Account<TAccountModel> account)
+        public RoomManager(Matchmaking<TAccountModel> matchmaking)
         {
+            _rooms = new Dictionary<Token, Room<TAccountModel, TGame>>();
             _matchmaking = matchmaking;
-            _account = account;
             _matchmaking.RoomCreated += ManageRoom;
         }
         private void ManageRoom(TAccountModel[] clients)
         {
             var room = new Room<TAccountModel, TGame>(clients);
+            room.Send = (msg, con) => _host.Send(msg, con);
+            room.InitRoom();
             lock (_rooms)
             {
                 foreach (var client in clients)
@@ -37,7 +39,7 @@ namespace GServer.Plugins
             }
             foreach (var player in room.Players)
             {
-                _host.Send(new Message((short)MatchmakingMessages.GameFound, Mode.Reliable), player.Connection);
+                _host.Send(new Message((short)MatchmakingMessages.GameFound, Mode.Reliable, room.RoomToken), player.Connection);
             }
             room.RoomClosed += () =>
             {
@@ -57,18 +59,19 @@ namespace GServer.Plugins
         {
             _host = host;
         }
-        public void AddHandler(short messageType, Action<Message, Room<TAccountModel, TGame>> roomHandler)
+        public void AddHandler(short messageType, Action<Message, Room<TAccountModel, TGame>, TAccountModel> roomHandler)
         {
-            _account.AddHandler(messageType, (m, a) =>
-             {
-                 lock (_rooms)
-                 {
-                     if (_rooms.ContainsKey(a.Connection.Token))
-                     {
-                         roomHandler.Invoke(m, _rooms[a.Connection.Token]);
-                     }
-                 }
-             });
+            _host.AddHandler(messageType, (m, c) =>
+            {
+                lock (_rooms)
+                {
+                    if (_rooms.ContainsKey(c.Token))
+                    {
+                        var room = _rooms[c.Token];
+                    roomHandler.Invoke(m, room, room.Players.FirstOrDefault(p=>p.Connection.Token == c.Token));
+                    }
+                }
+            });
         }
     }
 }
