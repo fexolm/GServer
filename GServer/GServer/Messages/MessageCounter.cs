@@ -2,10 +2,9 @@
 
 namespace GServer
 {
-    public struct MessageCounter : IComparable
+    internal struct MessageCounter : IComparable
     {
         private short _count;
-
         public static readonly MessageCounter Default = new MessageCounter(short.MinValue);
         public MessageCounter(short value)
         {

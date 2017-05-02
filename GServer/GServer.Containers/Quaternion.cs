@@ -17,12 +17,10 @@ namespace GServer.Containers
             var ds = new DataStorage(buffer);
             ReadFromDs(ds);
         }
-
         public void PushToDs(DataStorage ds)
         {
             ds.Push(X).Push(Y).Push(Z).Push(W);
         }
-
         public void ReadFromDs(DataStorage ds)
         {
             X = ds.ReadFloat();
@@ -30,7 +28,6 @@ namespace GServer.Containers
             Z = ds.ReadFloat();
             W = ds.ReadFloat();
         }
-
         public byte[] Serialize()
         {
             var ds = new DataStorage();

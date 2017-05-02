@@ -34,7 +34,7 @@ namespace Unit_Tests
             {
                 successAck = true;
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 successMessage = true;
             });
@@ -45,7 +45,7 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
             Assert.AreEqual(true, successMessage, "Сообщение не пришло");
@@ -80,7 +80,7 @@ namespace Unit_Tests
                     h2Messages.Add(m);
                 }
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 lock (h1Messages)
                 {
@@ -96,15 +96,15 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
 
@@ -146,7 +146,7 @@ namespace Unit_Tests
                     h2Messages.Add(m);
                 }
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 lock (h1Messages)
                 {
@@ -162,15 +162,15 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
 
@@ -212,7 +212,7 @@ namespace Unit_Tests
                     h2Messages.Add(m);
                 }
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 lock (h1Messages)
                 {
@@ -228,15 +228,15 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
 
@@ -277,7 +277,7 @@ namespace Unit_Tests
                     h2Messages.Add(m);
                 }
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 lock (h1Messages)
                 {
@@ -293,15 +293,15 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
 

@@ -26,7 +26,6 @@ namespace GServer.Containers
             Stream = new MemoryStream();
             Writer = new BinaryWriter(Stream);
         }
-
         public byte[] Serialize()
         {
             return Stream.ToArray();

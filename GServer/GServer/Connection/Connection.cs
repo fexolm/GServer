@@ -73,7 +73,6 @@ namespace GServer
             _handlers = new Dictionary<short, Action<Message>>();
         }
         public event Action Disconnected;
-
         public int BufferCount
         {
             get
@@ -84,9 +83,7 @@ namespace GServer
                 }
             }
         }
-
         private List<Packet> _messageBuffer = new List<Packet>();
-
         internal void MarkToSend(Message msg)
         {
             var p = new Packet(msg);
@@ -303,7 +300,6 @@ namespace GServer
         }
         #endregion
         #region Sequenced
-
         private readonly IDictionary<short, MessageCounter> _lastSequencedMessageNumPerType;
         internal bool IsMessageInItsOrder(short type, MessageCounter num)
         {
@@ -415,9 +411,7 @@ namespace GServer
             }
             return result;
         }
-
         private IDictionary<short, Action<Message>> _handlers;
-
         public void AddHandler(short type, Action<Message> callback)
         {
             lock (_handlers)
@@ -438,8 +432,7 @@ namespace GServer
                 }
             }
         }
-
-        public void InvokeIfBinded(Message msg)
+        internal void InvokeIfBinded(Message msg)
         {
             lock (_handlers)
             {

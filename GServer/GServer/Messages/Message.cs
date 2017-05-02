@@ -4,17 +4,19 @@ using GServer.Containers;
 
 namespace GServer
 {
-    public enum MessageType : short
+    /// <summary>
+    /// Default message types used in internal host logic
+    /// </summary>
+    internal enum MessageType : short
     {
         Empty,
         Handshake,
-        Ping,
-        Rpc,
-        Authorization,
         Ack,
-        Message,
         Token
     }
+    /// <summary>
+    /// Reliable udp mods
+    /// </summary>
     [Flags]
     public enum Mode : byte
     {
@@ -23,12 +25,12 @@ namespace GServer
         Sequenced = 0x2,
         Ordered = 0x4,
     }
-    public class MessageHeader : ISerializable
+    internal class MessageHeader : ISerializable
     {
         public short Type { get; private set; }
         private Mode _mode;
-        public Token ConnectionToken { get; set; }
-        public MessageCounter MessageId { get; set; }
+        public Token ConnectionToken { get; internal set; }
+        internal MessageCounter MessageId { get; set; }
         internal bool Reliable { get { return (_mode & Mode.Reliable) == Mode.Reliable; } }
         internal bool Sequenced { get { return (_mode & Mode.Sequenced) == Mode.Sequenced; } }
         internal bool Ordered { get { return (_mode & Mode.Ordered) == Mode.Ordered; } }
@@ -71,8 +73,8 @@ namespace GServer
     }
     public class Message : ISerializable
     {
-        public MessageHeader Header { get; private set; }
-        public Token ConnectionToken
+        internal MessageHeader Header { get; private set; }
+        internal Token ConnectionToken
         {
             get
             {
@@ -83,7 +85,7 @@ namespace GServer
                 Header.ConnectionToken = value;
             }
         }
-        public MessageCounter MessageId
+        internal MessageCounter MessageId
         {
             get
             {
@@ -165,8 +167,8 @@ namespace GServer
             Body = new byte[0];
         }
         private static readonly Message _handshake = new Message((short)MessageType.Handshake, Mode.None);
-        public static Message Handshake { get { return _handshake; } }
-        public static Message Ack(short type, MessageCounter msgId, Token conToken, int ackBitField)
+        internal static Message Handshake { get { return _handshake; } }
+        internal static Message Ack(short type, MessageCounter msgId, Token conToken, int ackBitField)
         {
             var ds = new DataStorage();
             ds.Push(ackBitField);

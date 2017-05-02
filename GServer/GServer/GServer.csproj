@@ -39,10 +39,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Connection\ConnectioManager.cs" />
+    <Compile Include="Connection\ConnectionManager.cs" />
     <Compile Include="Connection\Connection.cs" />
     <Compile Include="Host.cs" />
-    <Compile Include="GServerExtensions.cs" />
     <Compile Include="HostImpl.cs" />
     <Compile Include="IPlugin.cs" />
     <Compile Include="ISocket.cs" />
