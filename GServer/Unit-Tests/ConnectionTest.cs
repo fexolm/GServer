@@ -31,10 +31,5 @@ namespace Unit_Tests
                 }
             }
         }
-        [Test]
-        public void FailedTest()
-        {
-            Assert.Fail();
-        }
     }
 }
