@@ -70,7 +70,7 @@ namespace GServer.Plugins
         private void ChalangeHandler(Message m, Connection c)
         {
             Console.WriteLine("auth response from {0}", c.EndPoint.ToString());
-            var login = new DataStorage(m.Body).ReadString();
+            var login = DataStorage.CreateForRead(m.Body).ReadString();
             var user = _storage.Users.FirstOrDefault(u => u.Login == login);
             if (user == null || user.Online)
             {
@@ -86,18 +86,18 @@ namespace GServer.Plugins
                     session.Num = num;
                     _sessions.Add(c.Token, session);
                 }
-                _host.Send(new Message((short)AuthMType.ChalangeSuccess, Mode.Reliable, new DataStorage().Push(num).Serialize()), c);
+                _host.Send(new Message((short)AuthMType.ChalangeSuccess, Mode.Reliable, DataStorage.CreateForWrite().Push(num).Serialize()), c);
             }
         }
         private void SendPwdHash(Message m, Connection c)
         {
-            var num = new DataStorage(m.Body).ReadInt32();
+            var num = DataStorage.CreateForRead(m.Body).ReadInt32();
             var hash = Password.GetHashCode();
-            _host.Send(new Message((short)AuthMType.PwdHash, Mode.Reliable, new DataStorage().Push(num ^ hash).Serialize()));
+            _host.Send(new Message((short)AuthMType.PwdHash, Mode.Reliable, DataStorage.CreateForWrite().Push(num ^ hash).Serialize()));
         }
         private void CheckHash(Message m, Connection c)
         {
-            var hash = new DataStorage(m.Body).ReadInt32();
+            var hash = DataStorage.CreateForRead(m.Body).ReadInt32();
             lock (_sessions)
             {
                 if (_sessions.ContainsKey(c.Token))
@@ -126,7 +126,7 @@ namespace GServer.Plugins
         {
             Login = login;
             Password = pass;
-            _host.Send(new Message((short)AuthMType.Chalange, Mode.Reliable, new DataStorage().Push(login).Serialize()));
+            _host.Send(new Message((short)AuthMType.Chalange, Mode.Reliable, DataStorage.CreateForWrite().Push(login).Serialize()));
         }
         public event Action<Connection, Guid> OnAccountLogin;
         public event Action OnAuthSuccess;

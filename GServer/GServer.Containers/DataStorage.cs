@@ -8,23 +8,39 @@ namespace GServer.Containers
         private MemoryStream Stream;
         private BinaryReader Reader;
         private BinaryWriter Writer;
-        public DataStorage(BinaryReader reader)
+        private DataStorage(BinaryReader reader)
         {
             Reader = reader;
         }
-        public DataStorage(BinaryWriter writer)
+        private DataStorage(BinaryWriter writer)
         {
             Writer = writer;
         }
-        public DataStorage(byte[] buffer)
+        private DataStorage(byte[] buffer)
         {
             Stream = new MemoryStream(buffer);
             Reader = new BinaryReader(Stream);
         }
-        public DataStorage()
+        private DataStorage()
         {
             Stream = new MemoryStream();
             Writer = new BinaryWriter(Stream);
+        }
+        public static DataStorage CreateForRead(byte[] buffer)
+        {
+            return new DataStorage(buffer);
+        }
+        public static DataStorage CreateForWrite()
+        {
+            return new DataStorage();
+        }
+        public static DataStorage CreateForRead(BinaryReader reader)
+        {
+            return new DataStorage(reader);
+        }
+        public static DataStorage CreateForWrite(BinaryWriter writer)
+        {
+            return new DataStorage(writer);
         }
         public byte[] Serialize()
         {

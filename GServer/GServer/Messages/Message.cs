@@ -170,7 +170,7 @@ namespace GServer
         internal static Message Handshake { get { return _handshake; } }
         internal static Message Ack(short type, MessageCounter msgId, Token conToken, int ackBitField)
         {
-            var ds = new DataStorage();
+            var ds = DataStorage.CreateForWrite();
             ds.Push(ackBitField);
             ds.Push(type);
             var res = new Message((short)MessageType.Ack, Mode.None, ds);

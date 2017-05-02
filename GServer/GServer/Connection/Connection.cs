@@ -15,7 +15,7 @@ namespace GServer
         public byte[] Serialize()
         {
             var buffer = Msg.Serialize();
-            return new DataStorage().Push(buffer.Length).Push(buffer).Serialize();
+            return DataStorage.CreateForWrite().Push(buffer.Length).Push(buffer).Serialize();
         }
         public Packet(Message msg)
         {
@@ -137,7 +137,7 @@ namespace GServer
                 }
             }
 
-            DataStorage ds = new DataStorage();
+            DataStorage ds = DataStorage.CreateForWrite();
             foreach (var element in toSend)
             {
                 ds.Push(element.Serialize());
@@ -273,7 +273,7 @@ namespace GServer
         internal void ProcessAck(Message msg)
         {
             Ack ack = null;
-            var ds = new DataStorage(msg.Body);
+            var ds = DataStorage.CreateForRead(msg.Body);
             int bitField = ds.ReadInt32();
             short msgType = ds.ReadInt16();
             lock (_ackPerMsgType)

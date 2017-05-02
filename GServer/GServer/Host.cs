@@ -101,7 +101,7 @@ namespace GServer
                     }
                     if (buffer.Length == 0)
                         continue;
-                    var ds = new DataStorage(buffer);
+                    var ds = DataStorage.CreateForRead(buffer);
                     while (!ds.Empty)
                     {
                         int len = ds.ReadInt32();

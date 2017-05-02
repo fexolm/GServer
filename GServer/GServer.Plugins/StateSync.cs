@@ -64,7 +64,7 @@ namespace GServer.Plugins
         public bool Changed { get; set; }
         public void FillDeserialize(byte[] buffer)
         {
-            var ds = new DataStorage(buffer);
+            var ds = DataStorage.CreateForRead(buffer);
             ReadFromDs(ds);
         }
         public void PushToDs(DataStorage ds)
@@ -89,7 +89,7 @@ namespace GServer.Plugins
         }
         public byte[] Serialize()
         {
-            var ds = new DataStorage();
+            var ds = DataStorage.CreateForWrite();
             PushToDs(ds);
             return ds.Serialize();
         }
@@ -114,7 +114,7 @@ namespace GServer.Plugins
             {
                 if (obj.Value.Changed)
                 {
-                    var ds = new DataStorage();
+                    var ds = DataStorage.CreateForWrite();
                     ds.Push(obj.Key);
                     obj.Value.TickIndex = DateTime.UtcNow.Ticks;
                     ds.Push(obj.Value);
@@ -129,7 +129,7 @@ namespace GServer.Plugins
 
         private void OnStateReceived(Message msg, Connection con)
         {
-            var data = new DataStorage(msg.Body);
+            var data = DataStorage.CreateForRead(msg.Body);
             while (!data.Empty)
             {
                 int id = data.ReadInt32();

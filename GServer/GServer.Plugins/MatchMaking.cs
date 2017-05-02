@@ -39,7 +39,7 @@ namespace GServer.Plugins
             _host = host;
             _host.AddHandler((short)MatchmakingMessages.GameFound, (m, c) =>
             {
-                var ds = new DataStorage(m.Body);
+                var ds = DataStorage.CreateForRead(m.Body);
                 OnGameFound.Invoke(new Token(ds.ReadInt32()));
             });
             _host.AddHandler((short)MatchmakingMessages.ValidateActivity, (m, c) =>

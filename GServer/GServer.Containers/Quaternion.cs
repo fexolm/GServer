@@ -14,7 +14,7 @@ namespace GServer.Containers
 
         public void FillDeserialize(byte[] buffer)
         {
-            var ds = new DataStorage(buffer);
+            var ds = DataStorage.CreateForRead(buffer);
             ReadFromDs(ds);
         }
         public void PushToDs(DataStorage ds)
@@ -30,7 +30,7 @@ namespace GServer.Containers
         }
         public byte[] Serialize()
         {
-            var ds = new DataStorage();
+            var ds = DataStorage.CreateForWrite();
             PushToDs(ds);
             return ds.Serialize();
         }
