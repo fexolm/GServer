@@ -1,5 +1,10 @@
 image: mono:4.4.0.182
-
+variables:
+  PROJECT_NAME: "GServer"
+before_script:
+  - nuget restore ./GServer/
+  - echo "starting build for %PROJECT_NAME%"
+  - echo "Restoring NuGet Packages..."
 stages:
   - build
   - test
@@ -7,15 +12,15 @@ stages:
 build:
   stage: build
   script:
-    - nuget restore ./GServer/
+    - echo "Release build..."
     - MONO_IOMAP=case xbuild /t:Build /p:Configuration="Release" /p:Platform="Any CPU" ./GServer/GServer.sln
+  artifacts:
+    untracked: true
   
 test:
   stage: test
   script:
-    - ls
-    #- mono ./GServer/packages/NUnit.ConsoleRunner.3.6.1/tools/nunit3-console.exe ./GServer/Unit-Tests/bin/Release/Unit-Tests.dll /noresult
-
-cache:
-  paths:
-    - /
+    - echo "starting tests"
+    - mono ./GServer/packages/NUnit.ConsoleRunner.3.6.1/tools/nunit3-console.exe ./GServer/Unit-Tests/bin/Release/Unit-Tests.dll /noresult
+  dependencies:
+    - build
