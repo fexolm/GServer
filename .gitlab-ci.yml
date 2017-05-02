@@ -1,3 +1,7 @@
+image: mono:4.4.0.182
+
+build:
+  stage: build
   script:
     - nuget restore ./GServer/
     - MONO_IOMAP=case xbuild /t:Build /p:Configuration="Release" /p:Platform="Any CPU" ./GServer/GServer.sln
@@ -5,3 +9,4 @@
     - ls ./GServer/packages/NUnit.ConsoleRunner.3.6.1/
     - ls ./GServer/packages/NUnit.ConsoleRunner.3.6.1/tools
     - mono ./GServer/packages/NUnit.ConsoleRunner.3.6.1/tools/nunit3-console.exe ./Unit-Tests/bin/Release/Unit-Tests.dll /noresult
+
