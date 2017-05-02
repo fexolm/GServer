@@ -5,8 +5,6 @@ build:
   script:
     - nuget restore ./GServer/
     - MONO_IOMAP=case xbuild /t:Build /p:Configuration="Release" /p:Platform="Any CPU" ./GServer/GServer.sln
-
-test:
   stage: test
   script:
     - mono ./GServer/packages/NUnit.ConsoleRunner.3.6.1/tools/nunit3-console.exe ./GServer/Unit-Tests/bin/Release/Unit-Tests.dll /noresult
