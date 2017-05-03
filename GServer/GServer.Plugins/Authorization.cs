@@ -57,9 +57,9 @@ namespace GServer.Plugins
             if (_isClient)
             {
                 host.AddHandler((short)AuthMType.ChalangeSuccess, SendPwdHash);
-                host.AddHandler((short)AuthMType.ChalangeFailed, (m, e) => OnAuthFailed?.Invoke("Логин не найден"));
-                host.AddHandler((short)AuthMType.AuthFailed, (m, e) => OnAuthFailed?.Invoke("Пароль не подошел"));
-                host.AddHandler((short)AuthMType.AuthSuccess, (m, e) => OnAuthSuccess?.Invoke());
+                host.AddHandler((short)AuthMType.ChalangeFailed, (m, e) => { if (OnAuthFailed != null) OnAuthFailed.Invoke("Логин не найден"); });
+                host.AddHandler((short)AuthMType.AuthFailed, (m, e) => { if (OnAuthFailed != null) OnAuthFailed.Invoke("Пароль не подошел"); });
+                host.AddHandler((short)AuthMType.AuthSuccess, (m, e) => { if (OnAuthSuccess != null) OnAuthSuccess.Invoke(); });
             }
             else
             {
@@ -108,7 +108,7 @@ namespace GServer.Plugins
                         session.User.Online = true;
                         _host.Send(new Message((short)AuthMType.AuthSuccess, Mode.Reliable), c);
                         c.Disconnected += () => session.User.Online = false;
-                        OnAccountLogin?.Invoke(c, session.User.AccountId);
+                       if (OnAccountLogin!=null) OnAccountLogin.Invoke(c, session.User.AccountId);
                     }
                     else
                     {

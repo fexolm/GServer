@@ -20,14 +20,14 @@ namespace GServer.Plugins
             Game.Players = Players;
             Game.Send = (msg, con) =>
             {
-                Send?.Invoke(msg, con);
+               if (Send!=null) Send.Invoke(msg, con);
             };
             Game.InitGame();
         }
         public Action RoomClosed;
         public void Close()
         {
-            RoomClosed?.Invoke();
+           if (RoomClosed!=null) RoomClosed.Invoke();
         }
         public Action<Message, Connection> Send;
     }

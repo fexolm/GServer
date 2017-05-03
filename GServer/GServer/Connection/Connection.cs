@@ -283,7 +283,7 @@ namespace GServer
                     ack = _ackPerMsgType[msgType];
                 }
             }
-            ack?.ProcessReceivedAckBitfield(bitField, msg.MessageId, msgType);
+           if (ack!=null) ack.ProcessReceivedAckBitfield(bitField, msg.MessageId, msgType);
         }
         internal void StoreReliable(Message msg)
         {

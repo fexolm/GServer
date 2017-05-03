@@ -71,7 +71,7 @@ namespace GServer
                     _client.Send(buffer, c.EndPoint);
                 }
             });
-            OnTick?.Invoke();
+           if (OnTick!=null) OnTick.Invoke();
         }
         private void SendToken(Connection con)
         {

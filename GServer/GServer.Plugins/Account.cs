@@ -65,7 +65,7 @@ namespace GServer.Plugins
         {
             TModel account = new TModel();
             account.FillDeserialize(msg.Body);
-            OnAccountInfoReceived?.Invoke(account);
+           if (OnAccountInfoReceived!=null) OnAccountInfoReceived.Invoke(account);
         }
         private void InfoRequestHandler(Message msg, Connection con)
         {

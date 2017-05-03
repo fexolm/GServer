@@ -214,9 +214,9 @@ namespace GServer.Containers
         public bool Empty => Stream.Position == Stream.Length;
         public void Dispose()
         {
-            Reader?.Close();
-            Writer?.Close();
-            Stream?.Close();
+           if (Reader!=null) Reader.Close();
+           if (Writer!=null) Writer.Close();
+           if (Stream!=null) Stream.Close();
         }
         ~DataStorage()
         {

@@ -83,7 +83,7 @@ namespace GServer.Plugins
         {
             sender.BackToQueue -= ReturnToQueue;
             sender.OnValidateSuccess -= CreateGameSession;
-            RoomCreated?.Invoke(players);
+           if (RoomCreated!=null) RoomCreated.Invoke(players);
         }
 
         public void FindGame()

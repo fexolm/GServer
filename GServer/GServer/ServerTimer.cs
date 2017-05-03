@@ -6,7 +6,7 @@ namespace GServer
     {
         internal static void Tick()
         {
-            OnTick?.Invoke();
+           if (OnTick!=null) OnTick.Invoke();
         }
         public static event Action OnTick;
     }

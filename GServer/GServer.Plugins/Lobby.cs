@@ -51,7 +51,7 @@ namespace GServer.Plugins
                 _host.OnTick -= Tick;
                 if (_players.FirstOrDefault(p => !p.Active) != null)
                 {
-                    BackToQueue?.Invoke(this, _players.Where(p => p.Active).Select(p => p.Account).ToArray());
+                   if (BackToQueue!=null) BackToQueue.Invoke(this, _players.Where(p => p.Active).Select(p => p.Account).ToArray());
                     foreach (var p in _players.Where(p => !p.Active))
                     {
                         _host.ForceDisconnect(p.Account.Connection);
@@ -60,7 +60,7 @@ namespace GServer.Plugins
                 }
                 else
                 {
-                    OnValidateSuccess?.Invoke(this, _players.Select(p => p.Account).ToArray());
+                   if (OnValidateSuccess!=null) OnValidateSuccess.Invoke(this, _players.Select(p => p.Account).ToArray());
                 }
                 foreach (var p in _players)
                 {
