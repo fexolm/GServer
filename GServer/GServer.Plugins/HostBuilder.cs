@@ -84,7 +84,7 @@ namespace GServer.Plugins
     public static class HostBuilder
     {
 
-        public static Host CreateBaseServer<TGame>(int port, TGame game)
+        public static Host CreateBaseServer<TGame>(int port, TGame game, out RoomManager<TGame, AccountImpl> roomManager)
             where TGame : Game<AccountImpl>, new()
         {
             Host host = new Host(port);
@@ -92,7 +92,7 @@ namespace GServer.Plugins
             var auth = new Authorization(st);
             var account = new Account<AccountImpl>(auth, st);
             var matchmaking = new Matchmaking<AccountImpl>(account, new PlayerQueueImpl());
-            var roomManager = new RoomManager<TGame, AccountImpl>(matchmaking);
+            roomManager = new RoomManager<TGame, AccountImpl>(matchmaking);
             return CreateServer<TGame, AccountImpl>(port, auth, account, matchmaking, roomManager);
         }
         public static Host CreateServer<TGame, TAccountModel>(
@@ -109,11 +109,6 @@ namespace GServer.Plugins
             host.AddModule(account);
             host.AddModule(matchmaking);
             host.AddModule(roomManager);
-            return host;
-        }
-        public static Host CreateBaseClient(int port)
-        {
-            Host host = new Host(port);
             return host;
         }
         public static Host CreateClient<TAccountModel>(

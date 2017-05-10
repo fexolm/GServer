@@ -40,6 +40,7 @@
   <ItemGroup>
     <Compile Include="Account.cs" />
     <Compile Include="Authorization.cs" />
+    <Compile Include="HostBuilder.cs" />
     <Compile Include="Lobby.cs" />
     <Compile Include="Matchmaking.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
