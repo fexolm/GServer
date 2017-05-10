@@ -84,7 +84,7 @@ namespace GServer.Plugins
     public static class HostBuilder
     {
 
-        public static Host CreateBaseServer<TGame>(int port, TGame game, out RoomManager<TGame, AccountImpl> roomManager)
+        public static Host CreateBaseServer<TGame>(int port, out RoomManager<TGame, AccountImpl> roomManager)
             where TGame : Game<AccountImpl>, new()
         {
             Host host = new Host(port);
