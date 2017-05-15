@@ -20,7 +20,9 @@ namespace GServer.Plugins
         public void Bind(Host host)
         {
             _host = host;
+            InitializeHandlers();
         }
+        public virtual void InitializeHandlers() { }
         public void AddHandler(short messageType, Action<Message, TRoom, TAccountModel> roomHandler)
         {
             _host.AddHandler(messageType, (m, c) =>

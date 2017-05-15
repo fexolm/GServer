@@ -11,6 +11,7 @@ namespace GServer.Plugins.Lobby
     {
         private bool _gameStarted;
         public readonly int MaxPlayerCount;
+        public readonly int MinPlayerCount;
         private List<TAccountModel> _players = new List<TAccountModel>();
         public override List<TAccountModel> Players
         {
@@ -23,9 +24,10 @@ namespace GServer.Plugins.Lobby
                 _players = value;
             }
         }
-        public LobbyRoom(int playerCount) : base()
+        public LobbyRoom(int maxPlayerCount, int minPlayerCount) : base()
         {
-            MaxPlayerCount = playerCount;
+            MaxPlayerCount = maxPlayerCount;
+            MinPlayerCount = minPlayerCount;
             _gameStarted = false;
         }
         public void Join(TAccountModel player)
@@ -46,11 +48,14 @@ namespace GServer.Plugins.Lobby
         }
         public void StartGame()
         {
-            _gameStarted = true;
-            GameStarted.Invoke();
+            if (_players.Count >= MinPlayerCount)
+            {
+                _gameStarted = true;
+                GameStarted.Invoke(this);
+            }
         }
         public event Action<LobbyRoom<TAccountModel, TGame>, TAccountModel> PlayerJoined;
         public event Action<LobbyRoom<TAccountModel, TGame>, TAccountModel> PlayerLeaved;
-        public event Action GameStarted;
+        public event Action<LobbyRoom<TAccountModel, TGame>> GameStarted;
     }
 }
