@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using GServer.Plugins.Matchmaking;
 
 namespace GServer.Plugins
 {
@@ -84,7 +85,7 @@ namespace GServer.Plugins
     public static class HostBuilder
     {
 
-        public static Host CreateBaseServer<TGame>(int port, out RoomManager<TGame, AccountImpl> roomManager)
+        public static Host CreateBaseServer<TGame>(int port, out MatchmakingManager<TGame, AccountImpl> roomManager)
             where TGame : Game<AccountImpl>, new()
         {
             Host host = new Host(port);
@@ -92,7 +93,7 @@ namespace GServer.Plugins
             var auth = new Authorization(st);
             var account = new Account<AccountImpl>(auth, st);
             var matchmaking = new Matchmaking<AccountImpl>(account, new PlayerQueueImpl());
-            roomManager = new RoomManager<TGame, AccountImpl>(matchmaking);
+            roomManager = new MatchmakingManager<TGame, AccountImpl>(matchmaking);
             return CreateServer<TGame, AccountImpl>(port, auth, account, matchmaking, roomManager);
         }
         public static Host CreateServer<TGame, TAccountModel>(
@@ -100,7 +101,7 @@ namespace GServer.Plugins
             Authorization auth,
             Account<TAccountModel> account,
             Matchmaking<TAccountModel> matchmaking,
-            RoomManager<TGame, TAccountModel> roomManager)
+            MatchmakingManager<TGame, TAccountModel> roomManager)
             where TGame : Game<TAccountModel>, new()
             where TAccountModel : AccountModel, new()
         {

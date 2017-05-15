@@ -39,6 +39,10 @@ namespace GServer
             });
             AddHandler((short)MessageType.Handshake, (m, c) =>
             {
+                if (ConnectionCreated != null)
+                {
+                    ConnectionCreated.Invoke(c);
+                }
                 SendToken(c);
             });
             AddHandler((short)MessageType.Ack, (m, c) =>
@@ -396,5 +400,6 @@ namespace GServer
             StopListen();
         }
         public event Action OnTick;
+        public event Action<Connection> ConnectionCreated;
     }
 }

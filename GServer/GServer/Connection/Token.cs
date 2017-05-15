@@ -69,5 +69,9 @@ namespace GServer
             var other = (Token)obj;
             return this._tempNum.CompareTo(other._tempNum);
         }
+        public int ToInt()
+        {
+            return _tempNum;
+        }
     }
 }

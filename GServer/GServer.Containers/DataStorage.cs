@@ -132,7 +132,7 @@ namespace GServer.Containers
         }
         public DataStorage Push(IDeepSerializable val)
         {
-            if(Writer == null)
+            if (Writer == null)
                 throw new Exception("DataStorage in read only mode");
             val.PushToDs(this);
             return this;
@@ -211,12 +211,18 @@ namespace GServer.Containers
                 throw new Exception("DataStorage in write only mode");
             return new Guid(Reader.ReadBytes(16));
         }
+        public byte[] ReadToEnd()
+        {
+            if (Reader == null)
+                throw new Exception("DataStorage in write only mode");
+            return Reader.ReadBytes((int)(Stream.Length - Stream.Position));
+        }
         public bool Empty => Stream.Position == Stream.Length;
         public void Dispose()
         {
-           if (Reader!=null) Reader.Close();
-           if (Writer!=null) Writer.Close();
-           if (Stream!=null) Stream.Close();
+            if (Reader != null) Reader.Close();
+            if (Writer != null) Writer.Close();
+            if (Stream != null) Stream.Close();
         }
         ~DataStorage()
         {

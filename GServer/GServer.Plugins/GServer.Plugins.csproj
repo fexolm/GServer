@@ -40,9 +40,15 @@
   <ItemGroup>
     <Compile Include="Account.cs" />
     <Compile Include="Authorization.cs" />
+    <Compile Include="Game.cs" />
+    <Compile Include="GameSearcher.cs" />
     <Compile Include="HostBuilder.cs" />
-    <Compile Include="Lobby.cs" />
-    <Compile Include="Matchmaking.cs" />
+    <Compile Include="Lobby\LobbyManager.cs" />
+    <Compile Include="Lobby\LobbyRoom.cs" />
+    <Compile Include="Matchmaking\MatchmakingRoom.cs" />
+    <Compile Include="Matchmaking\MatchmakingManager.cs" />
+    <Compile Include="Matchmaking\MatchWating.cs" />
+    <Compile Include="Matchmaking\Matchmaking.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Room.cs" />
     <Compile Include="RoomManager.cs" />
