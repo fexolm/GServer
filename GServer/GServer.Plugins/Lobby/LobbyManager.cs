@@ -6,7 +6,7 @@ using System.Text;
 
 namespace GServer.Plugins.Lobby
 {
-    public enum LobbyMessages
+    internal enum LobbyMessages
     {
         CreateRoom = 3000,
         JoinRoom = 3001,
@@ -20,7 +20,7 @@ namespace GServer.Plugins.Lobby
         GetRooms = 3009,
         GetRoomsResponse = 3010,
     }
-    class LobbyManager<TAccountModel, TGame> : RoomManager<TGame, TAccountModel, LobbyRoom<TAccountModel, TGame>>
+    public class LobbyManager<TAccountModel, TGame> : RoomManager<TGame, TAccountModel, LobbyRoom<TAccountModel, TGame>>
         where TAccountModel : AccountModel, new()
         where TGame : Game<TAccountModel>, new()
     {

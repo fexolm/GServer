@@ -5,7 +5,7 @@ using System.Text;
 
 namespace GServer.Plugins.Lobby
 {
-    class LobbyRoom<TAccountModel, TGame> : Room<TAccountModel, TGame>
+    public class LobbyRoom<TAccountModel, TGame> : Room<TAccountModel, TGame>
         where TAccountModel : AccountModel, new()
         where TGame : Game<TAccountModel>, new()
     {
