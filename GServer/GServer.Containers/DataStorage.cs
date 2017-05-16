@@ -217,7 +217,7 @@ namespace GServer.Containers
                 throw new Exception("DataStorage in write only mode");
             return Reader.ReadBytes((int)(Stream.Length - Stream.Position));
         }
-        public bool Empty => Stream.Position == Stream.Length;
+        public bool Empty { get { return Stream.Position == Stream.Length; } }
         public void Dispose()
         {
             if (Reader != null) Reader.Close();

@@ -5,35 +5,33 @@ namespace GServer.Containers
 {
     public static class CollectionExtensions
     {
-        public static void Invoke<T>(this IEnumerable<T> collection, Action<T> action)
+        public static void Invoke<T>(this List<T> collection, Action<T> action)
         {
-            foreach(var element in collection)
+            foreach (var element in collection)
             {
                 action.Invoke(element);
             }
         }
 
-        #region IEnumerable Serialization
+        #region List Serialization
         public static byte[] Serialize(this IEnumerable<int> collection)
         {
             var ds = DataStorage.CreateForWrite();
             ds.Push(collection.Count());
-            foreach(var element in collection)
+            foreach (var element in collection)
             {
                 ds.Push(element);
             }
             return ds.Serialize();
         }
-        public static IEnumerable<int> FillDerialize(this IEnumerable<int> collection, byte[] buffer)
+        public static void FillDerialize(this List<int> collection, byte[] buffer)
         {
             var ds = DataStorage.CreateForRead(buffer);
             int len = ds.ReadInt32();
-            List<int> res = new List<int>();
-            for(int i=0; i<len; i++)
+            for (int i = 0; i < len; i++)
             {
-                res.Add(ds.ReadInt32());
+                collection.Add(ds.ReadInt32());
             }
-            return res;
         }
         public static byte[] Serialize(this IEnumerable<long> collection)
         {
@@ -45,16 +43,14 @@ namespace GServer.Containers
             }
             return ds.Serialize();
         }
-        public static IEnumerable<long> FillDerialize(this IEnumerable<long> collection, byte[] buffer)
+        public static void FillDerialize(this List<long> collection, byte[] buffer)
         {
             var ds = DataStorage.CreateForRead(buffer);
             int len = ds.ReadInt32();
-            List<long> res = new List<long>();
             for (int i = 0; i < len; i++)
             {
-                res.Add(ds.ReadInt64());
+                collection.Add(ds.ReadInt64());
             }
-            return res;
         }
         public static byte[] Serialize(this IEnumerable<short> collection)
         {
@@ -66,16 +62,14 @@ namespace GServer.Containers
             }
             return ds.Serialize();
         }
-        public static IEnumerable<short> FillDerialize(this IEnumerable<short> collection, byte[] buffer)
+        public static void FillDerialize(this List<short> collection, byte[] buffer)
         {
             var ds = DataStorage.CreateForRead(buffer);
             int len = ds.ReadInt32();
-            List<short> res = new List<short>();
             for (int i = 0; i < len; i++)
             {
-                res.Add(ds.ReadInt16());
+                collection.Add(ds.ReadInt16());
             }
-            return res;
         }
         public static byte[] Serialize(this IEnumerable<float> collection)
         {
@@ -87,16 +81,15 @@ namespace GServer.Containers
             }
             return ds.Serialize();
         }
-        public static IEnumerable<float> FillDerialize(this IEnumerable<float> collection, byte[] buffer)
+        public static void FillDerialize(this List<float> collection, byte[] buffer)
         {
             var ds = DataStorage.CreateForRead(buffer);
             int len = ds.ReadInt32();
-            List<float> res = new List<float>();
             for (int i = 0; i < len; i++)
             {
-                res.Add(ds.ReadFloat());
+                collection.Add(ds.ReadFloat());
             }
-            return res;
+
         }
         public static byte[] Serialize(this IEnumerable<double> collection)
         {
@@ -108,16 +101,14 @@ namespace GServer.Containers
             }
             return ds.Serialize();
         }
-        public static IEnumerable<double> FillDerialize(this IEnumerable<double> collection, byte[] buffer)
+        public static void FillDerialize(this List<double> collection, byte[] buffer)
         {
             var ds = DataStorage.CreateForRead(buffer);
             int len = ds.ReadInt32();
-            List<double> res = new List<double>();
             for (int i = 0; i < len; i++)
             {
-                res.Add(ds.ReadDouble());
+                collection.Add(ds.ReadDouble());
             }
-            return res;
         }
         public static byte[] Serialize(this IEnumerable<string> collection)
         {
@@ -129,16 +120,14 @@ namespace GServer.Containers
             }
             return ds.Serialize();
         }
-        public static IEnumerable<string> FillDerialize(this IEnumerable<string> collection, byte[] buffer)
+        public static void FillDerialize(this List<string> collection, byte[] buffer)
         {
             var ds = DataStorage.CreateForRead(buffer);
             int len = ds.ReadInt32();
-            List<string> res = new List<string>();
             for (int i = 0; i < len; i++)
             {
-                res.Add(ds.ReadString());
+                collection.Add(ds.ReadString());
             }
-            return res;
         }
         public static byte[] Serialize(this IEnumerable<char> collection)
         {
@@ -150,17 +139,38 @@ namespace GServer.Containers
             }
             return ds.Serialize();
         }
-        public static IEnumerable<char> FillDerialize(this IEnumerable<char> collection, byte[] buffer)
+        public static void FillDerialize(this List<char> collection, byte[] buffer)
         {
             var ds = DataStorage.CreateForRead(buffer);
             int len = ds.ReadInt32();
-            List<char> res = new List<char>();
             for (int i = 0; i < len; i++)
             {
-                res.Add(ds.ReadChar());
+                collection.Add(ds.ReadChar());
             }
-            return res;
         }
-#endregion
+        public static byte[] Serialize<TData>(this IEnumerable<TData> collection)
+            where TData : IDeepSerializable
+        {
+            var ds = DataStorage.CreateForWrite();
+            ds.Push(collection.Count());
+            foreach (var element in collection)
+            {
+                ds.Push(element);
+            }
+            return ds.Serialize();
+        }
+        public static void FillDerialize<TData>(this List<TData> collection, byte[] buffer)
+            where TData : IDeepDeserializable, new()
+        {
+            var ds = DataStorage.CreateForRead(buffer);
+            int len = ds.ReadInt32();
+            for (int i = 0; i < len; i++)
+            {
+                TData element = new TData();
+                element.ReadFromDs(ds);
+                collection.Add(element);
+            }
+        }
+        #endregion
     }
 }

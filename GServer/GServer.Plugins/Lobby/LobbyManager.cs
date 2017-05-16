@@ -17,18 +17,18 @@ namespace GServer.Plugins.Lobby
         PlayerJoined = 3006,
         PlayerLeaved = 3007,
         GameStarted = 3008,
+        GetRooms = 3009,
+        GetRoomsResponse = 3010,
     }
     class LobbyManager<TAccountModel, TGame> : RoomManager<TGame, TAccountModel, LobbyRoom<TAccountModel, TGame>>
         where TAccountModel : AccountModel, new()
         where TGame : Game<TAccountModel>, new()
     {
         private Account<TAccountModel> _accountManager;
-
         public LobbyManager(Account<TAccountModel> accountManager)
         {
             _accountManager = accountManager;
         }
-
         private void CreateRoom(TAccountModel host)
         {
             var room = new LobbyRoom<TAccountModel, TGame>(2, 2);
@@ -45,7 +45,6 @@ namespace GServer.Plugins.Lobby
                 }
             }
         }
-
         private void GameStaredHandler(LobbyRoom<TAccountModel, TGame> room)
         {
             foreach (var p in room.Players)
@@ -53,9 +52,7 @@ namespace GServer.Plugins.Lobby
                 _host.Send(new Message((short)LobbyMessages.GameStarted, Mode.Reliable, DataStorage.CreateForWrite().Push(room.RoomToken.ToInt())), p.Connection);
             }
         }
-
         private Token _roomToken;
-
         public override void InitializeHandlers()
         {
             _host.AddHandler((short)LobbyMessages.CreateRoom, (m, c) =>
@@ -135,8 +132,23 @@ namespace GServer.Plugins.Lobby
                     OnGameStarted.Invoke();
                 }
             });
+            _host.AddHandler((short)LobbyMessages.GetRooms, (m, c) =>
+            {
+                if (OnRoomInfoRecieved != null)
+                {
+                    _host.Send(new Message((short)LobbyMessages.GetRoomsResponse, Mode.Reliable, DataStorage.CreateForWrite().Push(_rooms.Keys.Serialize())), c);
+                }
+            });
+            _host.AddHandler((short)LobbyMessages.GetRoomsResponse, (m, c) =>
+            {
+                if (OnRoomInfoRecieved != null)
+                {
+                    List<Token> roomTokens = new List<Token>();
+                    roomTokens.FillDerialize(m.Body);
+                    OnRoomInfoRecieved.Invoke(roomTokens);
+                }
+            });
         }
-
         public void Send(Message msg)
         {
             var ds = DataStorage.CreateForWrite();
@@ -145,7 +157,6 @@ namespace GServer.Plugins.Lobby
             msg.Body = ds.Serialize();
             _host.Send(msg);
         }
-
         private void PlayerLeavedHander(LobbyRoom<TAccountModel, TGame> room, TAccountModel player)
         {
             foreach (var p in room.Players)
@@ -160,7 +171,6 @@ namespace GServer.Plugins.Lobby
                 }
             }
         }
-
         private void PlayerJoinedHandler(LobbyRoom<TAccountModel, TGame> room, TAccountModel player)
         {
             foreach (var p in room.Players)
@@ -175,11 +185,20 @@ namespace GServer.Plugins.Lobby
                 }
             }
         }
+        public void JoinRoom(Token roomToken)
+        {
+            _host.Send(new Message((short)LobbyMessages.JoinRoom, Mode.Reliable, DataStorage.CreateForWrite().Push(roomToken.ToInt())));
+        }
+        public void GetRooms()
+        {
+            _host.Send(new Message((short)LobbyMessages.GetRooms, Mode.Reliable));
+        }
         public event Action<Token> RoomCreated;
         public event Action OnLeave;
         public event Action OnJoin;
         public event Action<Token> OnPlayerLeaved;
         public event Action<Token> OnPlayerJoined;
         public event Action OnGameStarted;
+        public event Action<List<Token>> OnRoomInfoRecieved;
     }
 }

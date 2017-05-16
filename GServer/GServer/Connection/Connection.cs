@@ -11,7 +11,7 @@ namespace GServer
     {
         public int Priority { get; set; }
         public Message Msg { get; private set; }
-        public bool Resend => Msg.Reliable && !Msg.Sequenced;
+        public bool Resend { get { return Msg.Reliable && !Msg.Sequenced; } }
         public byte[] Serialize()
         {
             var buffer = Msg.Serialize();

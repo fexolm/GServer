@@ -14,7 +14,7 @@ namespace GServer
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
         }
-        public int Available => _client.Available;
+        public int Available { get { return _client.Available; } }
         public void Bind(IPEndPoint localEP)
         {
             _client.Client.Bind(localEP);

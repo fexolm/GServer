@@ -4,13 +4,13 @@ using GServer.Containers;
 
 namespace GServer
 {
-    public class Token : ISerializable, IComparable
+    public class Token : ISerializable, IComparable, IDeepSerializable, IDeepDeserializable
     {
         private static int _globalNum = 0;
 
-        private readonly int _tempNum;
+        private int _tempNum;
 
-        private Token()
+        public Token()
         {
             _tempNum = _globalNum;
             _globalNum++;
@@ -72,6 +72,16 @@ namespace GServer
         public int ToInt()
         {
             return _tempNum;
+        }
+
+        public void PushToDs(DataStorage ds)
+        {
+            ds.Push(_tempNum);
+        }
+
+        public void ReadFromDs(DataStorage ds)
+        {
+            _tempNum = ds.ReadInt32();
         }
     }
 }
