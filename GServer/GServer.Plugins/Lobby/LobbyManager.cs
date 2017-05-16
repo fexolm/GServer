@@ -52,7 +52,6 @@ namespace GServer.Plugins.Lobby
                 _host.Send(new Message((short)LobbyMessages.GameStarted, Mode.Reliable, DataStorage.CreateForWrite().Push(room.RoomToken.ToInt())), p.Connection);
             }
         }
-        private Token _roomToken;
         public override void InitializeHandlers()
         {
             _host.AddHandler((short)LobbyMessages.CreateRoom, (m, c) =>
@@ -82,6 +81,74 @@ namespace GServer.Plugins.Lobby
                     _rooms[roomToken].Leave(acc);
                 }
             });
+            _host.AddHandler((short)LobbyMessages.GetRooms, (m, c) =>
+            {
+                _host.Send(new Message((short)LobbyMessages.GetRoomsResponse, Mode.Reliable, DataStorage.CreateForWrite().Push(_rooms.Keys.Serialize())), c);
+
+            });
+        }
+        private void PlayerLeavedHander(LobbyRoom<TAccountModel, TGame> room, TAccountModel player)
+        {
+            foreach (var p in room.Players)
+            {
+                if (p != player)
+                {
+                    _host.Send(new Message((short)LobbyMessages.PlayerLeaved, Mode.Reliable, DataStorage.CreateForWrite().Push(player.Connection.Token.ToInt())), p.Connection);
+                }
+                else
+                {
+                    _host.Send(new Message((short)LobbyMessages.SuccesfullyLeaved, Mode.Reliable), p.Connection);
+                }
+            }
+        }
+        private void PlayerJoinedHandler(LobbyRoom<TAccountModel, TGame> room, TAccountModel player)
+        {
+            foreach (var p in room.Players)
+            {
+                if (p != player)
+                {
+                    _host.Send(new Message((short)LobbyMessages.PlayerJoined, Mode.Reliable, DataStorage.CreateForWrite().Push(player.Connection.Token.ToInt())), p.Connection);
+                }
+                else
+                {
+                    _host.Send(new Message((short)LobbyMessages.SuccesfullyJoined, Mode.Reliable), p.Connection);
+                }
+            }
+        }
+    }
+
+    public class LobbyClient<TAccountModel> : IPlugin
+        where TAccountModel : AccountModel, new()
+    {
+        Host _host;
+        private Token _roomToken;
+        public event Action<Token> RoomCreated;
+        public event Action OnLeave;
+        public event Action OnJoin;
+        public event Action<Token> OnPlayerLeaved;
+        public event Action<Token> OnPlayerJoined;
+        public event Action OnGameStarted;
+        public event Action<List<Token>> OnRoomInfoRecieved;
+        public void JoinRoom(Token roomToken)
+        {
+            _host.Send(new Message((short)LobbyMessages.JoinRoom, Mode.Reliable, DataStorage.CreateForWrite().Push(roomToken.ToInt())));
+        }
+        public void GetRooms()
+        {
+            _host.Send(new Message((short)LobbyMessages.GetRooms, Mode.Reliable));
+        }
+        public void Send(Message msg)
+        {
+            var ds = DataStorage.CreateForWrite();
+            ds.Push(_roomToken.ToInt());
+            ds.Push(msg.Body);
+            msg.Body = ds.Serialize();
+            _host.Send(msg);
+        }
+
+        public void Bind(Host host)
+        {
+            _host = host;
             _host.AddHandler((short)LobbyMessages.RoomCreated, (m, c) =>
             {
                 if (RoomCreated != null)
@@ -132,13 +199,6 @@ namespace GServer.Plugins.Lobby
                     OnGameStarted.Invoke();
                 }
             });
-            _host.AddHandler((short)LobbyMessages.GetRooms, (m, c) =>
-            {
-                if (OnRoomInfoRecieved != null)
-                {
-                    _host.Send(new Message((short)LobbyMessages.GetRoomsResponse, Mode.Reliable, DataStorage.CreateForWrite().Push(_rooms.Keys.Serialize())), c);
-                }
-            });
             _host.AddHandler((short)LobbyMessages.GetRoomsResponse, (m, c) =>
             {
                 if (OnRoomInfoRecieved != null)
@@ -149,56 +209,5 @@ namespace GServer.Plugins.Lobby
                 }
             });
         }
-        public void Send(Message msg)
-        {
-            var ds = DataStorage.CreateForWrite();
-            ds.Push(_roomToken.ToInt());
-            ds.Push(msg.Body);
-            msg.Body = ds.Serialize();
-            _host.Send(msg);
-        }
-        private void PlayerLeavedHander(LobbyRoom<TAccountModel, TGame> room, TAccountModel player)
-        {
-            foreach (var p in room.Players)
-            {
-                if (p != player)
-                {
-                    _host.Send(new Message((short)LobbyMessages.PlayerLeaved, Mode.Reliable, DataStorage.CreateForWrite().Push(player.Connection.Token.ToInt())), p.Connection);
-                }
-                else
-                {
-                    _host.Send(new Message((short)LobbyMessages.SuccesfullyLeaved, Mode.Reliable), p.Connection);
-                }
-            }
-        }
-        private void PlayerJoinedHandler(LobbyRoom<TAccountModel, TGame> room, TAccountModel player)
-        {
-            foreach (var p in room.Players)
-            {
-                if (p != player)
-                {
-                    _host.Send(new Message((short)LobbyMessages.PlayerJoined, Mode.Reliable, DataStorage.CreateForWrite().Push(player.Connection.Token.ToInt())), p.Connection);
-                }
-                else
-                {
-                    _host.Send(new Message((short)LobbyMessages.SuccesfullyJoined, Mode.Reliable), p.Connection);
-                }
-            }
-        }
-        public void JoinRoom(Token roomToken)
-        {
-            _host.Send(new Message((short)LobbyMessages.JoinRoom, Mode.Reliable, DataStorage.CreateForWrite().Push(roomToken.ToInt())));
-        }
-        public void GetRooms()
-        {
-            _host.Send(new Message((short)LobbyMessages.GetRooms, Mode.Reliable));
-        }
-        public event Action<Token> RoomCreated;
-        public event Action OnLeave;
-        public event Action OnJoin;
-        public event Action<Token> OnPlayerLeaved;
-        public event Action<Token> OnPlayerJoined;
-        public event Action OnGameStarted;
-        public event Action<List<Token>> OnRoomInfoRecieved;
     }
 }
