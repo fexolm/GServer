@@ -145,7 +145,10 @@ namespace GServer.Plugins.Lobby
             msg.Body = ds.Serialize();
             _host.Send(msg);
         }
-
+        public void CreateRoom()
+        {
+            _host.Send(new Message((short)LobbyMessages.CreateRoom, Mode.Reliable));
+        }
         public void Bind(Host host)
         {
             _host = host;
