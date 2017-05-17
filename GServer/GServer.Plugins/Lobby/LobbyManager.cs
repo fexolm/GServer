@@ -53,7 +53,7 @@ namespace GServer.Plugins.Lobby
                 _host.Send(new Message((short)LobbyMessages.GameStarted, Mode.Reliable, DataStorage.CreateForWrite().Push(room.RoomToken.ToInt())), p.Connection);
             }
         }
-        public override void InitializeHandlers()
+        protected override void InitializeHandlers()
         {
             _host.AddHandler((short)LobbyMessages.CreateRoom, (m, c) =>
             {

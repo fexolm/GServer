@@ -62,7 +62,7 @@ namespace GServer.Plugins.Matchmaking
 
         private Token _roomToken;
 
-        public override void InitializeHandlers()
+        protected override void InitializeHandlers()
         {
             _host.AddHandler((short)MatchmakingMessages.GameFound, (m, c) =>
             {
