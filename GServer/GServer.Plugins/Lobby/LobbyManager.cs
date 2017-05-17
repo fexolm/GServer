@@ -87,7 +87,8 @@ namespace GServer.Plugins.Lobby
                 _host.Send(new Message((short)LobbyMessages.GetRoomsResponse, Mode.Reliable, DataStorage.CreateForWrite().Push(_rooms.Keys.Serialize())), c);
 
             });
-            AddHandler((short)LobbyMessages.StartGame, (msg, room, account) =>
+            
+            base.AddHandler((short)LobbyMessages.StartGame, (msg, room, account) =>
             {
                 room.StartGame();
             });
