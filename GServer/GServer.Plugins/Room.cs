@@ -10,7 +10,7 @@ namespace GServer.Plugins
     {
         public TGame Game;
         public readonly Token RoomToken;
-        public List<TAccountModel> Players { get; set; }
+        public List<TAccountModel> Players { get; internal set; }
         internal Room()
         {
             RoomToken = Token.GenerateToken();

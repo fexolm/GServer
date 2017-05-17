@@ -22,6 +22,6 @@ namespace GServer.Plugins
             _host = host;
             InitializeHandlers();
         }
-        public abstract void InitializeHandlers();
+        protected abstract void InitializeHandlers();
     }
 }

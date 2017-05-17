@@ -15,14 +15,14 @@ namespace GServer.Plugins
         {
             _rooms = new Dictionary<Token, TRoom>();
         }
-        protected internal IDictionary<Token, TRoom> _rooms;
+        protected internal IDictionary<Token, TRoom> _rooms { get; private set; }
         protected Host _host;
         public void Bind(Host host)
         {
             _host = host;
             InitializeHandlers();
         }
-        public virtual void InitializeHandlers() { }
+        protected virtual void InitializeHandlers() { }
         public virtual void AddHandler(short messageType, Action<Message, TRoom, TAccountModel> roomHandler)
         {
             _host.AddHandler(messageType, (m, c) =>
