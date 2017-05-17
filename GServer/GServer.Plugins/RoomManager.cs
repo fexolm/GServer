@@ -15,7 +15,7 @@ namespace GServer.Plugins
         {
             _rooms = new Dictionary<Token, TRoom>();
         }
-        protected IDictionary<Token, TRoom> _rooms;
+        protected internal IDictionary<Token, TRoom> _rooms;
         protected Host _host;
         public void Bind(Host host)
         {

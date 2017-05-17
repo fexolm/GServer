@@ -10,52 +10,40 @@ namespace GServer.Plugins.Lobby
         where TGame : Game<TAccountModel>, new()
     {
         internal bool _gameStarted;
-        public readonly int MaxPlayerCount;
-        public readonly int MinPlayerCount;
-        private List<TAccountModel> _players = new List<TAccountModel>();
-        public override List<TAccountModel> Players
-        {
-            get
-            {
-                return _players;
-            }
-            set
-            {
-                _players = value;
-            }
-        }
-        public LobbyRoom(int maxPlayerCount, int minPlayerCount) : base()
+        internal readonly int MaxPlayerCount;
+        internal readonly int MinPlayerCount;
+        internal LobbyRoom(int maxPlayerCount, int minPlayerCount) : base()
         {
             MaxPlayerCount = maxPlayerCount;
             MinPlayerCount = minPlayerCount;
             _gameStarted = false;
         }
-        public void Join(TAccountModel player)
+        internal void Join(TAccountModel player)
         {
-            if (_players.Count < MaxPlayerCount && !_gameStarted)
+            if (Players.Count < MaxPlayerCount && !_gameStarted)
             {
-                _players.Add(player);
+                Players.Add(player);
                 PlayerJoined.Invoke(this, player);
             }
         }
-        public void Leave(TAccountModel player)
+        internal void Leave(TAccountModel player)
         {
-            if (_players.Contains(player) && !_gameStarted)
+            if (Players.Contains(player) && !_gameStarted)
             {
-                _players.Remove(player);
+                Players.Remove(player);
                 PlayerLeaved.Invoke(this, player);
             }
         }
-        public void StartGame()
+        internal void StartGame()
         {
-            if (_players.Count >= MinPlayerCount)
+            if (Players.Count >= MinPlayerCount)
             {
                 _gameStarted = true;
                 GameStarted.Invoke(this);
             }
         }
-        public event Action<LobbyRoom<TAccountModel, TGame>, TAccountModel> PlayerJoined;
-        public event Action<LobbyRoom<TAccountModel, TGame>, TAccountModel> PlayerLeaved;
-        public event Action<LobbyRoom<TAccountModel, TGame>> GameStarted;
+        internal event Action<LobbyRoom<TAccountModel, TGame>, TAccountModel> PlayerJoined;
+        internal event Action<LobbyRoom<TAccountModel, TGame>, TAccountModel> PlayerLeaved;
+        internal event Action<LobbyRoom<TAccountModel, TGame>> GameStarted;
     }
 }

@@ -10,25 +10,25 @@ namespace GServer.Plugins
     {
         public TGame Game;
         public readonly Token RoomToken;
-        public virtual List<TAccountModel> Players { get; set; }
-        public Room()
+        public List<TAccountModel> Players { get; set; }
+        internal Room()
         {
             RoomToken = Token.GenerateToken();
         }
-        public void InitRoom()
+        internal void InitRoom()
         {
             Game = new TGame();
             Game.Players = Players.ToArray();
             Game.Send = (msg, con) =>
             {
-               if (Send!=null) Send.Invoke(msg, con);
+                if (Send != null) Send.Invoke(msg, con);
             };
             Game.InitGame();
         }
         public Action RoomClosed;
-        public void Close()
+        internal void Close()
         {
-           if (RoomClosed!=null) RoomClosed.Invoke();
+            if (RoomClosed != null) RoomClosed.Invoke();
         }
         public Action<Message, Connection> Send;
     }
