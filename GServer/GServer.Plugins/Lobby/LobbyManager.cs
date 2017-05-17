@@ -19,6 +19,7 @@ namespace GServer.Plugins.Lobby
         GameStarted = 3008,
         GetRooms = 3009,
         GetRoomsResponse = 3010,
+        StartGame = 3011,
     }
     public class LobbyManager<TAccountModel, TGame> : RoomManager<TGame, TAccountModel, LobbyRoom<TAccountModel, TGame>>
         where TAccountModel : AccountModel, new()
@@ -32,12 +33,10 @@ namespace GServer.Plugins.Lobby
         private void CreateRoom(TAccountModel host)
         {
             var room = new LobbyRoom<TAccountModel, TGame>(2, 2);
+            room.Join(host)
             room.PlayerJoined += PlayerJoinedHandler;
             room.PlayerLeaved += PlayerLeavedHander;
-            room.GameStarted += GameStaredHandler;
-            room.Join(host);
-           
-            lock (_rooms)
+            room.GameStarted += GameStaredHandler;			room.Join(host);            lock (_rooms)
             {
                 if (!_rooms.ContainsKey(host.Connection.Token))
                 {
@@ -86,6 +85,10 @@ namespace GServer.Plugins.Lobby
             {
                 _host.Send(new Message((short)LobbyMessages.GetRoomsResponse, Mode.Reliable, DataStorage.CreateForWrite().Push(_rooms.Keys.Serialize())), c);
 
+            });
+            AddHandler((short)LobbyMessages.StartGame, (msg, room, account) => 
+            {
+                room.StartGame();
             });
         }
         private void PlayerLeavedHander(LobbyRoom<TAccountModel, TGame> room, TAccountModel player)
@@ -212,6 +215,10 @@ namespace GServer.Plugins.Lobby
                     OnRoomInfoRecieved.Invoke(roomTokens);
                 }
             });
+        }
+        public void StartGame()
+        {
+            _host.Send(new Message((short)LobbyMessages.StartGame, Mode.Reliable));
         }
     }
 }
