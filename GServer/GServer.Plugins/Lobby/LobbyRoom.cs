@@ -9,7 +9,7 @@ namespace GServer.Plugins.Lobby
         where TAccountModel : AccountModel, new()
         where TGame : Game<TAccountModel>, new()
     {
-        private bool _gameStarted;
+        internal bool _gameStarted;
         public readonly int MaxPlayerCount;
         public readonly int MinPlayerCount;
         private List<TAccountModel> _players = new List<TAccountModel>();

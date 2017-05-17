@@ -33,10 +33,11 @@ namespace GServer.Plugins.Lobby
         private void CreateRoom(TAccountModel host)
         {
             var room = new LobbyRoom<TAccountModel, TGame>(2, 2);
-            room.Join(host)
             room.PlayerJoined += PlayerJoinedHandler;
             room.PlayerLeaved += PlayerLeavedHander;
-            room.GameStarted += GameStaredHandler;			room.Join(host);            lock (_rooms)
+            room.GameStarted += GameStaredHandler;
+            room.Join(host);
+            lock (_rooms)
             {
                 if (!_rooms.ContainsKey(host.Connection.Token))
                 {
@@ -86,7 +87,7 @@ namespace GServer.Plugins.Lobby
                 _host.Send(new Message((short)LobbyMessages.GetRoomsResponse, Mode.Reliable, DataStorage.CreateForWrite().Push(_rooms.Keys.Serialize())), c);
 
             });
-            AddHandler((short)LobbyMessages.StartGame, (msg, room, account) => 
+            AddHandler((short)LobbyMessages.StartGame, (msg, room, account) =>
             {
                 room.StartGame();
             });
@@ -118,6 +119,22 @@ namespace GServer.Plugins.Lobby
                     _host.Send(new Message((short)LobbyMessages.SuccesfullyJoined, Mode.Reliable), p.Connection);
                 }
             }
+        }
+        public override void AddHandler(short messageType, Action<Message, LobbyRoom<TAccountModel, TGame>, TAccountModel> roomHandler)
+        {
+            Action<Message, LobbyRoom<TAccountModel, TGame>, TAccountModel> newHandler = (msg, room, acc) => 
+            {
+                if (room._gameStarted)
+                {
+                    roomHandler.Invoke(msg, room, acc);
+                }
+                else
+                {
+                    Console.WriteLine("Стой, игра еще не началась...");
+                }
+            };
+
+            base.AddHandler(messageType, newHandler);
         }
     }
 

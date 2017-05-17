@@ -23,7 +23,7 @@ namespace GServer.Plugins
             InitializeHandlers();
         }
         public virtual void InitializeHandlers() { }
-        public void AddHandler(short messageType, Action<Message, TRoom, TAccountModel> roomHandler)
+        public virtual void AddHandler(short messageType, Action<Message, TRoom, TAccountModel> roomHandler)
         {
             _host.AddHandler(messageType, (m, c) =>
             {
