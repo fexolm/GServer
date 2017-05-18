@@ -14,6 +14,7 @@ namespace GServer.Plugins.Lobby
         internal readonly int MinPlayerCount;
         internal LobbyRoom(int maxPlayerCount, int minPlayerCount) : base()
         {
+            Players = new List<TAccountModel>();
             MaxPlayerCount = maxPlayerCount;
             MinPlayerCount = minPlayerCount;
             _gameStarted = false;
@@ -39,6 +40,7 @@ namespace GServer.Plugins.Lobby
             if (Players.Count >= MinPlayerCount)
             {
                 _gameStarted = true;
+                InitRoom();
                 GameStarted.Invoke(this);
             }
         }

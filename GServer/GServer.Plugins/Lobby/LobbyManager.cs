@@ -66,9 +66,12 @@ namespace GServer.Plugins.Lobby
                 var acc = _accountManager.GetAccount(c.Token);
                 var ds = DataStorage.CreateForRead(m.Body);
                 var roomToken = new Token(ds.ReadInt32());
-                if (_rooms.ContainsKey(roomToken))
+                lock (_rooms)
                 {
-                    _rooms[roomToken].Join(acc);
+                    if (_rooms.ContainsKey(roomToken))
+                    {
+                        _rooms[roomToken].Join(acc);
+                    }
                 }
             });
 
@@ -77,18 +80,24 @@ namespace GServer.Plugins.Lobby
                 var acc = _accountManager.GetAccount(c.Token);
                 var ds = DataStorage.CreateForRead(m.Body);
                 var roomToken = new Token(ds.ReadInt32());
-                if (_rooms.ContainsKey(roomToken))
+                lock (_rooms)
                 {
-                    _rooms[roomToken].Leave(acc);
+                    if (_rooms.ContainsKey(roomToken))
+                    {
+                        _rooms[roomToken].Leave(acc);
+                    }
                 }
             });
             _host.AddHandler((short)LobbyMessages.GetRooms, (m, c) =>
             {
-                _host.Send(new Message((short)LobbyMessages.GetRoomsResponse, Mode.Reliable, DataStorage.CreateForWrite().Push(_rooms.Keys.Serialize())), c);
+                lock (_rooms)
+                {
+                    _host.Send(new Message((short)LobbyMessages.GetRoomsResponse, Mode.Reliable, DataStorage.CreateForWrite().Push(_rooms.Keys.Serialize())), c);
+                }
 
             });
-            
-            base.AddHandler((short)LobbyMessages.StartGame, (msg, room, account) =>
+
+            AddHandler((short)LobbyMessages.StartGame, (msg, room, account) =>
             {
                 room.StartGame();
             });
@@ -123,7 +132,12 @@ namespace GServer.Plugins.Lobby
         }
         public override void AddHandler(short messageType, Action<Message, LobbyRoom<TAccountModel, TGame>, TAccountModel> roomHandler)
         {
-            Action<Message, LobbyRoom<TAccountModel, TGame>, TAccountModel> newHandler = (msg, room, acc) => 
+            if (messageType == (short)LobbyMessages.StartGame)
+            {
+                base.AddHandler(messageType, roomHandler);
+                return;
+            }
+            Action<Message, LobbyRoom<TAccountModel, TGame>, TAccountModel> newHandler = (msg, room, acc) =>
             {
                 if (room._gameStarted)
                 {
@@ -236,7 +250,7 @@ namespace GServer.Plugins.Lobby
         }
         public void StartGame()
         {
-            _host.Send(new Message((short)LobbyMessages.StartGame, Mode.Reliable));
+            Send(new Message((short)LobbyMessages.StartGame, Mode.Reliable));
         }
     }
 }
