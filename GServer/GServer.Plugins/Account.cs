@@ -9,6 +9,7 @@ namespace GServer.Plugins
     {
         public Guid AccountId { get; set; }
         public Connection Connection { get; set; }
+        public Token RoomToken { get; set; }
         public abstract void FillDeserialize(byte[] buffer);
         public abstract byte[] Serialize();
     }

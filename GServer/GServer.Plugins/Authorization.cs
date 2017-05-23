@@ -71,6 +71,7 @@ namespace GServer.Plugins
         {
             Console.WriteLine("auth response from {0}", c.EndPoint.ToString());
             var login = DataStorage.CreateForRead(m.Body).ReadString();
+            Console.WriteLine("login: ", login);
             var user = _storage.Users.FirstOrDefault(u => u.Login == login);
             if (user == null || user.Online)
             {
@@ -108,7 +109,7 @@ namespace GServer.Plugins
                         session.User.Online = true;
                         _host.Send(new Message((short)AuthMType.AuthSuccess, Mode.Reliable), c);
                         c.Disconnected += () => session.User.Online = false;
-                       if (OnAccountLogin!=null) OnAccountLogin.Invoke(c, session.User.AccountId);
+                        if (OnAccountLogin != null) OnAccountLogin.Invoke(c, session.User.AccountId);
                     }
                     else
                     {

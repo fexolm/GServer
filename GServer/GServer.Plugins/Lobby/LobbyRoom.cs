@@ -21,16 +21,26 @@ namespace GServer.Plugins.Lobby
         }
         internal void Join(TAccountModel player)
         {
+            if (player.RoomToken != null)
+            {
+                return;
+            }
             if (Players.Count < MaxPlayerCount && !_gameStarted)
             {
+                player.RoomToken = RoomToken;
                 Players.Add(player);
                 PlayerJoined.Invoke(this, player);
             }
         }
         internal void Leave(TAccountModel player)
         {
+            if (player.RoomToken == null)
+            {
+                return;
+            }
             if (Players.Contains(player) && !_gameStarted)
             {
+                player.RoomToken = null;
                 Players.Remove(player);
                 PlayerLeaved.Invoke(this, player);
             }
