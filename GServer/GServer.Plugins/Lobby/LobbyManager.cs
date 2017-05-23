@@ -32,6 +32,10 @@ namespace GServer.Plugins.Lobby
         }
         private void CreateRoom(TAccountModel host)
         {
+            if (host.RoomToken != null)
+            {
+                return;
+            }
             var room = new LobbyRoom<TAccountModel, TGame>(2, 2);
             room.PlayerJoined += PlayerJoinedHandler;
             room.PlayerLeaved += PlayerLeavedHander;
