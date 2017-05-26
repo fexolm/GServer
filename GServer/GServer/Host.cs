@@ -26,6 +26,7 @@ namespace GServer
         public uint ConnectionCleaningInterval { get; set; }
         public Host(int port)
         {
+            ValidateMessageTypes();
             _listenThread = new Thread(() => Listen(port));
             _port = port;
             _isListening = false;
@@ -407,7 +408,7 @@ namespace GServer
 
         public bool Cross(Pair<int, int> a, Pair<int, int> b)
         {
-            if(a.Val1 < b.Val1)
+            if (a.Val1 < b.Val1)
             {
                 return a.Val2 > b.Val1;
             }
