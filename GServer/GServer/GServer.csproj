@@ -50,6 +50,7 @@
     <Compile Include="Messages\MessageCounter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Connection\Token.cs" />
+    <Compile Include="ReserveAttriute.cs" />
     <Compile Include="ServerTimer.cs" />
   </ItemGroup>
   <ItemGroup>

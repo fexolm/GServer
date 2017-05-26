@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using GServer.Containers;
+using System.Reflection;
+using System.Linq;
+
 namespace GServer
 {
     public delegate void ReceiveHandler(Message msg, Connection con);
@@ -75,7 +78,7 @@ namespace GServer
                     _client.Send(buffer, c.EndPoint);
                 }
             });
-           if (OnTick!=null) OnTick.Invoke();
+            if (OnTick != null) OnTick.Invoke();
         }
         private void SendToken(Connection con)
         {
@@ -401,5 +404,46 @@ namespace GServer
         }
         public event Action OnTick;
         public event Action<Connection> ConnectionCreated;
+
+        public bool Cross(Pair<int, int> a, Pair<int, int> b)
+        {
+            if(a.Val1 < b.Val1)
+            {
+                return a.Val2 > b.Val1;
+            }
+            else
+            {
+                return b.Val2 > a.Val1;
+            }
+        }
+
+        private void ValidateMessageTypes()
+        {
+            Dictionary<string, Pair<int, int>> dict = new Dictionary<string, Pair<int, int>>();
+            var assebly = Assembly.GetCallingAssembly();
+            var types = assebly.GetTypes();
+            foreach (var type in types)
+            {
+                var attrs = type.GetCustomAttributes(typeof(ReserveAttribute), true);
+                if (attrs.Length > 0)
+                {
+                    var a = (ReserveAttribute)attrs[0];
+                    dict.Add(type.ToString(), new Pair<int, int>(a.Start, a.End));
+                }
+            }
+
+            var values = dict.Values.ToList();
+            var keys = dict.Keys.ToList();
+            for (int i = 0; i < dict.Count; i++)
+            {
+                for (int j = 0; j < i; j++)
+                {
+                    if (Cross(values[i], values[j]))
+                    {
+                        Console.WriteLine("Warning {0} cross {1}", keys[i], keys[j]);
+                    }
+                }
+            }
+        }
     }
 }

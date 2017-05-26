@@ -6,6 +6,7 @@ using System.Text;
 
 namespace GServer.Plugins.Lobby
 {
+    [Reserve(3000,3013)]
     internal enum LobbyMessages
     {
         CreateRoom = 3000,
@@ -20,6 +21,8 @@ namespace GServer.Plugins.Lobby
         GetRooms = 3009,
         GetRoomsResponse = 3010,
         StartGame = 3011,
+        RoomInfoRequest = 3012,
+        RoomInfoResponse = 3013,
     }
     public class LobbyManager<TAccountModel, TGame> : RoomManager<TGame, TAccountModel, LobbyRoom<TAccountModel, TGame>>
         where TAccountModel : AccountModel, new()

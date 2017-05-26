@@ -7,6 +7,7 @@ namespace GServer
     /// <summary>
     /// Default message types used in internal host logic
     /// </summary>
+    
     internal enum MessageType : short
     {
         Empty,
