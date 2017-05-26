@@ -6,7 +6,7 @@ using System.Text;
 
 namespace GServer.Plugins.Lobby
 {
-    [Reserve(3000,3013)]
+    [Reserve(3000,3040)]
     internal enum LobbyMessages
     {
         CreateRoom = 3000,

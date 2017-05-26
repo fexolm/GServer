@@ -25,6 +25,7 @@ namespace GServer.Plugins
 
     public class Authorization : IPlugin, IAuthorization
     {
+        [Reserve(1000, 1010)]
         private enum AuthMType
         {
             Chalange = 1000,

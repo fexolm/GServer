@@ -7,13 +7,13 @@ namespace GServer
     /// <summary>
     /// Default message types used in internal host logic
     /// </summary>
-    
+    [Reserve(0,40)]
     internal enum MessageType : short
     {
-        Empty,
-        Handshake,
-        Ack,
-        Token
+        Empty = 0,
+        Handshake = 1,
+        Ack = 2,
+        Token = 3
     }
     /// <summary>
     /// Reliable udp mods

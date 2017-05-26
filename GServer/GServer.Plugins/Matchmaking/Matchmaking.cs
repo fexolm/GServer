@@ -2,6 +2,7 @@
 using GServer.Containers;
 namespace GServer.Plugins.Matchmaking
 {
+    [Reserve(3000, 3020)]
     public enum MatchmakingMessages
     {
         GameFound = 3000,

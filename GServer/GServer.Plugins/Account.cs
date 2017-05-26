@@ -23,6 +23,7 @@ namespace GServer.Plugins
     public class Account<TModel> : IPlugin
         where TModel : AccountModel, new()
     {
+        [Reserve(2000, 2010)]
         enum AccountMessage
         {
             InfoRequest = 2000,
