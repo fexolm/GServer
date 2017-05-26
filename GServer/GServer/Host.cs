@@ -422,14 +422,14 @@ namespace GServer
         {
             Dictionary<string, Pair<int, int>> dict = new Dictionary<string, Pair<int, int>>();
             var assebly = Assembly.GetCallingAssembly();
-            var types = assebly.GetTypes();
+            var types = Assembly.GetCallingAssembly().GetTypes().Concat(Assembly.GetEntryAssembly().GetTypes()).Concat(Assembly.GetExecutingAssembly().GetTypes());
             foreach (var type in types)
             {
                 var attrs = type.GetCustomAttributes(typeof(ReserveAttribute), true);
                 if (attrs.Length > 0)
                 {
                     var a = (ReserveAttribute)attrs[0];
-                    dict.Add(type.ToString(), new Pair<int, int>(a.Start, a.End));
+                    dict.Add(type.Name, new Pair<int, int>(a.Start, a.End));
                 }
             }
 
