@@ -43,6 +43,7 @@
     <Compile Include="Connection\Connection.cs" />
     <Compile Include="Host.cs" />
     <Compile Include="HostImpl.cs" />
+    <Compile Include="HttpPipe.cs" />
     <Compile Include="IPlugin.cs" />
     <Compile Include="ISocket.cs" />
     <Compile Include="Messages\Ack.cs" />
