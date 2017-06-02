@@ -26,7 +26,7 @@ namespace GServer
         public uint ConnectionCleaningInterval { get; set; }
         public Host(int port)
         {
-            ValidateMessageTypes();
+            //ValidateMessageTypes();
             _listenThread = new Thread(() => Listen(port));
             _port = port;
             _isListening = false;
@@ -254,7 +254,8 @@ namespace GServer
         {
             _isListening = false;
             ServerTimer.OnTick -= ServerTick;
-            _client.Close();
+            if (_client != null)
+                _client.Close();
         }
         /// <summary>
         /// Sending message to specific connection
@@ -422,7 +423,10 @@ namespace GServer
         {
             Dictionary<string, Pair<int, int>> dict = new Dictionary<string, Pair<int, int>>();
             var assebly = Assembly.GetCallingAssembly();
-            var types = Assembly.GetCallingAssembly().GetTypes().Concat(Assembly.GetEntryAssembly().GetTypes()).Concat(Assembly.GetExecutingAssembly().GetTypes());
+            var callingAssemblyTypes = Assembly.GetCallingAssembly().GetTypes();
+            var entryAssemblyTypes = Assembly.GetEntryAssembly().GetTypes();
+            var executingAssemblyTypes = Assembly.GetExecutingAssembly().GetTypes();
+            var types = callingAssemblyTypes.Concat(executingAssemblyTypes);
             foreach (var type in types)
             {
                 var attrs = type.GetCustomAttributes(typeof(ReserveAttribute), true);
