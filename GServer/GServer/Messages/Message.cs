@@ -66,7 +66,7 @@ namespace GServer
             result._mode = (Mode)reader.ReadByte();
             if (result.Type != (short)MessageType.Empty && result.Type != (short)MessageType.Handshake)
             {
-                result.ConnectionToken = new Token(reader.ReadInt32());
+                result.ConnectionToken = new Token(reader.ReadString());
             }
             result.MessageId = reader.ReadInt16();
             return result;
