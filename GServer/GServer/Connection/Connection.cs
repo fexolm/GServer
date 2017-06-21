@@ -52,7 +52,7 @@ namespace GServer
 
     public class Connection
     {
-        public readonly IPEndPoint EndPoint;
+        public IPEndPoint EndPoint { get; set; }
         public readonly Token Token;
         public DateTime LastActivity { get; private set; }
         public Connection(IPEndPoint endPoint)

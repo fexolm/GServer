@@ -73,6 +73,7 @@ namespace GServer
                     _connections.ContainsKey(msg.Header.ConnectionToken))
                 {
                     con = _connections[msg.Header.ConnectionToken];
+					con.EndPoint = endPoint;
                     return true;
                 }
                 if (msg.Header.Type == (short)MessageType.Handshake)
