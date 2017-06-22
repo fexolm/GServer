@@ -179,6 +179,18 @@ namespace GServer
 				}
 			}
 		}
+		private void InvokeHandler(ReceiveHandler handler, Message msg, Connection connection)
+		{
+			bool async = handler.GetMethodInfo().GetCustomAttributes(typeof(AsyncOperationAttribute), false).Length > 0;
+			if (async)
+			{
+				ThreadPool.QueueUserWorkItem((o) => handler.Invoke(msg, connection));
+			}
+			else
+			{
+				handler.Invoke(msg, connection);
+			}
+		}
 		private void ProcessDatagram(Message msg, Connection connection)
 		{
 			if (msg.Header.Reliable)
@@ -206,18 +218,7 @@ namespace GServer
 				{
 					return;
 				}
-				if (_threadCount > 0)
-				{
-					ThreadPool.QueueUserWorkItem((o) => ProcessHandlerList(toInvoke, connection));
-				}
-				else
-				{
-					ProcessHandlerList(toInvoke, connection);
-				}
-			}
-			else if (_threadCount > 0)
-			{
-				ThreadPool.QueueUserWorkItem((o) => ProcessHandler(msg, connection));
+				ProcessHandlerList(toInvoke, connection);
 			}
 			else
 			{
@@ -239,7 +240,7 @@ namespace GServer
 			{
 				foreach (var h in handlers)
 				{
-					h.Invoke(msg, connection);
+					InvokeHandler(h, msg, connection);
 				}
 				connection.UpdateActivity();
 			}
@@ -268,7 +269,7 @@ namespace GServer
 					{
 						try
 						{
-							h.Invoke(m, connection);
+							InvokeHandler(h, m, connection);
 						}
 						catch (Exception ex)
 						{
@@ -284,13 +285,9 @@ namespace GServer
 		/// </summary>
 		/// <param name="threadCount">Number of processing threads</param>
 		/// <param name="host">Socket implementation</param>
-		public void StartListen(int threadCount, ISocket host)
+		public void StartListen(ISocket host)
 		{
-			if (threadCount > 0)
-			{
-				ThreadPool.SetMinThreads(threadCount, threadCount);
-			}
-			_threadCount = threadCount;
+			ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount*4);
 			_isListening = true;
 			_client = host;
 			_listenThread.Start();
@@ -299,9 +296,9 @@ namespace GServer
 		///  Begin listening
 		/// </summary>
 		/// <param name="threadCount">Number of processing threads</param>
-		public void StartListen(int threadCount)
+		public void StartListen()
 		{
-			StartListen(threadCount, new HostImpl());
+			StartListen(new HostImpl());
 		}
 		/// <summary>
 		/// Stop all server threads
