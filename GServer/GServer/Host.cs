@@ -23,17 +23,39 @@ namespace GServer
 			_allowedTokens = tokens;
 		}
 		public static readonly AllowedTokens Any = new AllowedTokens();
-		public bool IsAccepted(Token token)
+		internal bool IsAccepted(Token token)
 		{
 			return _allowAll || _allowedTokens.Contains(token);
+		}
+		internal void InitializeConnections(ConnectionManager cm)
+		{
+			if (!_allowAll)
+			{
+				foreach (var token in _allowedTokens)
+				{
+					cm.Add(token, new Connection(null, token));
+				}
+			}
 		}
 	}
 
 	public delegate void ReceiveHandler(Message msg, Connection con);
 	public class Host : IDisposable
 	{
-		public bool EmableHandshake { get; set; }
-		public AllowedTokens AllowedTokens { get; set; }
+		public bool EnableHandshake { get; set; }
+		private AllowedTokens _allowedTokens;
+		public AllowedTokens AllowedTokens
+		{
+			get
+			{
+				return _allowedTokens;
+			}
+			set
+			{
+				_allowedTokens = value;
+				_allowedTokens.InitializeConnections(_connectionManager);
+			}
+		}
 		private Token _hostToken;
 		private ISocket _client;
 		private readonly Thread _listenThread;
@@ -48,7 +70,7 @@ namespace GServer
 		public uint ConnectionCleaningInterval { get; set; }
 		public Host(int port)
 		{
-			EmableHandshake = true;
+			EnableHandshake = true;
 			AllowedTokens = AllowedTokens.Any;
 			//ValidateMessageTypes();
 			_listenThread = new Thread(() => Listen(port));
@@ -67,7 +89,7 @@ namespace GServer
 			});
 			AddHandler((short)MessageType.Handshake, (m, c) =>
 			{
-				if (EmableHandshake)
+				if (EnableHandshake)
 				{
 					if (ConnectionCreated != null)
 					{
@@ -373,6 +395,13 @@ namespace GServer
 			var buffer = Message.Handshake;
 			Packet p = new Packet(buffer);
 			_client.Send(p.Serialize());
+			return true;
+		}
+		public bool BeginConnect(IPEndPoint ep, Token token)
+		{
+			_hostToken = token;
+			_connectionManager.Add(token, new Connection(ep));
+			OnConnect.Invoke();
 			return true;
 		}
 		internal void WriteError(string error)
