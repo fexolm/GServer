@@ -101,7 +101,8 @@ namespace GServer
                 foreach (var ack in _ackPerMsgType)
                 {
                     var buffer = ack.Value.GetAcks();
-                    if (buffer != Ack.Empty)
+                     
+		    if (buffer != Ack.Empty)
                     {
                         foreach (var msg in buffer)
                         {
@@ -119,7 +120,7 @@ namespace GServer
                     int p = x.Priority.CompareTo(y.Priority);
                     return p == 0 ? x.Msg.MessageId.CompareTo(y.Msg.MessageId) : -p;
                 });
-                for (; i < 128 && i < _messageBuffer.Count; i++)
+                for (; /*i < 128 && */ i < _messageBuffer.Count; i++)
                 {
                     toSend.Add(_messageBuffer[i]);
                     if (!_messageBuffer[i].Resend)
@@ -131,6 +132,7 @@ namespace GServer
                 {
                     _messageBuffer[i].Priority++;
                 }
+
                 foreach (var element in toDelete)
                 {
                     _messageBuffer.Remove(element);
@@ -259,6 +261,7 @@ namespace GServer
         }
         private void AckArrivedHandler(MessageCounter arg1, short arg2)
         {
+
             lock (_messageBuffer)
             {
                 var toRemove = _messageBuffer.FirstOrDefault(m =>
