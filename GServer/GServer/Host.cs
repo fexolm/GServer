@@ -165,15 +165,20 @@ namespace GServer
                               int len = ds.ReadInt32();
                               var msg = Message.Deserialize(ds.ReadBytes(len));
                               Connection connection;
+			      if(msg.Header.Type ==(short)MessageType.Ack) {
+			           Console.WriteLine("ack arrived"); 
+			      }
                               if (_connectionManager.TryGetConnection(out connection, msg, endPoint))
                               {
+				   if(msg.Header.Type == (short)MessageType.Ack) {
+				         Console.WriteLine("connecion accepted");
+				   }
                                    if (AllowedTokens.IsAccepted(connection.Token))
                                    {
                                         ProcessDatagram(msg, connection);
                                    }
                                    else
                                    {
-					Console.WriteLine("disconnected");
                                         ForceDisconnect(connection);
                                    }
                               }
@@ -183,19 +188,35 @@ namespace GServer
                }
           }
           private void InvokeHandler(ReceiveHandler handler, Message msg, Connection connection)
-          {
+          {	    
+	       if(msg.Header.Type == (short)MessageType.Ack) 
+	             Console.WriteLine("ack marked to be processed");
+	       try{
                bool async = handler.GetMethodInfo().GetCustomAttributes(typeof(AsyncOperationAttribute), false).Length > 0;
                if (async)
-               {
+	       {
+		    if(msg.Header.Type == (short)MessageType.Ack) {
+		         Console.WriteLine("ack processed async");
+		    }
+            
                     ThreadPool.QueueUserWorkItem((o) => handler.Invoke(msg, connection));
                }
                else
                {
+		    if(msg.Header.Type == (short)MessageType.Ack) {
+		         Console.WriteLine("ack processed sync");
+		    }
                     handler.Invoke(msg, connection);
                }
+	       } catch(Exception ex) {
+	            Console.WriteLine(ex.ToString());
+	       }
           }
           private void ProcessDatagram(Message msg, Connection connection)
           {
+	       if(msg.Header.Type == (short)MessageType.Ack) {
+	            Console.WriteLine("processDatagram");
+	       }
                if (msg.Header.Reliable)
                {
                     connection.ReceiveReliable(msg);
@@ -230,6 +251,9 @@ namespace GServer
           }
           private void ProcessHandler(Message msg, Connection connection)
           {
+	       if(msg.Header.Type == (short)MessageType.Ack) {
+	            Console.WriteLine("processHandler invoked");
+	       }  
                connection.InvokeIfBinded(msg);
                IList<ReceiveHandler> handlers = null;
                lock (_receiveHandlers)
@@ -238,7 +262,7 @@ namespace GServer
                     {
                          handlers = _receiveHandlers[(short)msg.Header.Type];
                     }
-               }
+               } 
                if (handlers != null)
                {
                     foreach (var h in handlers)
