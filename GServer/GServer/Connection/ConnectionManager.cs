@@ -69,9 +69,6 @@ namespace GServer
         {
             lock (_connections)
             {
-		if(msg.Header.Type == (short)MessageType.Ack) {
-		     Console.WriteLine($"ack token: {msg.Header.ConnectionToken}");
-		}
                 if (msg.Header.ConnectionToken != null &&
                     _connections.ContainsKey(msg.Header.ConnectionToken))
                 {
