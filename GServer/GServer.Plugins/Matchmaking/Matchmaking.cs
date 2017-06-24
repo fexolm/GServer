@@ -68,8 +68,9 @@ namespace GServer.Plugins.Matchmaking
             _host.AddHandler((short)MatchmakingMessages.GameFound, (m, c) =>
             {
                 var ds = DataStorage.CreateForRead(m.Body);
-                _roomToken = new Token(ds.ReadInt32());
-                OnGameFound.Invoke();
+                _roomToken = new Token();
+				_roomToken.ReadFromDs(ds);
+				OnGameFound.Invoke();
             });
             _host.AddHandler((short)MatchmakingMessages.ValidateActivity, (m, c) =>
             {
@@ -95,7 +96,7 @@ namespace GServer.Plugins.Matchmaking
         public void Send(Message msg)
         {
             var ds = DataStorage.CreateForWrite();
-            ds.Push(_roomToken.ToInt());
+            ds.Push(_roomToken);
             ds.Push(msg.Body);
             msg.Body = ds.Serialize();
             _host.Send(msg);

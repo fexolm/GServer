@@ -49,7 +49,7 @@ namespace GServer.Plugins.Lobby
                 if (!_rooms.ContainsKey(host.Connection.Token))
                 {
                     _rooms.Add(room.RoomToken, room);
-                    _host.Send(new Message((short)LobbyMessages.RoomCreated, Mode.Reliable, DataStorage.CreateForWrite().Push(room.RoomToken.ToInt())), host.Connection);
+                    _host.Send(new Message((short)LobbyMessages.RoomCreated, Mode.Reliable, DataStorage.CreateForWrite().Push(room.RoomToken)), host.Connection);
                 }
             }
         }
@@ -57,7 +57,7 @@ namespace GServer.Plugins.Lobby
         {
             foreach (var p in room.Players)
             {
-                _host.Send(new Message((short)LobbyMessages.GameStarted, Mode.Reliable, DataStorage.CreateForWrite().Push(room.RoomToken.ToInt())), p.Connection);
+                _host.Send(new Message((short)LobbyMessages.GameStarted, Mode.Reliable, DataStorage.CreateForWrite().Push(room.RoomToken)), p.Connection);
             }
         }
         protected override void InitializeHandlers()
@@ -72,8 +72,9 @@ namespace GServer.Plugins.Lobby
             {
                 var acc = _accountManager.GetAccount(c.Token);
                 var ds = DataStorage.CreateForRead(m.Body);
-                var roomToken = new Token(ds.ReadInt32());
-                lock (_rooms)
+                var roomToken = new Token();
+				roomToken.ReadFromDs(ds);
+				lock (_rooms)
                 {
                     if (_rooms.ContainsKey(roomToken))
                     {
@@ -86,7 +87,8 @@ namespace GServer.Plugins.Lobby
             {
                 var acc = _accountManager.GetAccount(c.Token);
                 var ds = DataStorage.CreateForRead(m.Body);
-                var roomToken = new Token(ds.ReadInt32());
+                var roomToken = new Token();
+				roomToken.ReadFromDs(ds);
                 lock (_rooms)
                 {
                     if (_rooms.ContainsKey(roomToken))
@@ -115,7 +117,7 @@ namespace GServer.Plugins.Lobby
             {
                 if (p != player)
                 {
-                    _host.Send(new Message((short)LobbyMessages.PlayerLeaved, Mode.Reliable, DataStorage.CreateForWrite().Push(player.Connection.Token.ToInt())), p.Connection);
+                    _host.Send(new Message((short)LobbyMessages.PlayerLeaved, Mode.Reliable, DataStorage.CreateForWrite().Push(player.Connection.Token)), p.Connection);
                 }
                 else
                 {
@@ -129,7 +131,7 @@ namespace GServer.Plugins.Lobby
             {
                 if (p != player)
                 {
-                    _host.Send(new Message((short)LobbyMessages.PlayerJoined, Mode.Reliable, DataStorage.CreateForWrite().Push(player.Connection.Token.ToInt())), p.Connection);
+                    _host.Send(new Message((short)LobbyMessages.PlayerJoined, Mode.Reliable, DataStorage.CreateForWrite().Push(player.Connection.Token)), p.Connection);
                 }
                 else
                 {
@@ -174,7 +176,7 @@ namespace GServer.Plugins.Lobby
         public event Action<List<Token>> OnRoomInfoRecieved;
         public void JoinRoom(Token roomToken)
         {
-            _host.Send(new Message((short)LobbyMessages.JoinRoom, Mode.Reliable, DataStorage.CreateForWrite().Push(roomToken.ToInt())));
+            _host.Send(new Message((short)LobbyMessages.JoinRoom, Mode.Reliable, DataStorage.CreateForWrite().Push(roomToken)));
         }
         public void GetRooms()
         {
@@ -183,7 +185,7 @@ namespace GServer.Plugins.Lobby
         public void Send(Message msg)
         {
             var ds = DataStorage.CreateForWrite();
-            ds.Push(_roomToken.ToInt());
+            ds.Push(_roomToken);
             ds.Push(msg.Body);
             msg.Body = ds.Serialize();
             _host.Send(msg);
@@ -200,8 +202,10 @@ namespace GServer.Plugins.Lobby
                 if (RoomCreated != null)
                 {
                     var ds = DataStorage.CreateForRead(m.Body);
-                    var roomToken = new Token(ds.ReadInt32());
-                    RoomCreated.Invoke(roomToken);
+                    var roomToken = new Token();
+					roomToken.ReadFromDs(ds);
+
+					RoomCreated.Invoke(roomToken);
                 }
             });
             _host.AddHandler((short)LobbyMessages.PlayerLeaved, (m, c) =>
@@ -209,7 +213,8 @@ namespace GServer.Plugins.Lobby
                 if (OnPlayerLeaved != null)
                 {
                     var ds = DataStorage.CreateForRead(m.Body);
-                    var playerToken = new Token(ds.ReadInt32());
+                    var playerToken = new Token();
+					playerToken.ReadFromDs(ds);
                     OnPlayerLeaved.Invoke(playerToken);
                 }
             });
@@ -225,7 +230,8 @@ namespace GServer.Plugins.Lobby
                 if (OnPlayerJoined != null)
                 {
                     var ds = DataStorage.CreateForRead(m.Body);
-                    var playerToken = new Token(ds.ReadInt32());
+                    var playerToken = new Token();
+					playerToken.ReadFromDs(ds);
                     OnPlayerJoined.Invoke(playerToken);
                 }
             });
@@ -241,7 +247,8 @@ namespace GServer.Plugins.Lobby
                 if (OnGameStarted != null)
                 {
                     var ds = DataStorage.CreateForRead(m.Body);
-                    _roomToken = new Token(ds.ReadInt32());
+                    _roomToken = new Token();
+					_roomToken.ReadFromDs(ds);
                     OnGameStarted.Invoke();
                 }
             });

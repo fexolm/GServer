@@ -12,7 +12,6 @@ namespace GServer
     {
         private TcpClient _listener;
         private bool _isListening;
-        private Thread _listenThread;
         public HttpPipe(int port)
         {
             var ip = new IPEndPoint(IPAddress.Any, port);
@@ -43,7 +42,6 @@ namespace GServer
         public void Listen()
         {
             _isListening = true;
-            _listenThread.Start();
         }
         public void StopListen()
         {

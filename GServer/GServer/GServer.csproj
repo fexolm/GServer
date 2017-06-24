@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncOperationAttribute.cs" />
     <Compile Include="Connection\ConnectionManager.cs" />
     <Compile Include="Connection\Connection.cs" />
     <Compile Include="Host.cs" />

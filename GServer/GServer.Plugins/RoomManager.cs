@@ -28,7 +28,8 @@ namespace GServer.Plugins
             _host.AddHandler(messageType, (m, c) =>
             {
                 var ds = DataStorage.CreateForRead(m.Body);
-                var token = new Token(ds.ReadInt32());
+                var token = new Token();
+				token.ReadFromDs(ds);
                 m.Body = ds.ReadToEnd();
                 lock (_rooms)
                 {

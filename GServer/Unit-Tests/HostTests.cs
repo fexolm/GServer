@@ -22,8 +22,8 @@ namespace Unit_Tests
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
 
-            h1.StartListen(10, ts1);
-            h2.StartListen(10, ts2);
+            h1.StartListen(ts1);
+            h2.StartListen(ts2);
             Thread.Sleep(1000);
             TestSocket.Join(ts1, ts2);
             bool successMessage = false;
@@ -67,8 +67,8 @@ namespace Unit_Tests
             h2.DebugLog = s => debug += s + '\n';
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
-            h1.StartListen(0);
-            h2.StartListen(0);
+            h1.StartListen();
+            h2.StartListen();
             Thread.Sleep(1000);
             //TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
@@ -133,8 +133,8 @@ namespace Unit_Tests
             h2.DebugLog = s => debug += s + '\n';
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
-            h1.StartListen(0);
-            h2.StartListen(0);
+            h1.StartListen();
+            h2.StartListen();
             Thread.Sleep(1000);
             //TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
@@ -199,8 +199,8 @@ namespace Unit_Tests
             h2.DebugLog = s => debug += s + '\n';
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
-            h1.StartListen(0);
-            h2.StartListen(0);
+            h1.StartListen();
+            h2.StartListen();
             Thread.Sleep(1000);
             //TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
@@ -264,8 +264,8 @@ namespace Unit_Tests
             h2.DebugLog = s => debug += s + '\n';
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
-            h1.StartListen(0);
-            h2.StartListen(0);
+            h1.StartListen();
+            h2.StartListen();
             Thread.Sleep(1000);
             //TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
@@ -335,8 +335,8 @@ namespace Unit_Tests
             client.OnConnect = () => { connected = true; };
             var ts1 = new TestSocketRnd(0.85);
             var ts2 = new TestSocketRnd(0.85);
-            server.StartListen(0, ts1);
-            client.StartListen(0, ts2);
+            server.StartListen(ts1);
+            client.StartListen(ts2);
             Timer t1 = new Timer((o) => ServerTimer.Tick());
             t1.Change(10, 10);
             Thread.Sleep(1000);
