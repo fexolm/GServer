@@ -1,74 +1,45 @@
-﻿using System;
+﻿using GServer.Containers;
+using GServer.Plugins.Matchmaking;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GServer.Plugins
 {
-    public abstract class Game<TAccountModel>
-        where TAccountModel : AccountModel, new()
-    {
-        public AccountModel[] Players { get; set; }
-
-
-    }
-
-    public class RoomManager<TGame, TAccountModel> : IPlugin
+    public abstract class RoomManager<TGame, TAccountModel, TRoom> : IPlugin
         where TAccountModel : AccountModel, new()
         where TGame : Game<TAccountModel>, new()
+        where TRoom : Room<TAccountModel, TGame>
     {
-        private IDictionary<Token, Room<TAccountModel, TGame>> _rooms;
-        private Matchmaking<TAccountModel> _matchmaking;
-        private Host _host;
-        private Account<TAccountModel> _account;
-        public RoomManager(Matchmaking<TAccountModel> matchmaking, Account<TAccountModel> account)
+        public RoomManager()
         {
-            _matchmaking = matchmaking;
-            _account = account;
-            _matchmaking.RoomCreated += ManageRoom;
+            _rooms = new Dictionary<Token, TRoom>();
         }
-        private void ManageRoom(TAccountModel[] clients)
-        {
-            var room = new Room<TAccountModel, TGame>(clients);
-            lock (_rooms)
-            {
-                foreach (var client in clients)
-                {
-                    _rooms.Add(client.Connection.Token, room);
-                }
-            }
-            foreach (var player in room.Players)
-            {
-                _host.Send(new Message((short)MatchmakingMessages.GameFound, Mode.Reliable), player.Connection);
-            }
-            room.RoomClosed += () =>
-            {
-                lock (_rooms)
-                {
-                    foreach (var player in room.Players)
-                    {
-                        if (_rooms.ContainsKey(player.Connection.Token))
-                        {
-                            _rooms.Remove(player.Connection.Token);
-                        }
-                    }
-                }
-            };
-        }
+        protected internal IDictionary<Token, TRoom> _rooms { get; private set; }
+        protected Host _host;
         public void Bind(Host host)
         {
             _host = host;
+            InitializeHandlers();
         }
-        public void AddHandler(short messageType, Action<Message, Room<TAccountModel, TGame>> roomHandler)
+        protected virtual void InitializeHandlers() { }
+        public virtual void AddHandler(short messageType, Action<Message, TRoom, TAccountModel> roomHandler)
         {
-            _account.AddHandler(messageType, (m, a) =>
-             {
-                 lock (_rooms)
-                 {
-                     if (_rooms.ContainsKey(a.Connection.Token))
-                     {
-                         roomHandler.Invoke(m, _rooms[a.Connection.Token]);
-                     }
-                 }
-             });
+            _host.AddHandler(messageType, (m, c) =>
+            {
+                var ds = DataStorage.CreateForRead(m.Body);
+                var token = new Token();
+				token.ReadFromDs(ds);
+                m.Body = ds.ReadToEnd();
+                lock (_rooms)
+                {
+                    if (_rooms.ContainsKey(token))
+                    {
+                        var room = _rooms[token];
+                        roomHandler.Invoke(m, room, room.Players.FirstOrDefault(p => p.Connection.Token == c.Token));
+                    }
+                }
+            });
         }
     }
 }

@@ -31,7 +31,7 @@ namespace GServer
             {
                 if ((bf & 1) == 1)
                 {
-                    MessageArrived?.Invoke(tmp, msgType);
+                   if (MessageArrived!=null) MessageArrived.Invoke(tmp, msgType);
                 }
                 bf >>= 1;
                 tmp--;

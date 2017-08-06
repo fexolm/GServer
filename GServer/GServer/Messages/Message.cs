@@ -1,20 +1,23 @@
 ﻿using System;
 using System.IO;
-
+using GServer.Containers;
 
 namespace GServer
 {
-    public enum MessageType : short
+    /// <summary>
+    /// Default message types used in internal host logic
+    /// </summary>
+    [Reserve(0,40)]
+    internal enum MessageType : short
     {
-        Empty,
-        Handshake,
-        Ping,
-        Rpc,
-        Authorization,
-        Ack,
-        Message,
-        Token
+        Empty = 0,
+        Handshake = 1,
+        Ack = 2,
+        Token = 3
     }
+    /// <summary>
+    /// Reliable udp mods
+    /// </summary>
     [Flags]
     public enum Mode : byte
     {
@@ -23,15 +26,15 @@ namespace GServer
         Sequenced = 0x2,
         Ordered = 0x4,
     }
-    public class MessageHeader : ISerializable
+    internal class MessageHeader : ISerializable
     {
         public short Type { get; private set; }
         private Mode _mode;
-        public Token ConnectionToken { get; set; }
-        public MessageCounter MessageId { get; set; }
-        public bool Reliable { get { return (_mode & Mode.Reliable) == Mode.Reliable; } }
-        public bool Sequenced { get { return (_mode & Mode.Sequenced) == Mode.Sequenced; } }
-        public bool Ordered { get { return (_mode & Mode.Ordered) == Mode.Ordered; } }
+        public Token ConnectionToken { get; internal set; }
+        internal MessageCounter MessageId { get; set; }
+        internal bool Reliable { get { return (_mode & Mode.Reliable) == Mode.Reliable; } }
+        internal bool Sequenced { get { return (_mode & Mode.Sequenced) == Mode.Sequenced; } }
+        internal bool Ordered { get { return (_mode & Mode.Ordered) == Mode.Ordered; } }
         private MessageHeader() { }
         public MessageHeader(short type, Mode mode)
         {
@@ -63,7 +66,7 @@ namespace GServer
             result._mode = (Mode)reader.ReadByte();
             if (result.Type != (short)MessageType.Empty && result.Type != (short)MessageType.Handshake)
             {
-                result.ConnectionToken = new Token(reader.ReadInt32());
+                result.ConnectionToken = new Token(reader.ReadString());
             }
             result.MessageId = reader.ReadInt16();
             return result;
@@ -71,8 +74,8 @@ namespace GServer
     }
     public class Message : ISerializable
     {
-        public MessageHeader Header { get; private set; }
-        public Token ConnectionToken
+        internal MessageHeader Header { get; private set; }
+        internal Token ConnectionToken
         {
             get
             {
@@ -83,7 +86,7 @@ namespace GServer
                 Header.ConnectionToken = value;
             }
         }
-        public MessageCounter MessageId
+        internal MessageCounter MessageId
         {
             get
             {
@@ -94,21 +97,21 @@ namespace GServer
                 Header.MessageId = value;
             }
         }
-        public bool Reliable
+        internal bool Reliable
         {
             get
             {
                 return Header.Reliable;
             }
         }
-        public bool Ordered
+        internal bool Ordered
         {
             get
             {
                 return Header.Ordered;
             }
         }
-        public bool Sequenced
+        internal bool Sequenced
         {
             get
             {
@@ -165,10 +168,10 @@ namespace GServer
             Body = new byte[0];
         }
         private static readonly Message _handshake = new Message((short)MessageType.Handshake, Mode.None);
-        public static Message Handshake { get { return _handshake; } }
-        public static Message Ack(short type, MessageCounter msgId, Token conToken, int ackBitField)
+        internal static Message Handshake { get { return _handshake; } }
+        internal static Message Ack(short type, MessageCounter msgId, Token conToken, int ackBitField)
         {
-            var ds = new DataStorage();
+            var ds = DataStorage.CreateForWrite();
             ds.Push(ackBitField);
             ds.Push(type);
             var res = new Message((short)MessageType.Ack, Mode.None, ds);

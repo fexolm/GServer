@@ -1,4 +1,5 @@
 ﻿using GServer;
+using GServer.Containers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,7 +66,7 @@ namespace Unit_Tests
         {
             if (dgram.Length > 0)
             {
-                var ds = new DataStorage(dgram);
+                var ds = DataStorage.CreateForRead(dgram);
                 while (!ds.Empty)
                 {
                     int len = ds.ReadInt32();
@@ -80,7 +81,7 @@ namespace Unit_Tests
         {
             if (dgram.Length > 0)
             {
-                var ds = new DataStorage(dgram);
+                var ds = DataStorage.CreateForRead(dgram);
                 while (!ds.Empty)
                 {
                     int len = ds.ReadInt32();
@@ -140,7 +141,7 @@ namespace Unit_Tests
             {
                 if (dgram.Length > 0)
                 {
-                    var ds = new DataStorage(dgram);
+                    var ds = DataStorage.CreateForRead(dgram);
                     while (!ds.Empty)
                     {
                         int len = ds.ReadInt32();
@@ -161,7 +162,7 @@ namespace Unit_Tests
             {
                 if (dgram.Length > 0)
                 {
-                    var ds = new DataStorage(dgram);
+                    var ds = DataStorage.CreateForRead(dgram);
                     while (!ds.Empty)
                     {
                         int len = ds.ReadInt32();

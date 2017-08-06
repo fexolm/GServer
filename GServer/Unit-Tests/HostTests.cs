@@ -22,8 +22,8 @@ namespace Unit_Tests
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
 
-            h1.StartListen(10, ts1);
-            h2.StartListen(10, ts2);
+            h1.StartListen(ts1);
+            h2.StartListen(ts2);
             Thread.Sleep(1000);
             TestSocket.Join(ts1, ts2);
             bool successMessage = false;
@@ -34,7 +34,7 @@ namespace Unit_Tests
             {
                 successAck = true;
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 successMessage = true;
             });
@@ -45,7 +45,7 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
             Assert.AreEqual(true, successMessage, "Сообщение не пришло");
@@ -67,8 +67,8 @@ namespace Unit_Tests
             h2.DebugLog = s => debug += s + '\n';
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
-            h1.StartListen(0);
-            h2.StartListen(0);
+            h1.StartListen();
+            h2.StartListen();
             Thread.Sleep(1000);
             //TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
@@ -80,7 +80,7 @@ namespace Unit_Tests
                     h2Messages.Add(m);
                 }
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 lock (h1Messages)
                 {
@@ -96,15 +96,15 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Sequenced));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
 
@@ -133,8 +133,8 @@ namespace Unit_Tests
             h2.DebugLog = s => debug += s + '\n';
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
-            h1.StartListen(0);
-            h2.StartListen(0);
+            h1.StartListen();
+            h2.StartListen();
             Thread.Sleep(1000);
             //TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
@@ -146,7 +146,7 @@ namespace Unit_Tests
                     h2Messages.Add(m);
                 }
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 lock (h1Messages)
                 {
@@ -162,15 +162,15 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
+            h2.Send(new Message((short)123, Mode.None));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
 
@@ -199,8 +199,8 @@ namespace Unit_Tests
             h2.DebugLog = s => debug += s + '\n';
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
-            h1.StartListen(0);
-            h2.StartListen(0);
+            h1.StartListen();
+            h2.StartListen();
             Thread.Sleep(1000);
             //TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
@@ -212,7 +212,7 @@ namespace Unit_Tests
                     h2Messages.Add(m);
                 }
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 lock (h1Messages)
                 {
@@ -228,15 +228,15 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
+            h2.Send(new Message((short)123, Mode.Reliable));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
 
@@ -264,8 +264,8 @@ namespace Unit_Tests
             h2.DebugLog = s => debug += s + '\n';
             var ts1 = new TestSocketRnd();
             var ts2 = new TestSocketRnd();
-            h1.StartListen(0);
-            h2.StartListen(0);
+            h1.StartListen();
+            h2.StartListen();
             Thread.Sleep(1000);
             //TestSocket.Join(ts1, ts2);
             List<Message> h2Messages = new List<Message>();
@@ -277,7 +277,7 @@ namespace Unit_Tests
                     h2Messages.Add(m);
                 }
             });
-            h1.AddHandler((short)MessageType.Rpc, (m, e) =>
+            h1.AddHandler((short)123, (m, e) =>
             {
                 lock (h1Messages)
                 {
@@ -293,15 +293,15 @@ namespace Unit_Tests
                 h2.BeginConnect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
                 Thread.Sleep(1000);
             }
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
-            h2.Send(new Message((short)MessageType.Rpc, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
+            h2.Send(new Message((short)123, Mode.Reliable | Mode.Ordered));
             Thread.Sleep(4000);
             Assert.AreEqual(string.Empty, err);
 
@@ -335,8 +335,8 @@ namespace Unit_Tests
             client.OnConnect = () => { connected = true; };
             var ts1 = new TestSocketRnd(0.85);
             var ts2 = new TestSocketRnd(0.85);
-            server.StartListen(0, ts1);
-            client.StartListen(0, ts2);
+            server.StartListen(ts1);
+            client.StartListen(ts2);
             Timer t1 = new Timer((o) => ServerTimer.Tick());
             t1.Change(10, 10);
             Thread.Sleep(1000);

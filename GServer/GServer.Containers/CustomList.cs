@@ -17,11 +17,11 @@ namespace GServer
         private CustomNode<TData> _tail;
         private Enumerator _enumerator;
 
-        public bool Empty => _head.Next == _tail;
+        public bool Empty { get { return _head.Next == _tail; } }
 
-        public CustomNode<TData> First => _head.Next;
+        public CustomNode<TData> First { get { return _head.Next; } }
 
-        public CustomNode<TData> Last => _tail.Prev;
+        public CustomNode<TData> Last { get { return _tail.Prev; } }
         public CustomList()
         {
             _head = new CustomNode<TData>();
@@ -127,9 +127,9 @@ namespace GServer
                 _current = list._head;
             }
 
-            public TData Current => _current.Value;
+            public TData Current { get { return _current.Value; } }
 
-            object IEnumerator.Current => _current.Value;
+            object IEnumerator.Current { get { return _current.Value; } }
 
             public void Dispose()
             {

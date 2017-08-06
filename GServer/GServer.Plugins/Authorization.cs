@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using GServer.Containers;
 namespace GServer.Plugins
 {
     public class AuthUser
@@ -8,6 +9,7 @@ namespace GServer.Plugins
         public Guid AccountId { get; set; }
         public string Login { get; set; }
         public string Password { get; set; }
+        public bool Online = false;
     }
 
     public interface IAuthStorage
@@ -23,6 +25,7 @@ namespace GServer.Plugins
 
     public class Authorization : IPlugin, IAuthorization
     {
+        [Reserve(1000, 1010)]
         private enum AuthMType
         {
             Chalange = 1000,
@@ -55,9 +58,9 @@ namespace GServer.Plugins
             if (_isClient)
             {
                 host.AddHandler((short)AuthMType.ChalangeSuccess, SendPwdHash);
-                host.AddHandler((short)AuthMType.ChalangeFailed, (m, e) => OnAuthFailed?.Invoke("Логин не найден"));
-                host.AddHandler((short)AuthMType.AuthFailed, (m, e) => OnAuthFailed?.Invoke("Пароль не подошел"));
-                host.AddHandler((short)AuthMType.AuthSuccess, (m, e) => OnAuthSuccess?.Invoke());
+                host.AddHandler((short)AuthMType.ChalangeFailed, (m, e) => { if (OnAuthFailed != null) OnAuthFailed.Invoke("Логин не найден"); });
+                host.AddHandler((short)AuthMType.AuthFailed, (m, e) => { if (OnAuthFailed != null) OnAuthFailed.Invoke("Пароль не подошел"); });
+                host.AddHandler((short)AuthMType.AuthSuccess, (m, e) => { if (OnAuthSuccess != null) OnAuthSuccess.Invoke(); });
             }
             else
             {
@@ -68,9 +71,10 @@ namespace GServer.Plugins
         private void ChalangeHandler(Message m, Connection c)
         {
             Console.WriteLine("auth response from {0}", c.EndPoint.ToString());
-            var login = new DataStorage(m.Body).ReadString();
+            var login = DataStorage.CreateForRead(m.Body).ReadString();
+            Console.WriteLine("login: ", login);
             var user = _storage.Users.FirstOrDefault(u => u.Login == login);
-            if (user == null)
+            if (user == null || user.Online)
             {
                 _host.Send(new Message((short)AuthMType.ChalangeFailed, Mode.Reliable), c);
             }
@@ -84,27 +88,29 @@ namespace GServer.Plugins
                     session.Num = num;
                     _sessions.Add(c.Token, session);
                 }
-                _host.Send(new Message((short)AuthMType.ChalangeSuccess, Mode.Reliable, new DataStorage().Push(num)), c);
+                _host.Send(new Message((short)AuthMType.ChalangeSuccess, Mode.Reliable, DataStorage.CreateForWrite().Push(num).Serialize()), c);
             }
         }
         private void SendPwdHash(Message m, Connection c)
         {
-            var num = new DataStorage(m.Body).ReadInt32();
+            var num = DataStorage.CreateForRead(m.Body).ReadInt32();
             var hash = Password.GetHashCode();
-            _host.Send(new Message((short)AuthMType.PwdHash, Mode.Reliable, new DataStorage().Push(num ^ hash)));
+            _host.Send(new Message((short)AuthMType.PwdHash, Mode.Reliable, DataStorage.CreateForWrite().Push(num ^ hash).Serialize()));
         }
         private void CheckHash(Message m, Connection c)
         {
-            var hash = new DataStorage(m.Body).ReadInt32();
+            var hash = DataStorage.CreateForRead(m.Body).ReadInt32();
             lock (_sessions)
             {
                 if (_sessions.ContainsKey(c.Token))
                 {
                     var session = _sessions[c.Token];
-                    if (true)
+                    if (!session.User.Online)
                     {
+                        session.User.Online = true;
                         _host.Send(new Message((short)AuthMType.AuthSuccess, Mode.Reliable), c);
-                        OnAccountLogin?.Invoke(c, session.User.AccountId);
+                        c.Disconnected += () => session.User.Online = false;
+                        if (OnAccountLogin != null) OnAccountLogin.Invoke(c, session.User.AccountId);
                     }
                     else
                     {
@@ -122,7 +128,7 @@ namespace GServer.Plugins
         {
             Login = login;
             Password = pass;
-            _host.Send(new Message((short)AuthMType.Chalange, Mode.Reliable, new DataStorage().Push(login)));
+            _host.Send(new Message((short)AuthMType.Chalange, Mode.Reliable, DataStorage.CreateForWrite().Push(login).Serialize()));
         }
         public event Action<Connection, Guid> OnAccountLogin;
         public event Action OnAuthSuccess;

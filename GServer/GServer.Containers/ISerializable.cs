@@ -1,5 +1,5 @@
 ﻿
-namespace GServer
+namespace GServer.Containers
 {
     public interface ISerializable
     {

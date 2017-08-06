@@ -1,4 +1,5 @@
 ﻿using GServer;
+using GServer.Containers;
 using NUnit.Framework;
 
 namespace Unit_Tests
@@ -21,7 +22,7 @@ namespace Unit_Tests
         public void SerializationTest()
         {
             var token = Token.GenerateToken();
-            var ds = new DataStorage();
+            var ds = DataStorage.CreateForWrite();
             ds.Push(13);
             ds.Push("word");
             ds.Push(true);
@@ -41,7 +42,7 @@ namespace Unit_Tests
             Assert.AreEqual(msg.Header.Sequenced, newMsg.Header.Sequenced);
             Assert.AreEqual(msg.Header.ConnectionToken, newMsg.Header.ConnectionToken);
 
-            var readDs = new DataStorage(msg.Body);
+            var readDs = DataStorage.CreateForRead(msg.Body);
 
             Assert.AreEqual(13, readDs.ReadInt32());
             Assert.AreEqual("word", readDs.ReadString());
@@ -53,7 +54,7 @@ namespace Unit_Tests
         [Test]
         public void DataStorageTest()
         {
-            DataStorage ds = new DataStorage();
+            DataStorage ds = DataStorage.CreateForWrite();
             ds.Push(13);
             ds.Push("word");
             ds.Push(true);
@@ -61,7 +62,7 @@ namespace Unit_Tests
             ds.Push(13.221F);
             ds.Push(14.32D);
 
-            DataStorage readDs = new DataStorage(ds.Serialize());
+            DataStorage readDs = DataStorage.CreateForRead(ds.Serialize());
 
             Assert.AreEqual(13, readDs.ReadInt32());
             Assert.AreEqual("word", readDs.ReadString());

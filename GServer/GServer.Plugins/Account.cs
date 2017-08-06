@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using GServer.Containers;
 
 namespace GServer.Plugins
 {
@@ -8,6 +9,7 @@ namespace GServer.Plugins
     {
         public Guid AccountId { get; set; }
         public Connection Connection { get; set; }
+        public Token RoomToken { get; set; }
         public abstract void FillDeserialize(byte[] buffer);
         public abstract byte[] Serialize();
     }
@@ -21,6 +23,7 @@ namespace GServer.Plugins
     public class Account<TModel> : IPlugin
         where TModel : AccountModel, new()
     {
+        [Reserve(2000, 2010)]
         enum AccountMessage
         {
             InfoRequest = 2000,
@@ -64,7 +67,7 @@ namespace GServer.Plugins
         {
             TModel account = new TModel();
             account.FillDeserialize(msg.Body);
-            OnAccountInfoReceived?.Invoke(account);
+            if (OnAccountInfoReceived != null) OnAccountInfoReceived.Invoke(account);
         }
         private void InfoRequestHandler(Message msg, Connection con)
         {
@@ -72,7 +75,7 @@ namespace GServer.Plugins
             {
                 if (_accounts.ContainsKey(con.Token))
                 {
-                    _host.Send(new Message((short)AccountMessage.InfoResponse, Mode.None, _accounts[con.Token]), con);
+                    _host.Send(new Message((short)AccountMessage.InfoResponse, Mode.None, _accounts[con.Token].Serialize()), con);
                 }
             }
         }

@@ -1,22 +1,46 @@
 ﻿using System;
 using System.IO;
 
-namespace GServer
+namespace GServer.Containers
 {
     public class DataStorage : ISerializable, IDisposable
     {
         private MemoryStream Stream;
         private BinaryReader Reader;
         private BinaryWriter Writer;
-        public DataStorage(byte[] buffer)
+        private DataStorage(BinaryReader reader)
+        {
+            Reader = reader;
+        }
+        private DataStorage(BinaryWriter writer)
+        {
+            Writer = writer;
+        }
+        private DataStorage(byte[] buffer)
         {
             Stream = new MemoryStream(buffer);
             Reader = new BinaryReader(Stream);
         }
-        public DataStorage()
+        private DataStorage()
         {
             Stream = new MemoryStream();
             Writer = new BinaryWriter(Stream);
+        }
+        public static DataStorage CreateForRead(byte[] buffer)
+        {
+            return new DataStorage(buffer);
+        }
+        public static DataStorage CreateForWrite()
+        {
+            return new DataStorage();
+        }
+        public static DataStorage CreateForRead(BinaryReader reader)
+        {
+            return new DataStorage(reader);
+        }
+        public static DataStorage CreateForWrite(BinaryWriter writer)
+        {
+            return new DataStorage(writer);
         }
         public byte[] Serialize()
         {
@@ -106,6 +130,13 @@ namespace GServer
             Writer.Write(val);
             return this;
         }
+        public DataStorage Push(IDeepSerializable val)
+        {
+            if (Writer == null)
+                throw new Exception("DataStorage in read only mode");
+            val.PushToDs(this);
+            return this;
+        }
         public byte ReadByte()
         {
             if (Reader == null)
@@ -180,12 +211,18 @@ namespace GServer
                 throw new Exception("DataStorage in write only mode");
             return new Guid(Reader.ReadBytes(16));
         }
-        public bool Empty => Stream.Position == Stream.Length;
+        public byte[] ReadToEnd()
+        {
+            if (Reader == null)
+                throw new Exception("DataStorage in write only mode");
+            return Reader.ReadBytes((int)(Stream.Length - Stream.Position));
+        }
+        public bool Empty { get { return Stream.Position == Stream.Length; } }
         public void Dispose()
         {
-            Reader?.Close();
-            Writer?.Close();
-            Stream?.Close();
+            if (Reader != null) Reader.Close();
+            if (Writer != null) Writer.Close();
+            if (Stream != null) Stream.Close();
         }
         ~DataStorage()
         {

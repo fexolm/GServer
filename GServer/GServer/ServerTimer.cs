@@ -2,11 +2,11 @@
 
 namespace GServer
 {
-    static class ServerTimer
+    public static class ServerTimer
     {
-        public static void Tick()
+        internal static void Tick()
         {
-            OnTick?.Invoke();
+           if (OnTick!=null) OnTick.Invoke();
         }
         public static event Action OnTick;
     }
