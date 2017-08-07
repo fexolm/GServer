@@ -220,7 +220,7 @@ namespace GServer.Containers
         public bool Empty { get { return Stream.Position == Stream.Length; } }
         public void Dispose()
         {
-            if (Reader != null) Reader.Close();
+            if (Reader !=  null) Reader.Close();
             if (Writer != null) Writer.Close();
             if (Stream != null) Stream.Close();
         }

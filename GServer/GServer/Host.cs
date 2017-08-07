@@ -62,8 +62,7 @@ namespace GServer
           private readonly ConnectionManager _connectionManager;
           private bool _isListening;
           private int _port;
-          private IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
-          private int _threadCount;
+          private readonly IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
           /// <summary>
           /// Interval in server ticks of disconnecting inactive connections 
           /// </summary>
