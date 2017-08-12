@@ -220,6 +220,21 @@ namespace GServer.Containers
             collection.DeserializeFrom(ds);
         }
 
+        public static void SerializeTo(this IDictionary<int, int> collection, DataStorage ds) {
+            int len = collection.Count;
+            ds.Push(len);
+            foreach (var pair in collection) {
+                ds.Push(pair.Key).Push(pair.Value);
+            }
+        }
+
+        public static void DeserializeFrom(this IDictionary<int, int> collection, DataStorage ds) {
+            int len = ds.ReadInt32();
+            for (int i = 0; i < len; i++) {
+                collection.Add(ds.ReadInt32(), ds.ReadInt32());
+            }
+        }
+
         #endregion
     }
 }
