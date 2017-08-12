@@ -110,19 +110,19 @@ AutoTest.Net/
 # DocProject is a documentation generator add-in
 DocProject/buildhelp/
 DocProject/Help/*.HxT
-DocProject/Help/*.HxC
-DocProject/Help/*.hhc
-DocProject/Help/*.hhk
-DocProject/Help/*.hhp
-DocProject/Help/Html2
-DocProject/Help/html
+                 DocProject/Help/*.HxC
+                 DocProject/Help/*.hhc
+                 DocProject/Help/*.hhk
+                 DocProject/Help/*.hhp
+                 DocProject/Help/Html2
+                 DocProject/Help/html
 
 # Click-Once directory
 publish/
 
 # Publish Web Output
-*.[Pp]ublish.xml
-*.azurePubxml
+                *.[Pp]ublish.xml
+                *.azurePubxml
 ## TODO: Comment the next line if you want to checkin your
 ## web deploy settings but do note that will include unencrypted
 ## passwords
@@ -142,23 +142,23 @@ packages/*
 
 # Windows Azure Build Output
 csx/
-*.build.csdef
+                *.build.csdef
 
 # Windows Store app package directory
 AppPackages/
 
 # Others
 sql/
-*.Cache
-ClientBin/
-[Ss]tyle[Cc]op.*
-~$*
-*~
-*.dbmdl
-*.dbproj.schemaview
-*.pfx
-*.publishsettings
-node_modules/
+                *.Cache
+                ClientBin/
+                [Ss]tyle[Cc]op.*
+                ~$*
+                *~
+                *.dbmdl
+                *.dbproj.schemaview
+                *.pfx
+                *.publishsettings
+                node_modules/
 
 # RIA/Silverlight projects
 Generated_Code/
@@ -187,3 +187,4 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
+/GServer/.idea/
