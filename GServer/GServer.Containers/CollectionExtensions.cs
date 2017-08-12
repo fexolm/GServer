@@ -222,6 +222,7 @@ namespace GServer.Containers
 
         public static void SerializeTo(this IDictionary<int, int> collection, DataStorage ds) {
             int len = collection.Count;
+            ds.Push(len);
             foreach (var pair in collection) {
                 ds.Push(pair.Key).Push(pair.Value);
             }
