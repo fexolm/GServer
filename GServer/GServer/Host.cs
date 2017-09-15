@@ -5,7 +5,11 @@ using System.Threading;
 using GServer.Containers;
 using System.Reflection;
 using System.Linq;
-using System.Diagnostics;
+using GServer.Connection;
+using GServer.Messages;
+
+// ReSharper disable ArrangeAccessorOwnerBody
+// ReSharper disable UseNullPropagation
 
 namespace GServer
 {
@@ -32,12 +36,12 @@ namespace GServer
         internal void InitializeConnections(ConnectionManager cm) {
             if (_allowAll) return;
             foreach (var token in _allowedTokens) {
-                cm.Add(token, new Connection(null, token));
+                cm.Add(token, new Connection.Connection(null, token));
             }
         }
     }
 
-    public delegate void ReceiveHandler(Message msg, Connection con);
+    public delegate void ReceiveHandler(Message msg, Connection.Connection con);
 
     public class Host : IDisposable
     {
@@ -57,7 +61,6 @@ namespace GServer
         private readonly Thread _listenThread;
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
-        private int _port;
         private readonly IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
 
         /// <summary>
@@ -70,7 +73,6 @@ namespace GServer
             AllowedTokens = AllowedTokens.Any;
             //ValidateMessageTypes();
             _listenThread = new Thread(() => Listen(port));
-            _port = port;
             _isListening = false;
             _connectionManager = new ConnectionManager();
             _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
@@ -96,7 +98,7 @@ namespace GServer
         /// Disconnect connection
         /// </summary>
         /// <param name="con">Connection to disconnect</param>
-        public void ForceDisconnect(Connection con) {
+        public void ForceDisconnect(Connection.Connection con) {
             _connectionManager.Remove(con.Token);
         }
 
@@ -116,7 +118,7 @@ namespace GServer
             if (OnTick != null) OnTick.Invoke();
         }
 
-        private void SendToken(Connection con) {
+        private void SendToken(Connection.Connection con) {
             var msg = new Message((short) MessageType.Token, Mode.None) {ConnectionToken = con.Token};
             Send(msg, con);
         }
@@ -132,7 +134,6 @@ namespace GServer
             _client.Bind(new IPEndPoint(IPAddress.Any, port));
             while (_isListening) {
                 if (_client.Available <= 0) continue;
-                var start = DateTime.Now.Ticks;
                 IPEndPoint endPoint = null;
                 var buffer = _client.Receive(ref endPoint);
                 if (buffer == null) {
@@ -142,9 +143,9 @@ namespace GServer
                     continue;
                 var ds = DataStorage.CreateForRead(buffer);
                 while (!ds.Empty) {
-                    int len = ds.ReadInt32();
+                    var len = ds.ReadInt32();
                     var msg = Message.Deserialize(ds.ReadBytes(len));
-                    Connection connection;
+                    Connection.Connection connection;
                     if (!_connectionManager.TryGetConnection(out connection, msg, endPoint)) continue;
                     if (AllowedTokens.IsAccepted(connection.Token)) {
                         ProcessDatagram(msg, connection);
@@ -153,12 +154,11 @@ namespace GServer
                         ForceDisconnect(connection);
                     }
                 }
-                var end = DateTime.Now.Ticks;
             }
         }
 
-        private static void InvokeHandler(ReceiveHandler handler, Message msg, Connection connection) {
-            bool async = handler.GetMethodInfo().GetCustomAttributes(typeof(AsyncOperationAttribute), false).Length > 0;
+        private static void InvokeHandler(ReceiveHandler handler, Message msg, Connection.Connection connection) {
+            var async = handler.GetMethodInfo().GetCustomAttributes(typeof(AsyncOperationAttribute), false).Length > 0;
             if (async) {
                 ThreadPool.QueueUserWorkItem((o) => handler.Invoke(msg, connection));
             }
@@ -167,7 +167,7 @@ namespace GServer
             }
         }
 
-        private void ProcessDatagram(Message msg, Connection connection) {
+        private void ProcessDatagram(Message msg, Connection.Connection connection) {
             if (msg.Header.Reliable) {
                 connection.ReceiveReliable(msg);
                 if (!msg.Header.Sequenced && !msg.Header.Ordered) {
@@ -193,12 +193,12 @@ namespace GServer
             }
         }
 
-        private void ProcessHandler(Message msg, Connection connection) {
+        private void ProcessHandler(Message msg, Connection.Connection connection) {
             connection.InvokeIfBinded(msg);
             IList<ReceiveHandler> handlers = null;
             lock (_receiveHandlers) {
-                if (_receiveHandlers.ContainsKey((short) msg.Header.Type)) {
-                    handlers = _receiveHandlers[(short) msg.Header.Type];
+                if (_receiveHandlers.ContainsKey(msg.Header.Type)) {
+                    handlers = _receiveHandlers[msg.Header.Type];
                 }
             }
             if (handlers == null) return;
@@ -208,7 +208,7 @@ namespace GServer
             connection.UpdateActivity();
         }
 
-        private void ProcessHandlerList(IReadOnlyList<Message> messages, Connection connection) {
+        private void ProcessHandlerList(IReadOnlyList<Message> messages, Connection.Connection connection) {
             if (connection == null) throw new ArgumentNullException(nameof(connection));
             IList<ReceiveHandler> handlers = null;
             if (messages.Count == 0) {
@@ -216,8 +216,8 @@ namespace GServer
             }
             var msg = messages[0];
             lock (_receiveHandlers) {
-                if (_receiveHandlers.ContainsKey((short) msg.Header.Type)) {
-                    handlers = _receiveHandlers[(short) msg.Header.Type];
+                if (_receiveHandlers.ContainsKey(msg.Header.Type)) {
+                    handlers = _receiveHandlers[msg.Header.Type];
                 }
             }
             if (handlers == null) return;
@@ -268,7 +268,7 @@ namespace GServer
         /// </summary>
         /// <param name="msg">Message to send</param>
         /// <param name="con">Destination connection</param>
-        public void Send(Message msg, Connection con) {
+        public void Send(Message msg, Connection.Connection con) {
             msg.ConnectionToken = con.Token;
             if (msg.Header.Type != (short) MessageType.Ack)
                 msg.MessageId = con.GetMessageId(msg);
@@ -293,8 +293,7 @@ namespace GServer
             }
         }
 
-        internal void RowSend(Message msg, Connection con) {
-            var buffer = msg.Serialize();
+        internal void RowSend(Message msg, Connection.Connection con) {
             con.MarkToSend(msg);
             if (msg.Header.Reliable) {
                 con.StoreReliable(msg);
@@ -339,7 +338,7 @@ namespace GServer
 
         public bool BeginConnect(IPEndPoint ep, Token token) {
             _hostToken = token;
-            _connectionManager.Add(token, new Connection(ep));
+            _connectionManager.Add(token, new Connection.Connection(ep));
             OnConnect.Invoke();
             return true;
         }
@@ -399,8 +398,8 @@ namespace GServer
         /// Shows all connected to host connections 
         /// </summary>
         /// <returns>Connected to host connections</returns>
-        public IEnumerable<Connection> GetConnections() {
-            var res = new List<Connection>();
+        public IEnumerable<Connection.Connection> GetConnections() {
+            var res = new List<Connection.Connection>();
             _connectionManager.InvokeForAllConnections(c => res.Add(c));
             return res;
         }
@@ -410,40 +409,13 @@ namespace GServer
         }
 
         public event Action OnTick;
-        public event Action<Connection> ConnectionCreated;
+        public event Action<Connection.Connection> ConnectionCreated;
 
         public bool Cross(Pair<int, int> a, Pair<int, int> b) {
             if (a.Val1 < b.Val1) {
                 return a.Val2 > b.Val1;
             }
-            else {
-                return b.Val2 > a.Val1;
-            }
-        }
-
-        private void ValidateMessageTypes() {
-            var dict = new Dictionary<string, Pair<int, int>>();
-            var assebly = Assembly.GetCallingAssembly();
-            var callingAssemblyTypes = Assembly.GetCallingAssembly().GetTypes();
-            var entryAssemblyTypes = Assembly.GetEntryAssembly().GetTypes();
-            var executingAssemblyTypes = Assembly.GetExecutingAssembly().GetTypes();
-            var types = callingAssemblyTypes.Concat(executingAssemblyTypes);
-            foreach (var type in types) {
-                var attrs = type.GetCustomAttributes(typeof(ReserveAttribute), true);
-                if (attrs.Length <= 0) continue;
-                var a = (ReserveAttribute) attrs[0];
-                dict.Add(type.Name, new Pair<int, int>(a.Start, a.End));
-            }
-
-            var values = dict.Values.ToList();
-            var keys = dict.Keys.ToList();
-            for (int i = 0; i < dict.Count; i++) {
-                for (int j = 0; j < i; j++) {
-                    if (Cross(values[i], values[j])) {
-                        Console.WriteLine("Warning {0} cross {1}", keys[i], keys[j]);
-                    }
-                }
-            }
+            return b.Val2 > a.Val1;
         }
     }
 }

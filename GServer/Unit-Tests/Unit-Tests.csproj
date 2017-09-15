@@ -56,6 +56,8 @@
     <Compile Include="SerializationTest.cs" />
     <Compile Include="TestModels\s.cs" />
     <Compile Include="TestSocket.cs" />
+    <Compile Include="TestSocketFixed.cs" />
+    <Compile Include="TestSocketRnd.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GServer.Containers\GServer.Containers.csproj">

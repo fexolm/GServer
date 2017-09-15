@@ -10,7 +10,7 @@ namespace Unit_Tests
     {
         [Test]
         public void DataStorageTest() {
-            DataStorage ds = DataStorage.CreateForWrite();
+            var ds = DataStorage.CreateForWrite();
             ds.Push(13);
             ds.Push("word");
             ds.Push(true);
@@ -18,7 +18,7 @@ namespace Unit_Tests
             ds.Push(13.221F);
             ds.Push(14.32D);
 
-            DataStorage readDs = DataStorage.CreateForRead(ds.Serialize());
+            var readDs = DataStorage.CreateForRead(ds.Serialize());
 
             Assert.AreEqual(13, readDs.ReadInt32());
             Assert.AreEqual("word", readDs.ReadString());
@@ -35,7 +35,7 @@ namespace Unit_Tests
             var dList = new List<int>();
             dList.FillDeserialize(a);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
 
             dList = new List<int>();
@@ -44,7 +44,7 @@ namespace Unit_Tests
             var dsR = DataStorage.CreateForRead(dsW.Serialize());
             dList.DeserializeFrom(dsR);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
         }
 
@@ -55,7 +55,7 @@ namespace Unit_Tests
             var dList = new List<short>();
             dList.FillDeserialize(a);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
 
             dList = new List<short>();
@@ -64,7 +64,7 @@ namespace Unit_Tests
             var dsR = DataStorage.CreateForRead(dsW.Serialize());
             dList.DeserializeFrom(dsR);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
         }
 
@@ -75,7 +75,7 @@ namespace Unit_Tests
             var dList = new List<long>();
             dList.FillDeserialize(a);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
 
             dList = new List<long>();
@@ -84,7 +84,7 @@ namespace Unit_Tests
             var dsR = DataStorage.CreateForRead(dsW.Serialize());
             dList.DeserializeFrom(dsR);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
         }
 
@@ -95,7 +95,7 @@ namespace Unit_Tests
             var dList = new List<double>();
             dList.FillDeserialize(a);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
 
             dList = new List<double>();
@@ -104,7 +104,7 @@ namespace Unit_Tests
             var dsR = DataStorage.CreateForRead(dsW.Serialize());
             dList.DeserializeFrom(dsR);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
         }
 
@@ -115,7 +115,7 @@ namespace Unit_Tests
             var dList = new List<float>();
             dList.FillDeserialize(a);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
 
             dList = new List<float>();
@@ -124,7 +124,7 @@ namespace Unit_Tests
             var dsR = DataStorage.CreateForRead(dsW.Serialize());
             dList.DeserializeFrom(dsR);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
         }
 
@@ -135,7 +135,7 @@ namespace Unit_Tests
             var dList = new List<string>();
             dList.FillDeserialize(a);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
 
             dList = new List<string>();
@@ -144,7 +144,7 @@ namespace Unit_Tests
             var dsR = DataStorage.CreateForRead(dsW.Serialize());
             dList.DeserializeFrom(dsR);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
         }
 
@@ -155,7 +155,7 @@ namespace Unit_Tests
             var dList = new List<char>();
             dList.FillDeserialize(a);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
 
             dList = new List<char>();
@@ -164,13 +164,13 @@ namespace Unit_Tests
             var dsR = DataStorage.CreateForRead(dsW.Serialize());
             dList.DeserializeFrom(dsR);
             Assert.AreEqual(list.Count, dList.Count);
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 Assert.AreEqual(list[i], dList[i]);
         }
 
         [Test]
         public void DeepSerializationTest() {
-            SerializationModel sm = new SerializationModel {
+            var sm = new SerializationModel {
                 IntProp = 5,
                 DoubleProp = 5.23,
                 StringProp = "string",
@@ -202,11 +202,11 @@ namespace Unit_Tests
             Assert.AreEqual(sm.StringProp, dsm.StringProp);
             Assert.AreEqual(sm.SPProp.StringProp, dsm.SPProp.StringProp);
             Assert.AreEqual(sm.SPProp.ListIntProp.Count, dsm.SPProp.ListIntProp.Count);
-            for (int i = 0; i < sm.SPProp.ListIntProp.Count; i++)
+            for (var i = 0; i < sm.SPProp.ListIntProp.Count; i++)
                 Assert.AreEqual(sm.SPProp.ListIntProp[i], dsm.SPProp.ListIntProp[i]);
             Assert.AreEqual(sm.SPProp.ListSP2Prop.Count, sm.SPProp.ListSP2Prop.Count);
-            for (int i = 0; i < sm.SPProp.ListSP2Prop.Count; i++)
-                sm.SPProp.ListSP2Prop[i].Equals(dsm.SPProp.ListSP2Prop[i]);
+            for (var i = 0; i < sm.SPProp.ListSP2Prop.Count; i++)
+                Assert.AreEqual(sm.SPProp.ListSP2Prop[i], dsm.SPProp.ListSP2Prop[i]);
         }
 
         [Test]
@@ -223,7 +223,7 @@ namespace Unit_Tests
             var vals = dct.Values.ToList();
             var nvals = ndct.Values.ToList();
 
-            for (int i = 0; i < dct.Count; i++) {
+            for (var i = 0; i < dct.Count; i++) {
                 Assert.AreEqual(keys[i], nkeys[i]);
                 Assert.AreEqual(vals[i], nvals[i]);
             }

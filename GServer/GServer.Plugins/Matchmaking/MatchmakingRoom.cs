@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 
 namespace GServer.Plugins.Matchmaking
 {
@@ -9,8 +6,7 @@ namespace GServer.Plugins.Matchmaking
         where TAccountModel : AccountModel, new()
         where TGame : Game<TAccountModel>, new()
     {
-        public MatchmakingRoom(TAccountModel[] players) : base()
-        {
+        public MatchmakingRoom(TAccountModel[] players) : base() {
             Players = players.ToList();
         }
     }

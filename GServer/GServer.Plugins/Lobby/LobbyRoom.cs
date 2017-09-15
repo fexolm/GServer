@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace GServer.Plugins.Lobby
 {
@@ -12,48 +10,44 @@ namespace GServer.Plugins.Lobby
         internal bool _gameStarted;
         internal readonly int MaxPlayerCount;
         internal readonly int MinPlayerCount;
-        internal LobbyRoom(int maxPlayerCount, int minPlayerCount) : base()
-        {
+
+        internal LobbyRoom(int maxPlayerCount, int minPlayerCount) : base() {
             Players = new List<TAccountModel>();
             MaxPlayerCount = maxPlayerCount;
             MinPlayerCount = minPlayerCount;
             _gameStarted = false;
         }
-        internal void Join(TAccountModel player)
-        {
-            if (player.RoomToken != null)
-            {
+
+        internal void Join(TAccountModel player) {
+            if (player.RoomToken != null) {
                 return;
             }
-            if (Players.Count < MaxPlayerCount && !_gameStarted)
-            {
+            if (Players.Count < MaxPlayerCount && !_gameStarted) {
                 player.RoomToken = RoomToken;
                 Players.Add(player);
                 PlayerJoined.Invoke(this, player);
             }
         }
-        internal void Leave(TAccountModel player)
-        {
-            if (player.RoomToken == null)
-            {
+
+        internal void Leave(TAccountModel player) {
+            if (player.RoomToken == null) {
                 return;
             }
-            if (Players.Contains(player) && !_gameStarted)
-            {
+            if (Players.Contains(player) && !_gameStarted) {
                 player.RoomToken = null;
                 Players.Remove(player);
                 PlayerLeaved.Invoke(this, player);
             }
         }
-        internal void StartGame()
-        {
-            if (Players.Count >= MinPlayerCount)
-            {
+
+        internal void StartGame() {
+            if (Players.Count >= MinPlayerCount) {
                 _gameStarted = true;
                 InitRoom();
                 GameStarted.Invoke(this);
             }
         }
+
         internal event Action<LobbyRoom<TAccountModel, TGame>, TAccountModel> PlayerJoined;
         internal event Action<LobbyRoom<TAccountModel, TGame>, TAccountModel> PlayerLeaved;
         internal event Action<LobbyRoom<TAccountModel, TGame>> GameStarted;

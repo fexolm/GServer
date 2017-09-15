@@ -1,8 +1,4 @@
-﻿using GServer.Containers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System;
 
 namespace GServer
 {
@@ -11,8 +7,7 @@ namespace GServer
         public readonly int Start;
         public readonly int End;
 
-        public ReserveAttribute(int start, int end)
-        {
+        public ReserveAttribute(int start, int end) {
             Start = start;
             End = end;
         }

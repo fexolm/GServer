@@ -2,11 +2,6 @@
 
 namespace GServer
 {
-	public class AsyncOperationAttribute : Attribute
-	{
-		public AsyncOperationAttribute()
-		{
-
-		}
-	}
+    public class AsyncOperationAttribute : Attribute
+    { }
 }

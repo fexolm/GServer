@@ -13,26 +13,22 @@ namespace Unit_Tests.TestModels
 
         public SerializabeProp SPProp { get; set; }
 
-        public void FillDeserialize(byte[] buffer)
-        {
+        public void FillDeserialize(byte[] buffer) {
             var ds = DataStorage.CreateForRead(buffer);
             ReadFromDs(ds);
         }
 
-        public byte[] Serialize()
-        {
+        public byte[] Serialize() {
             var ds = DataStorage.CreateForWrite();
             PushToDs(ds);
             return ds.Serialize();
         }
 
-        public void PushToDs(DataStorage ds)
-        {
+        public void PushToDs(DataStorage ds) {
             ds.Push(IntProp).Push(DoubleProp).Push(StringProp).Push(SPProp);
         }
 
-        public void ReadFromDs(DataStorage ds)
-        {
+        public void ReadFromDs(DataStorage ds) {
             SPProp = new SerializabeProp();
             IntProp = ds.ReadInt32();
             DoubleProp = ds.ReadDouble();
@@ -48,15 +44,13 @@ namespace Unit_Tests.TestModels
 
             public List<SerializableProp2> ListSP2Prop { get; set; }
 
-            public void PushToDs(DataStorage ds)
-            {
+            public void PushToDs(DataStorage ds) {
                 ListIntProp.SerializeTo(ds);
                 ds.Push(StringProp);
                 ListSP2Prop.SerializeTo(ds);
             }
 
-            public void ReadFromDs(DataStorage ds)
-            {
+            public void ReadFromDs(DataStorage ds) {
                 ListIntProp = new List<int>();
                 ListSP2Prop = new List<SerializableProp2>();
                 ListIntProp.DeserializeFrom(ds);
@@ -70,27 +64,24 @@ namespace Unit_Tests.TestModels
 
                 public List<string> ListStringProp { get; set; }
 
-                public void PushToDs(DataStorage ds)
-                {
+                public void PushToDs(DataStorage ds) {
                     ds.Push(BoolProp);
                     ListStringProp.SerializeTo(ds);
                 }
 
-                public void ReadFromDs(DataStorage ds)
-                {
+                public void ReadFromDs(DataStorage ds) {
                     BoolProp = ds.ReadBoolean();
                     ListStringProp = new List<string>();
                     ListStringProp.DeserializeFrom(ds);
                 }
 
-                public override bool Equals(object obj)
-                {
-                    var other = (SerializableProp2)obj;
+                public override bool Equals(object obj) {
+                    var other = (SerializableProp2) obj;
                     if (ListStringProp == null)
                         return false;
                     if (ListStringProp.Count != other.ListStringProp.Count)
                         return false;
-                    for (int i = 0; i < ListStringProp.Count; i++)
+                    for (var i = 0; i < ListStringProp.Count; i++)
                         if (ListStringProp[i] != other.ListStringProp[i])
                             return false;
                     return BoolProp == other.BoolProp;

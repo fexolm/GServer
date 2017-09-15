@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using GServer.Messages;
 
 namespace GServer.Plugins
 {
@@ -9,7 +7,7 @@ namespace GServer.Plugins
         where TAccountModel : AccountModel, new()
     {
         public AccountModel[] Players { get; set; }
-        public Action<Message, Connection> Send;
+        public Action<Message, Connection.Connection> Send;
         public abstract void InitGame();
     }
 }
