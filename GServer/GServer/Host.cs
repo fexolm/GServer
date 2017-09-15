@@ -30,10 +30,9 @@ namespace GServer
         }
 
         internal void InitializeConnections(ConnectionManager cm) {
-            if (!_allowAll) {
-                foreach (var token in _allowedTokens) {
-                    cm.Add(token, new Connection(null, token));
-                }
+            if (_allowAll) return;
+            foreach (var token in _allowedTokens) {
+                cm.Add(token, new Connection(null, token));
             }
         }
     }
@@ -83,12 +82,11 @@ namespace GServer
                 }
             });
             AddHandler((short) MessageType.Handshake, (m, c) => {
-                if (EnableHandshake) {
-                    if (ConnectionCreated != null) {
-                        ConnectionCreated.Invoke(c);
-                    }
-                    SendToken(c);
+                if (!EnableHandshake) return;
+                if (ConnectionCreated != null) {
+                    ConnectionCreated.Invoke(c);
                 }
+                SendToken(c);
             });
             AddHandler((short) MessageType.Ack, (m, c) => { c.ProcessAck(m); });
             ServerTimer.OnTick += ServerTick;
@@ -110,7 +108,7 @@ namespace GServer
             //    _connectionCleaningTick = 0;
             //}
             _connectionManager.InvokeForAllConnections(c => {
-                byte[] buffer = c.GetBytesToSend();
+                var buffer = c.GetBytesToSend();
                 if (buffer.Length > 0) {
                     _client.Send(buffer, c.EndPoint);
                 }
@@ -119,8 +117,7 @@ namespace GServer
         }
 
         private void SendToken(Connection con) {
-            Message msg = new Message((short) MessageType.Token, Mode.None);
-            msg.ConnectionToken = con.Token;
+            var msg = new Message((short) MessageType.Token, Mode.None) {ConnectionToken = con.Token};
             Send(msg, con);
         }
 
@@ -134,35 +131,33 @@ namespace GServer
         private void Listen(int port) {
             _client.Bind(new IPEndPoint(IPAddress.Any, port));
             while (_isListening) {
-                if (_client.Available > 0) {
-                    var start = DateTime.Now.Ticks;
-                    IPEndPoint endPoint = null;
-                    var buffer = _client.Receive(ref endPoint);
-                    if (buffer == null) {
-                        continue;
-                    }
-                    if (buffer.Length == 0)
-                        continue;
-                    var ds = DataStorage.CreateForRead(buffer);
-                    while (!ds.Empty) {
-                        int len = ds.ReadInt32();
-                        var msg = Message.Deserialize(ds.ReadBytes(len));
-                        Connection connection;
-                        if (_connectionManager.TryGetConnection(out connection, msg, endPoint)) {
-                            if (AllowedTokens.IsAccepted(connection.Token)) {
-                                ProcessDatagram(msg, connection);
-                            }
-                            else {
-                                ForceDisconnect(connection);
-                            }
-                        }
-                    }
-                    var end = DateTime.Now.Ticks;
+                if (_client.Available <= 0) continue;
+                var start = DateTime.Now.Ticks;
+                IPEndPoint endPoint = null;
+                var buffer = _client.Receive(ref endPoint);
+                if (buffer == null) {
+                    continue;
                 }
+                if (buffer.Length == 0)
+                    continue;
+                var ds = DataStorage.CreateForRead(buffer);
+                while (!ds.Empty) {
+                    int len = ds.ReadInt32();
+                    var msg = Message.Deserialize(ds.ReadBytes(len));
+                    Connection connection;
+                    if (!_connectionManager.TryGetConnection(out connection, msg, endPoint)) continue;
+                    if (AllowedTokens.IsAccepted(connection.Token)) {
+                        ProcessDatagram(msg, connection);
+                    }
+                    else {
+                        ForceDisconnect(connection);
+                    }
+                }
+                var end = DateTime.Now.Ticks;
             }
         }
 
-        private void InvokeHandler(ReceiveHandler handler, Message msg, Connection connection) {
+        private static void InvokeHandler(ReceiveHandler handler, Message msg, Connection connection) {
             bool async = handler.GetMethodInfo().GetCustomAttributes(typeof(AsyncOperationAttribute), false).Length > 0;
             if (async) {
                 ThreadPool.QueueUserWorkItem((o) => handler.Invoke(msg, connection));
@@ -206,15 +201,15 @@ namespace GServer
                     handlers = _receiveHandlers[(short) msg.Header.Type];
                 }
             }
-            if (handlers != null) {
-                foreach (var h in handlers) {
-                    InvokeHandler(h, msg, connection);
-                }
-                connection.UpdateActivity();
+            if (handlers == null) return;
+            foreach (var h in handlers) {
+                InvokeHandler(h, msg, connection);
             }
+            connection.UpdateActivity();
         }
 
-        private void ProcessHandlerList(List<Message> messages, Connection connection) {
+        private void ProcessHandlerList(IReadOnlyList<Message> messages, Connection connection) {
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
             IList<ReceiveHandler> handlers = null;
             if (messages.Count == 0) {
                 return;
@@ -225,26 +220,24 @@ namespace GServer
                     handlers = _receiveHandlers[(short) msg.Header.Type];
                 }
             }
-            if (handlers != null) {
-                connection = _connectionManager[msg.Header.ConnectionToken];
-                foreach (var h in handlers) {
-                    foreach (var m in messages) {
-                        try {
-                            InvokeHandler(h, m, connection);
-                        }
-                        catch (Exception ex) {
-                            WriteError(ex.Message);
-                        }
+            if (handlers == null) return;
+            connection = _connectionManager[msg.Header.ConnectionToken];
+            foreach (var h in handlers) {
+                foreach (var m in messages) {
+                    try {
+                        InvokeHandler(h, m, connection);
+                    }
+                    catch (Exception ex) {
+                        WriteError(ex.Message);
                     }
                 }
-                connection.UpdateActivity();
             }
+            connection.UpdateActivity();
         }
 
         /// <summary>
         /// Begin listening (use this if u need to substitude socket implementation)
         /// </summary>
-        /// <param name="threadCount">Number of processing threads</param>
         /// <param name="host">Socket implementation</param>
         public void StartListen(ISocket host) {
             ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount * 4);
@@ -256,7 +249,6 @@ namespace GServer
         /// <summary>
         ///  Begin listening
         /// </summary>
-        /// <param name="threadCount">Number of processing threads</param>
         public void StartListen() {
             StartListen(new HostImpl());
         }
@@ -291,9 +283,7 @@ namespace GServer
         /// </summary>
         /// <param name="msg">Message to send</param>
         public void Send(Message msg) {
-            Connection connection;
-
-            connection = _connectionManager[_hostToken];
+            var connection = _connectionManager[_hostToken];
             if (msg.Reliable)
                 msg.MessageId = connection.GetMessageId(msg);
             msg.ConnectionToken = _hostToken;
@@ -342,7 +332,7 @@ namespace GServer
                 return false;
             }
             var buffer = Message.Handshake;
-            Packet p = new Packet(buffer);
+            var p = new Packet(buffer);
             _client.Send(p.Serialize());
             return true;
         }
@@ -410,7 +400,7 @@ namespace GServer
         /// </summary>
         /// <returns>Connected to host connections</returns>
         public IEnumerable<Connection> GetConnections() {
-            List<Connection> res = new List<Connection>();
+            var res = new List<Connection>();
             _connectionManager.InvokeForAllConnections(c => res.Add(c));
             return res;
         }
@@ -432,7 +422,7 @@ namespace GServer
         }
 
         private void ValidateMessageTypes() {
-            Dictionary<string, Pair<int, int>> dict = new Dictionary<string, Pair<int, int>>();
+            var dict = new Dictionary<string, Pair<int, int>>();
             var assebly = Assembly.GetCallingAssembly();
             var callingAssemblyTypes = Assembly.GetCallingAssembly().GetTypes();
             var entryAssemblyTypes = Assembly.GetEntryAssembly().GetTypes();
@@ -440,10 +430,9 @@ namespace GServer
             var types = callingAssemblyTypes.Concat(executingAssemblyTypes);
             foreach (var type in types) {
                 var attrs = type.GetCustomAttributes(typeof(ReserveAttribute), true);
-                if (attrs.Length > 0) {
-                    var a = (ReserveAttribute) attrs[0];
-                    dict.Add(type.Name, new Pair<int, int>(a.Start, a.End));
-                }
+                if (attrs.Length <= 0) continue;
+                var a = (ReserveAttribute) attrs[0];
+                dict.Add(type.Name, new Pair<int, int>(a.Start, a.End));
             }
 
             var values = dict.Values.ToList();
