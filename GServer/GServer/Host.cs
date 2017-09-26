@@ -338,7 +338,7 @@ namespace GServer
 
         public bool BeginConnect(IPEndPoint ep, Token token) {
             _hostToken = token;
-            _connectionManager.Add(token, new Connection.Connection(ep));
+            _connectionManager.Add(token, new Connection.Connection(ep, token));
             OnConnect.Invoke();
             return true;
         }
