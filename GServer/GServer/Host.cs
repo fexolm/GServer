@@ -76,7 +76,6 @@ namespace GServer
             _isListening = false;
             _connectionManager = new ConnectionManager();
             _receiveHandlers = new Dictionary<short, IList<ReceiveHandler>>();
-            Rnd = new Random();
             AddHandler((short) MessageType.Token, (m, c) => {
                 _hostToken = m.ConnectionToken;
                 if (OnConnect != null) {
@@ -228,7 +227,7 @@ namespace GServer
                         InvokeHandler(h, m, connection);
                     }
                     catch (Exception ex) {
-                        WriteError(ex.Message);
+                        OnException.Invoke(ex);
                     }
                 }
             }
@@ -343,12 +342,6 @@ namespace GServer
             return true;
         }
 
-        internal void WriteError(string error) {
-            if (ErrLog != null) {
-                ErrLog.Invoke(error);
-            }
-        }
-
         internal void WriteDebug(string error) {
             if (DebugLog != null) {
                 DebugLog.Invoke(error);
@@ -366,7 +359,7 @@ namespace GServer
         /// <summary>
         /// Server random
         /// </summary>
-        public readonly Random Rnd;
+        public static readonly Random Rnd = new Random();
 
         public void Dispose() {
             StopListen();
@@ -375,7 +368,7 @@ namespace GServer
         /// <summary>
         /// Host errors
         /// </summary>
-        public Action<string> ErrLog;
+        public Action<Exception> OnException;
 
         /// <summary>
         /// Host debug messages
