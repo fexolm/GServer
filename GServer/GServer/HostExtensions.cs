@@ -6,7 +6,9 @@ namespace GServer
     {
         public static void Ping(this Host host) {
             foreach (var connection in host.GetConnections()) {
-                host.Send(new Message((short) MessageType.Ping, Mode.Reliable), connection);
+                if (connection.EndPoint != null) {
+                    host.Send(new Message((short)MessageType.Ping, Mode.Reliable), connection);
+                }
             }
         }
     }
