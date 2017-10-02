@@ -16,7 +16,8 @@ namespace GServer.Messages
         Empty = 0,
         Handshake = 1,
         Ack = 2,
-        Token = 3
+        Token = 3,
+        Ping = 4,
     }
 
     /// <summary>

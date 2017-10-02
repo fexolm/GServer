@@ -85,7 +85,7 @@ namespace GServer.Plugins
                 _host.Send(new Message((short) AuthMType.ChalangeFailed, Mode.Reliable), c);
             }
             else {
-                var num = _host.Rnd.Next(1000000, int.MaxValue);
+                var num = Host.Rnd.Next(1000000, int.MaxValue);
                 lock (_sessions) {
                     var session = new AuthSession();
                     session.User = user;

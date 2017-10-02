@@ -15,7 +15,6 @@ namespace Unit_Tests
             var h1 = new Host(8080);
             var h2 = new Host(8081);
             var err = string.Empty;
-            h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => { };
             h2.DebugLog = s => { };
             var ts1 = new TestSocketRnd();
@@ -53,7 +52,6 @@ namespace Unit_Tests
             var h1 = new Host(8080);
             var h2 = new Host(8081);
             var err = string.Empty;
-            h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => { };
             h2.DebugLog = s => { };
             h1.StartListen();
@@ -103,7 +101,6 @@ namespace Unit_Tests
             var h1 = new Host(8080);
             var h2 = new Host(8081);
             var err = string.Empty;
-            h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => { };
             h2.DebugLog = s => { };
             h1.StartListen();
@@ -153,7 +150,6 @@ namespace Unit_Tests
             var h1 = new Host(8080);
             var h2 = new Host(8081);
             var err = string.Empty;
-            h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => { };
             h2.DebugLog = s => { };
             h1.StartListen();
@@ -202,7 +198,6 @@ namespace Unit_Tests
             var h1 = new Host(8080);
             var h2 = new Host(8081);
             var err = string.Empty;
-            h2.ErrLog = s => err += s + "\n";
             h1.DebugLog = s => { };
             h2.DebugLog = s => { };
             h1.StartListen();
