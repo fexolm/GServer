@@ -90,6 +90,8 @@ namespace GServer.Connection
             }
         }
 
+        
+        
         private readonly List<Packet> _messageBuffer = new List<Packet>();
 
         internal void MarkToSend(Message msg) {

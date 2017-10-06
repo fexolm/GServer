@@ -56,29 +56,31 @@ namespace GServer.Connection
 
         public bool TryGetConnection(out Connection con, Message msg, IPEndPoint endPoint) {
             lock (_connections) {
-                if (msg.Header.ConnectionToken != null &&
-                    _connections.ContainsKey(msg.Header.ConnectionToken)) {
+                if (msg.Header.ConnectionToken != null) {
+                    if (!_connections.ContainsKey(msg.ConnectionToken)) {
+                        _connections[msg.ConnectionToken] = new Connection(endPoint, msg.ConnectionToken);
+                    }
                     con = _connections[msg.Header.ConnectionToken];
                     if (con.EndPoint == null) {
                         con.EndPoint = endPoint;
                     }
                     return true;
                 }
-                // ReSharper disable once ConvertIfStatementToSwitchStatement
-                if (msg.Header.Type == (short) MessageType.Handshake) {
-                    con = new Connection(endPoint);
-                    _connections.Add(con.Token, con);
-                    // ReSharper disable once UseNullPropagation
-                    if (HandshakeRecieved != null) {
-                        HandshakeRecieved.Invoke(con);
-                    }
-                    return true;
+            }
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (msg.Header.Type == (short) MessageType.Handshake) {
+                con = new Connection(endPoint);
+                _connections.Add(con.Token, con);
+                // ReSharper disable once UseNullPropagation
+                if (HandshakeRecieved != null) {
+                    HandshakeRecieved.Invoke(con);
                 }
-                else if (msg.Header.Type == (short) MessageType.Token) {
-                    con = new Connection(endPoint, msg.ConnectionToken);
-                    _connections.Add(con.Token, con);
-                    return true;
-                }
+                return true;
+            }
+            else if (msg.Header.Type == (short) MessageType.Token) {
+                con = new Connection(endPoint, msg.ConnectionToken);
+                _connections.Add(con.Token, con);
+                return true;
             }
             con = null;
             return false;
