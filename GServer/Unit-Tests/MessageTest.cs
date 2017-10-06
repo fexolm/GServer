@@ -1,5 +1,4 @@
-﻿using GServer;
-using GServer.Containers;
+﻿using GServer.Messages;
 using NUnit.Framework;
 
 namespace Unit_Tests
@@ -7,8 +6,7 @@ namespace Unit_Tests
     class MessageTest
     {
         [Test]
-        public void HandshakeTest()
-        {
+        public void HandshakeTest() {
             var msg = Message.Handshake;
             var bytes = msg.Serialize();
             var dmsg = Message.Deserialize(bytes);

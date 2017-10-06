@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace GServer.Containers
+﻿namespace GServer.Containers
 {
     public class Quaternion : ISerializable, IDeserializable, IDeepSerializable, IDeepDeserializable
     {
@@ -12,24 +7,23 @@ namespace GServer.Containers
         public float Z { get; set; }
         public float W { get; set; }
 
-        public void FillDeserialize(byte[] buffer)
-        {
+        public void FillDeserialize(byte[] buffer) {
             var ds = DataStorage.CreateForRead(buffer);
             ReadFromDs(ds);
         }
-        public void PushToDs(DataStorage ds)
-        {
+
+        public void PushToDs(DataStorage ds) {
             ds.Push(X).Push(Y).Push(Z).Push(W);
         }
-        public void ReadFromDs(DataStorage ds)
-        {
+
+        public void ReadFromDs(DataStorage ds) {
             X = ds.ReadFloat();
             Y = ds.ReadFloat();
             Z = ds.ReadFloat();
             W = ds.ReadFloat();
         }
-        public byte[] Serialize()
-        {
+
+        public byte[] Serialize() {
             var ds = DataStorage.CreateForWrite();
             PushToDs(ds);
             return ds.Serialize();

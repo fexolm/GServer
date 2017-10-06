@@ -2,7 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using GServer.Connection;
+using GServer.Messages;
 
 namespace GServer.Plugins.Lobby
 {
@@ -228,7 +229,7 @@ namespace GServer.Plugins.Lobby
             });
             _host.AddHandler((short) LobbyMessages.GetRoomsResponse, (m, c) => {
                 if (OnRoomInfoRecieved != null) {
-                    List<Token> roomTokens = new List<Token>();
+                    var roomTokens = new List<Token>();
                     roomTokens.FillDeserialize(m.Body);
                     OnRoomInfoRecieved.Invoke(roomTokens);
                 }

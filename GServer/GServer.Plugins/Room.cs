@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using GServer.Connection;
+using GServer.Messages;
 
 namespace GServer.Plugins
 {
@@ -11,25 +12,26 @@ namespace GServer.Plugins
         public TGame Game;
         public readonly Token RoomToken;
         public List<TAccountModel> Players { get; internal set; }
-        internal Room()
-        {
+
+        internal Room() {
             RoomToken = Token.GenerateToken();
         }
-        internal void InitRoom()
-        {
+
+        internal void InitRoom() {
             Game = new TGame();
             Game.Players = Players.ToArray();
-            Game.Send = (msg, con) =>
-            {
+            Game.Send = (msg, con) => {
                 if (Send != null) Send.Invoke(msg, con);
             };
             Game.InitGame();
         }
+
         public Action RoomClosed;
-        internal void Close()
-        {
+
+        internal void Close() {
             if (RoomClosed != null) RoomClosed.Invoke();
         }
-        public Action<Message, Connection> Send;
+
+        public Action<Message, Connection.Connection> Send;
     }
 }

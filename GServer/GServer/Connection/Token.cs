@@ -1,95 +1,83 @@
 ﻿using System;
 using System.IO;
-using GServer.Containers;
 using System.Text;
+using GServer.Containers;
 
-namespace GServer
+namespace GServer.Connection
 {
-	public class Token : ISerializable, IComparable, IDeepSerializable, IDeepDeserializable
-	{
-		private string _tokenStr;
+    public class Token : ISerializable, IComparable, IDeepSerializable, IDeepDeserializable
+    {
+        private string _tokenStr;
 
-		public Token()
-		{
-		}
-		public Token(string str)
-		{
-			_tokenStr = str;
-		}
-		public static Token GenerateToken()
-		{
-			return new Token(GetRandomString(32));
-		}
-		public byte[] Serialize()
-		{
-			using (MemoryStream m = new MemoryStream())
-			{
-				using (BinaryWriter writer = new BinaryWriter(m))
-				{
-					writer.Write(_tokenStr);
-				}
-				return m.ToArray();
-			}
-		}
-		public override string ToString()
-		{
-			return _tokenStr;
-		}
-		public override bool Equals(object obj)
-		{
-			try
-			{
-				var left = (Token)obj;
-				return left._tokenStr == _tokenStr;
-			}
-			catch
-			{
-				return false;
-			}
-		}
-		public static bool operator ==(Token left, Token right)
-		{
-			return Equals(left, right);
-		}
+        public Token() { }
 
-		public static bool operator !=(Token left, Token right)
-		{
-			return !Equals(left, right);
-		}
-		public override int GetHashCode()
-		{
-			return _tokenStr.GetHashCode();
-		}
+        public Token(string str) {
+            _tokenStr = str;
+        }
 
-		public int CompareTo(object obj)
-		{
-			var other = (Token)obj;
-			return this._tokenStr.CompareTo(other._tokenStr);
-		}
+        public static Token GenerateToken() {
+            return new Token(GetRandomString(32));
+        }
 
-		public void PushToDs(DataStorage ds)
-		{
-			ds.Push(_tokenStr);
-		}
+        public byte[] Serialize() {
+            using (var m = new MemoryStream()) {
+                using (var writer = new BinaryWriter(m)) {
+                    writer.Write(_tokenStr);
+                }
+                return m.ToArray();
+            }
+        }
 
-		public void ReadFromDs(DataStorage ds)
-		{
-			_tokenStr = ds.ReadString();
-		}
+        public override string ToString() {
+            return _tokenStr;
+        }
 
-		private static Random random = new Random((int)DateTime.Now.Ticks);
+        public override bool Equals(object obj) {
+            try {
+                var left = (Token) obj;
+                return left != null && left._tokenStr == _tokenStr;
+            }
+            catch {
+                return false;
+            }
+        }
 
-		private static string GetRandomString(int size)
-		{
-			StringBuilder builder = new StringBuilder();
-			char ch;
-			for (int i = 0; i < size; i++)
-			{
-				ch = Convert.ToChar(Convert.ToInt32(Math.Floor(26 * random.NextDouble() + 65)));
-				builder.Append(ch);
-			}
+        public static bool operator ==(Token left, Token right) {
+            return Equals(left, right);
+        }
 
-			return builder.ToString();
-		}
-	}
+        public static bool operator !=(Token left, Token right) {
+            return !Equals(left, right);
+        }
+
+        public override int GetHashCode() {
+            // ReSharper disable once NonReadonlyMemberInGetHashCode
+            return _tokenStr.GetHashCode();
+        }
+
+        public int CompareTo(object obj) {
+            var other = (Token) obj;
+            return string.Compare(_tokenStr, other._tokenStr, StringComparison.Ordinal);
+        }
+
+        public void PushToDs(DataStorage ds) {
+            ds.Push(_tokenStr);
+        }
+
+        public void ReadFromDs(DataStorage ds) {
+            _tokenStr = ds.ReadString();
+        }
+
+        private static readonly Random random = new Random((int) DateTime.Now.Ticks);
+
+        private static string GetRandomString(int size) {
+            var builder = new StringBuilder();
+            for (var i = 0; i < size; i++) {
+                var ch = Convert.ToChar(Convert.ToInt32(Math.Floor(26 * random.NextDouble() + 65)));
+                builder.Append(ch);
+            }
+
+            return builder.ToString();
+        }
+    }
 }

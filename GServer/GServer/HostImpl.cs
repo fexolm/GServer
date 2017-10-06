@@ -1,53 +1,55 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 
+// ReSharper disable ArrangeAccessorOwnerBody
+
 namespace GServer
 {
     internal class HostImpl : ISocket
     {
-        private UdpClient _client;
+        private readonly UdpClient _client;
         private IPEndPoint _connectedEndPoint;
-        public HostImpl()
-        {
-            _client = new UdpClient();
-            _client.ExclusiveAddressUse = false;
+
+        public HostImpl() {
+            _client = new UdpClient {ExclusiveAddressUse = false};
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
         }
-        public int Available { get { return _client.Available; } }
-        public void Bind(IPEndPoint localEP)
-        {
+
+        public int Available {
+            get { return _client.Available; }
+        }
+
+        public void Bind(IPEndPoint localEP) {
             _client.Client.Bind(localEP);
         }
-        public void Close()
-        {
+
+        public void Close() {
             _client.Close();
         }
-        public void Connect(IPEndPoint endPoint)
-        {
+
+        public void Connect(IPEndPoint endPoint) {
             _connectedEndPoint = endPoint;
         }
-        public void Dispose()
-        {
+
+        public void Dispose() {
             _client.Close();
         }
-        public byte[] Receive(ref IPEndPoint remoteEP)
-        {
-            try
-            {
+
+        public byte[] Receive(ref IPEndPoint remoteEP) {
+            try {
                 return _client.Receive(ref remoteEP);
             }
-            catch
-            {
+            catch {
                 return null;
             }
         }
-        public int Send(byte[] dgram)
-        {
+
+        public int Send(byte[] dgram) {
             return _client.Send(dgram, dgram.Length, _connectedEndPoint);
         }
-        public int Send(byte[] dgram, IPEndPoint endPoint)
-        {
+
+        public int Send(byte[] dgram, IPEndPoint endPoint) {
             return _client.Send(dgram, dgram.Length, endPoint);
         }
     }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GServer.Containers
 {
@@ -15,7 +14,7 @@ namespace GServer.Containers
         #region List Serialization
 
         public static void SerializeTo(this IList<int> collection, DataStorage ds) {
-            ds.Push(collection.Count());
+            ds.Push(collection.Count);
             foreach (var element in collection) {
                 ds.Push(element);
             }
@@ -28,8 +27,8 @@ namespace GServer.Containers
         }
 
         public static void DeserializeFrom(this IList<int> collection, DataStorage ds) {
-            int len = ds.ReadInt32();
-            for (int i = 0; i < len; i++) {
+            var len = ds.ReadInt32();
+            for (var i = 0; i < len; i++) {
                 collection.Add(ds.ReadInt32());
             }
         }
@@ -40,7 +39,7 @@ namespace GServer.Containers
         }
 
         public static void SerializeTo(this IList<long> collection, DataStorage ds) {
-            ds.Push(collection.Count());
+            ds.Push(collection.Count);
             foreach (var element in collection) {
                 ds.Push(element);
             }
@@ -53,8 +52,8 @@ namespace GServer.Containers
         }
 
         public static void DeserializeFrom(this IList<long> collection, DataStorage ds) {
-            int len = ds.ReadInt32();
-            for (int i = 0; i < len; i++) {
+            var len = ds.ReadInt32();
+            for (var i = 0; i < len; i++) {
                 collection.Add(ds.ReadInt64());
             }
         }
@@ -65,7 +64,7 @@ namespace GServer.Containers
         }
 
         public static void SerializeTo(this IList<short> collection, DataStorage ds) {
-            ds.Push(collection.Count());
+            ds.Push(collection.Count);
             foreach (var element in collection) {
                 ds.Push(element);
             }
@@ -78,8 +77,8 @@ namespace GServer.Containers
         }
 
         public static void DeserializeFrom(this IList<short> collection, DataStorage ds) {
-            int len = ds.ReadInt32();
-            for (int i = 0; i < len; i++) {
+            var len = ds.ReadInt32();
+            for (var i = 0; i < len; i++) {
                 collection.Add(ds.ReadInt16());
             }
         }
@@ -90,7 +89,7 @@ namespace GServer.Containers
         }
 
         public static void SerializeTo(this IList<float> collection, DataStorage ds) {
-            ds.Push(collection.Count());
+            ds.Push(collection.Count);
             foreach (var element in collection) {
                 ds.Push(element);
             }
@@ -103,8 +102,8 @@ namespace GServer.Containers
         }
 
         public static void DeserializeFrom(this IList<float> collection, DataStorage ds) {
-            int len = ds.ReadInt32();
-            for (int i = 0; i < len; i++) {
+            var len = ds.ReadInt32();
+            for (var i = 0; i < len; i++) {
                 collection.Add(ds.ReadFloat());
             }
         }
@@ -115,7 +114,7 @@ namespace GServer.Containers
         }
 
         public static void SerializeTo(this IList<double> collection, DataStorage ds) {
-            ds.Push(collection.Count());
+            ds.Push(collection.Count);
             foreach (var element in collection) {
                 ds.Push(element);
             }
@@ -128,8 +127,8 @@ namespace GServer.Containers
         }
 
         public static void DeserializeFrom(this IList<double> collection, DataStorage ds) {
-            int len = ds.ReadInt32();
-            for (int i = 0; i < len; i++) {
+            var len = ds.ReadInt32();
+            for (var i = 0; i < len; i++) {
                 collection.Add(ds.ReadDouble());
             }
         }
@@ -140,7 +139,7 @@ namespace GServer.Containers
         }
 
         public static void SerializeTo(this IList<string> collection, DataStorage ds) {
-            ds.Push(collection.Count());
+            ds.Push(collection.Count);
             foreach (var element in collection) {
                 ds.Push(element);
             }
@@ -153,8 +152,8 @@ namespace GServer.Containers
         }
 
         public static void DeserializeFrom(this IList<string> collection, DataStorage ds) {
-            int len = ds.ReadInt32();
-            for (int i = 0; i < len; i++) {
+            var len = ds.ReadInt32();
+            for (var i = 0; i < len; i++) {
                 collection.Add(ds.ReadString());
             }
         }
@@ -165,7 +164,7 @@ namespace GServer.Containers
         }
 
         public static void SerializeTo(this IList<char> collection, DataStorage ds) {
-            ds.Push(collection.Count());
+            ds.Push(collection.Count);
             foreach (var element in collection) {
                 ds.Push(element);
             }
@@ -178,8 +177,8 @@ namespace GServer.Containers
         }
 
         public static void DeserializeFrom(this IList<char> collection, DataStorage ds) {
-            int len = ds.ReadInt32();
-            for (int i = 0; i < len; i++) {
+            var len = ds.ReadInt32();
+            for (var i = 0; i < len; i++) {
                 collection.Add(ds.ReadChar());
             }
         }
@@ -191,7 +190,7 @@ namespace GServer.Containers
 
         public static void SerializeTo<TData>(this IList<TData> collection, DataStorage ds)
             where TData : IDeepSerializable {
-            ds.Push(collection.Count());
+            ds.Push(collection.Count);
             foreach (var element in collection) {
                 ds.Push(element);
             }
@@ -199,8 +198,8 @@ namespace GServer.Containers
 
         public static void DeserializeFrom<TData>(this IList<TData> collection, DataStorage ds)
             where TData : IDeepDeserializable, new() {
-            int len = ds.ReadInt32();
-            for (int i = 0; i < len; i++) {
+            var len = ds.ReadInt32();
+            for (var i = 0; i < len; i++) {
                 var element = new TData();
                 element.ReadFromDs(ds);
                 collection.Add(element);
@@ -221,7 +220,7 @@ namespace GServer.Containers
         }
 
         public static void SerializeTo(this IDictionary<int, int> collection, DataStorage ds) {
-            int len = collection.Count;
+            var len = collection.Count;
             ds.Push(len);
             foreach (var pair in collection) {
                 ds.Push(pair.Key).Push(pair.Value);
@@ -229,8 +228,8 @@ namespace GServer.Containers
         }
 
         public static void DeserializeFrom(this IDictionary<int, int> collection, DataStorage ds) {
-            int len = ds.ReadInt32();
-            for (int i = 0; i < len; i++) {
+            var len = ds.ReadInt32();
+            for (var i = 0; i < len; i++) {
                 collection.Add(ds.ReadInt32(), ds.ReadInt32());
             }
         }
