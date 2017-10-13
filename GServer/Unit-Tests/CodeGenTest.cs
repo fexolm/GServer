@@ -1,4 +1,5 @@
-﻿using GServer;
+﻿using System.Runtime.InteropServices;
+using GServer;
 using GServer.Containers;
 using NUnit.Framework;
 
@@ -9,7 +10,7 @@ namespace Unit_Tests
         [DsSerialize]
         public int A1 { get; set; }
 
-        [DsSerialize]
+        [DsSerialize(DsSerializeAttribute.SerializationOptions.Optional)]
         public string B1 { get; set; }
 
         public SampleIn(int a, string b) {
@@ -44,13 +45,15 @@ namespace Unit_Tests
     {
         [Test]
         public void SerializerTest() {
-            var sample = new Sample(512, "kek", new SampleIn(123, "lol"));
+            var sample = new Sample(512, "kek", new SampleIn(123, null));
             var buffer = FuckingAwesomeDataStorageSerializer.Serialize(sample);
 
             var res = FuckingAwesomeDataStorageSerializer.DeserializeInto<Sample>(buffer);
 
             Assert.AreEqual(res.A, sample.A);
             Assert.AreEqual(res.B, sample.B);
+            Assert.AreEqual(res.C.A1, sample.C.A1);
+            Assert.AreEqual(res.C.B1, sample.C.B1);
         }
     }
 }

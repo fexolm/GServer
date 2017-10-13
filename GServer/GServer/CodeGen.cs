@@ -97,7 +97,6 @@ namespace GServer
             il.Emit(OpCodes.Stloc_0);
 
             PushSerializeMethods(il, type, (prop) => {
-                il.Emit(OpCodes.Ldloc_0);
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Callvirt, prop.GetMethod);
             });
@@ -105,7 +104,12 @@ namespace GServer
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Callvirt, serialize);
             il.Emit(OpCodes.Ret);
-            return (Func<object, byte[]>) method.CreateDelegate(typeof(Func<object, byte[]>));
+            try {
+                return (Func<object, byte[]>) method.CreateDelegate(typeof(Func<object, byte[]>));
+            }
+            catch (Exception ex) {
+                return null;
+            }
         }
 
         private static void PushSerializeMethods(ILGenerator il, Type type, Action<PropertyInfo> getPropAction) {
@@ -113,11 +117,22 @@ namespace GServer
                 .Where(m => m.GetCustomAttribute(typeof(DsSerializeAttribute), false) != null);
 
             foreach (var prop in props) {
+                var elseStmt = il.DefineLabel();
+                var endIf = il.DefineLabel();
                 var options = prop.GetCustomAttribute<DsSerializeAttribute>().Options;
                 if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
-                    // generate bool
+                    il.Emit(OpCodes.Ldloc_0);
+                    getPropAction.Invoke(prop);
+                    il.Emit(OpCodes.Ldnull);
+                    il.Emit(OpCodes.Ceq);
+                    il.Emit(OpCodes.Dup);
+                    il.Emit(OpCodes.Brfalse, elseStmt);
+                    il.Emit(OpCodes.Br, endIf);
                 }
+
+                il.MarkLabel(elseStmt);
                 if (_serializeActions.ContainsKey(prop.PropertyType)) {
+                    il.Emit(OpCodes.Ldloc_0);
                     getPropAction.Invoke(prop);
                     var push = _serializeActions[prop.PropertyType];
                     il.Emit(OpCodes.Callvirt, push);
@@ -128,6 +143,13 @@ namespace GServer
                         getPropAction.Invoke(prop);
                         il.Emit(OpCodes.Callvirt, p.GetMethod);
                     });
+                }
+                il.MarkLabel(endIf);
+
+                if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
+                    il.Emit(OpCodes.Not);
+                    il.Emit(OpCodes.Call, _serializeActions[typeof(bool)]);
+                    il.Emit(OpCodes.Pop);
                 }
             }
         }
@@ -151,7 +173,12 @@ namespace GServer
 
             il.Emit(OpCodes.Ldloc_1);
             il.Emit(OpCodes.Ret);
-            return (Func<byte[], object>) method.CreateDelegate(typeof(Func<byte[], object>));
+            try {
+                return (Func<byte[], object>) method.CreateDelegate(typeof(Func<byte[], object>));
+            }
+            catch (Exception ex) {
+                return null;
+            }
         }
 
         private static void PushDeserializeMethods(ILGenerator il, Type type, Action getPropAction) {
@@ -161,9 +188,17 @@ namespace GServer
 
             foreach (var prop in props) {
                 var options = prop.GetCustomAttribute<DsSerializeAttribute>().Options;
+                var elseStmt = il.DefineLabel();
+                var endIf = il.DefineLabel();
+
                 if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
-                    // read bool
+                    il.Emit(OpCodes.Ldloc_0);
+                    il.Emit(OpCodes.Call, _deserializeActions[typeof(bool)]);
+                    il.Emit(OpCodes.Brfalse, elseStmt);
+                    il.Emit(OpCodes.Br, endIf);
                 }
+
+                il.MarkLabel(elseStmt);
                 if (_deserializeActions.ContainsKey(prop.PropertyType)) {
                     var read = _deserializeActions[prop.PropertyType];
                     getPropAction.Invoke();
@@ -180,7 +215,20 @@ namespace GServer
                         il.Emit(OpCodes.Callvirt, prop.GetMethod);
                     });
                 }
+                il.MarkLabel(endIf);
             }
+        }
+
+        public static byte[] SerializeTest(string obj) {
+            var ds = DataStorage.CreateForWrite();
+            if (obj != null) {
+                ds.Push(true);
+                ds.Push(obj);
+            }
+            else {
+                ds.Push(false);
+            }
+            return ds.Serialize();
         }
     }
 }
