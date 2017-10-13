@@ -46,7 +46,7 @@
     <Compile Include="Connection\ConnectionManager.cs" />
     <Compile Include="Connection\Connection.cs" />
     <Compile Include="DsSerializeAttribute.cs" />
-    <Compile Include="FuckingAwesomeDataStorageSerializer.cs" />
+    <Compile Include="DsSerializer.cs" />
     <Compile Include="Host.cs" />
     <Compile Include="HostExtensions.cs" />
     <Compile Include="HostImpl.cs" />

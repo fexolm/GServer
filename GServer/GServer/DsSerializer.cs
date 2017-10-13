@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace GServer
 {
-    public static class FuckingAwesomeDataStorageSerializer
+    public static class DsSerializer
     {
         private static readonly IDictionary<Type, Func<object, byte[]>> _serializerCache
             = new Dictionary<Type, Func<object, byte[]>>();

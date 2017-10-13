@@ -46,9 +46,9 @@ namespace Unit_Tests
         [Test]
         public void SerializerTest() {
             var sample = new Sample(512, "kek", new SampleIn(123, null));
-            var buffer = FuckingAwesomeDataStorageSerializer.Serialize(sample);
+            var buffer = DsSerializer.Serialize(sample);
 
-            var res = FuckingAwesomeDataStorageSerializer.DeserializeInto<Sample>(buffer);
+            var res = DsSerializer.DeserializeInto<Sample>(buffer);
 
             Assert.AreEqual(res.A, sample.A);
             Assert.AreEqual(res.B, sample.B);
