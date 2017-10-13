@@ -96,7 +96,11 @@ namespace GServer
             il.DeclareLocal(typeof(DataStorage));
             il.Emit(OpCodes.Stloc_0);
 
-            PushSerializeMethods(il, type);
+            PushSerializeMethods(il, type, (prop) => {
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Callvirt, prop.GetMethod);
+            });
 
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Callvirt, serialize);
@@ -104,25 +108,26 @@ namespace GServer
             return (Func<object, byte[]>) method.CreateDelegate(typeof(Func<object, byte[]>));
         }
 
-        private static void PushSerializeMethods(ILGenerator il, Type type) {
+        private static void PushSerializeMethods(ILGenerator il, Type type, Action<PropertyInfo> getPropAction) {
             var props = type.GetProperties()
                 .Where(m => m.GetCustomAttribute(typeof(DsSerializeAttribute), false) != null);
 
             foreach (var prop in props) {
-                il.Emit(OpCodes.Ldloc_0);
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Callvirt, prop.GetMethod);
                 var options = prop.GetCustomAttribute<DsSerializeAttribute>().Options;
                 if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
                     // generate bool
                 }
                 if (_serializeActions.ContainsKey(prop.PropertyType)) {
+                    getPropAction.Invoke(prop);
                     var push = _serializeActions[prop.PropertyType];
                     il.Emit(OpCodes.Callvirt, push);
                     il.Emit(OpCodes.Pop);
                 }
                 else {
-                    PushSerializeMethods(il, prop.PropertyType);
+                    PushSerializeMethods(il, prop.PropertyType, (p) => {
+                        getPropAction.Invoke(prop);
+                        il.Emit(OpCodes.Callvirt, p.GetMethod);
+                    });
                 }
             }
         }
@@ -139,20 +144,17 @@ namespace GServer
             il.Emit(OpCodes.Call, createDs);
             il.DeclareLocal(typeof(DataStorage));
             il.Emit(OpCodes.Stloc_0);
-
-            PushDeserializeMethods(il, type);
+            il.Emit(OpCodes.Newobj, type.GetConstructor(new Type[0]));
+            il.DeclareLocal(type);
+            il.Emit(OpCodes.Stloc_1);
+            PushDeserializeMethods(il, type, () => { il.Emit(OpCodes.Ldloc_1); });
 
             il.Emit(OpCodes.Ldloc_1);
             il.Emit(OpCodes.Ret);
             return (Func<byte[], object>) method.CreateDelegate(typeof(Func<byte[], object>));
         }
 
-        private static void PushDeserializeMethods(ILGenerator il, Type type) {
-            var ctor = type.GetConstructor(new Type[0]);
-            il.Emit(OpCodes.Newobj, ctor);
-            il.DeclareLocal(type);
-            il.Emit(OpCodes.Stloc_1);
-
+        private static void PushDeserializeMethods(ILGenerator il, Type type, Action getPropAction) {
             var props = type.GetProperties()
                 .Where(m => m.GetCustomAttribute(typeof(DsSerializeAttribute), false) != null);
 
@@ -164,29 +166,21 @@ namespace GServer
                 }
                 if (_deserializeActions.ContainsKey(prop.PropertyType)) {
                     var read = _deserializeActions[prop.PropertyType];
-                    il.Emit(OpCodes.Ldloc_1);
+                    getPropAction.Invoke();
                     il.Emit(OpCodes.Ldloc_0);
                     il.Emit(OpCodes.Call, read);
                     il.Emit(OpCodes.Callvirt, prop.SetMethod);
                 }
                 else {
-                    PushDeserializeMethods(il, prop.PropertyType);
+                    getPropAction.Invoke();
+                    il.Emit(OpCodes.Newobj, prop.PropertyType.GetConstructor(new Type[0]));
+                    il.Emit(OpCodes.Callvirt, prop.SetMethod);
+                    PushDeserializeMethods(il, prop.PropertyType, () => {
+                        getPropAction.Invoke();
+                        il.Emit(OpCodes.Callvirt, prop.GetMethod);
+                    });
                 }
             }
-        }
-
-        public class SerializingClass
-        {
-            public int Prop1 { get; set; }
-            public string Prop2 { get; set; }
-        }
-
-        public static object DerializeClass(byte[] buf) {
-            var ds = DataStorage.CreateForRead(buf);
-            var c = new SerializingClass();
-            c.Prop1 = ds.ReadInt32();
-            c.Prop2 = ds.ReadString();
-            return c;
         }
     }
 }
