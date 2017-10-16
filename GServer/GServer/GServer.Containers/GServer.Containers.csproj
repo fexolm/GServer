@@ -1,19 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7D55B9CF-74F8-4D40-8C5F-9AE0021424D4}</ProjectGuid>
+    <ProjectGuid>{4238A9A0-DA81-4E1C-9345-C5BBAE9B4EA6}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GServer</RootNamespace>
-    <AssemblyName>GServer</AssemblyName>
+    <RootNamespace>GServer.Containers</RootNamespace>
+    <AssemblyName>GServer.Containers</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,6 +24,7 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -31,6 +32,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -41,38 +45,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AsyncOperationAttribute.cs" />
-    <Compile Include="CodeGen.cs" />
-    <Compile Include="Connection\ConnectionManager.cs" />
-    <Compile Include="Connection\Connection.cs" />
-    <Compile Include="DsSerializeAttribute.cs" />
-    <Compile Include="DsSerializer.cs" />
-    <Compile Include="Host.cs" />
-    <Compile Include="HostExtensions.cs" />
-    <Compile Include="HostImpl.cs" />
-    <Compile Include="HttpPipe.cs" />
-    <Compile Include="IPlugin.cs" />
-    <Compile Include="ISocket.cs" />
-    <Compile Include="Messages\Ack.cs" />
-    <Compile Include="Messages\Message.cs" />
-    <Compile Include="Messages\MessageCounter.cs" />
+    <Compile Include="CollectionExtensions.cs" />
+    <Compile Include="CustomList.cs" />
+    <Compile Include="DataStorage.cs" />
+    <Compile Include="IDeepSerializable.cs" />
+    <Compile Include="ISerializable.cs" />
+    <Compile Include="Pair.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Connection\Token.cs" />
-    <Compile Include="ReserveAttriute.cs" />
-    <Compile Include="ServerTimer.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\GServer.Containers\GServer.Containers.csproj">
-      <Project>{4238a9a0-da81-4e1c-9345-c5bbae9b4ea6}</Project>
-      <Name>GServer.Containers</Name>
-    </ProjectReference>
+    <Compile Include="Quaternion.cs" />
+    <Compile Include="Vector3.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
