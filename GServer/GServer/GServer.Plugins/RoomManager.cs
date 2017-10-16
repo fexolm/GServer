@@ -1,0 +1,44 @@
+﻿using GServer.Containers;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using GServer.Connection;
+using GServer.Messages;
+
+namespace GServer.Plugins
+{
+    public abstract class RoomManager<TGame, TAccountModel, TRoom> : IPlugin
+        where TAccountModel : AccountModel, new()
+        where TGame : Game<TAccountModel>, new()
+        where TRoom : Room<TAccountModel, TGame>
+    {
+        public RoomManager() {
+            _rooms = new Dictionary<Token, TRoom>();
+        }
+
+        protected internal IDictionary<Token, TRoom> _rooms { get; private set; }
+        protected Host _host;
+
+        public void Bind(Host host) {
+            _host = host;
+            InitializeHandlers();
+        }
+
+        protected virtual void InitializeHandlers() { }
+
+        public virtual void AddHandler(short messageType, Action<Message, TRoom, TAccountModel> roomHandler) {
+            _host.AddHandler(messageType, (m, c) => {
+                var ds = DataStorage.CreateForRead(m.Body);
+                var token = new Token();
+                token.ReadFromDs(ds);
+                m.Body = ds.ReadToEnd();
+                lock (_rooms) {
+                    if (_rooms.ContainsKey(token)) {
+                        var room = _rooms[token];
+                        roomHandler.Invoke(m, room, room.Players.FirstOrDefault(p => p.Connection.Token == c.Token));
+                    }
+                }
+            });
+        }
+    }
+}
