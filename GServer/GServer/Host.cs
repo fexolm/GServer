@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Linq;
 using GServer.Connection;
 using GServer.Messages;
+
 // ReSharper disable UnusedMember.Global
 // ReSharper disable InlineOutVariableDeclaration
 // ReSharper disable UnusedMethodReturnValue.Global
@@ -55,6 +56,7 @@ namespace GServer
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
         private readonly IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
+        private int _connectionCleaningTick = 0;
 
         /// <summary>
         /// Interval in server ticks of disconnecting inactive connections 
@@ -96,8 +98,7 @@ namespace GServer
 
         private void ServerTick() {
             //_connectionCleaningTick++;
-            //if (_connectionCleaningTick > ConnectionCleaningInterval)
-            //{
+            //if (_connectionCleaningTick > ConnectionCleaningInterval) {
             //    CleanConnections();
             //    _connectionCleaningTick = 0;
             //}

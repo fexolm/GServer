@@ -38,14 +38,6 @@ namespace GServer.Containers
             return new DataStorage();
         }
 
-        public static DataStorage CreateForRead(BinaryReader reader) {
-            return new DataStorage(reader);
-        }
-
-        public static DataStorage CreateForWrite(BinaryWriter writer) {
-            return new DataStorage(writer);
-        }
-
         public byte[] Serialize() {
             return Stream.ToArray();
         }
