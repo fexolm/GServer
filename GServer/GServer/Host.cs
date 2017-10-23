@@ -97,11 +97,6 @@ namespace GServer
         }
 
         private void ServerTick() {
-            _connectionCleaningTick++;
-            if (_connectionCleaningTick > ConnectionCleaningInterval) {
-                CleanConnections();
-                _connectionCleaningTick = 0;
-            }
             _connectionManager.InvokeForAllConnections(c => {
                 var buffer = c.GetBytesToSend();
                 if (buffer.Length > 0) {

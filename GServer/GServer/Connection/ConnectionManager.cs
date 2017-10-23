@@ -58,6 +58,7 @@ namespace GServer.Connection
             lock (_connections) {
                 if (msg.Header.ConnectionToken != null) {
                     if (!_connections.ContainsKey(msg.ConnectionToken)) {
+                        Console.WriteLine("Create new connecton");
                         _connections[msg.ConnectionToken] = new Connection(endPoint, msg.ConnectionToken);
                     }
                     con = _connections[msg.Header.ConnectionToken];
