@@ -80,7 +80,7 @@ namespace GServer.Connection
             _handlers = new Dictionary<short, Action<Message>>();
         }
 
-        public event Action Disconnected;
+        public event Action<Connection> Disconnected;
 
         public int BufferCount {
             get {
@@ -90,6 +90,8 @@ namespace GServer.Connection
             }
         }
 
+        
+        
         private readonly List<Packet> _messageBuffer = new List<Packet>();
 
         internal void MarkToSend(Message msg) {
@@ -147,7 +149,7 @@ namespace GServer.Connection
 
         internal void Disconnect() {
             if (Disconnected != null)
-                Disconnected.Invoke();
+                Disconnected.Invoke(this);
         }
 
         #region Reliable
