@@ -31,7 +31,7 @@ namespace GServer.Connection
             lock (_connections) {
                 var toRemove = new List<Token>();
                 foreach (var element in _connections) {
-                    if (!((DateTime.Now - element.Value.LastActivity).TotalSeconds > 20)) continue;
+                    if (!((DateTime.Now - element.Value.LastActivity).TotalSeconds > 10)) continue;
                     toRemove.Add(element.Key);
                     element.Value.Disconnect();
                 }
