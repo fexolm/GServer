@@ -113,7 +113,7 @@ namespace GServer.Plugins
                     if (!session.User.Online) {
                         session.User.Online = true;
                         _host.Send(new Message((short) AuthMType.AuthSuccess, Mode.Reliable), c);
-                        c.Disconnected += () => session.User.Online = false;
+                        c.Disconnected += (con) => session.User.Online = false;
                         if (OnAccountLogin != null) OnAccountLogin.Invoke(c, session.User.AccountId);
                     }
                     else {

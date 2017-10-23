@@ -52,7 +52,7 @@ namespace GServer.Plugins
                     var account = _storage.Accounts.FirstOrDefault(a => a.AccountId == accountId);
                     account.Connection = connection;
                     _accounts.Add(connection.Token, account);
-                    connection.Disconnected += () => { _accounts.Remove(connection.Token); };
+                    connection.Disconnected += (c) => { _accounts.Remove(c.Token); };
                 }
             }
         }

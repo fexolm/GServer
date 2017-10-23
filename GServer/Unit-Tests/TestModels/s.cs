@@ -1,5 +1,8 @@
 ﻿using GServer.Containers;
 using System.Collections.Generic;
+using System.Linq;
+
+// ReSharper disable UseNullPropagation
 
 namespace Unit_Tests.TestModels
 {
@@ -79,11 +82,11 @@ namespace Unit_Tests.TestModels
                     var other = (SerializableProp2) obj;
                     if (ListStringProp == null)
                         return false;
-                    if (ListStringProp.Count != other.ListStringProp.Count)
+                    if (other != null && ListStringProp.Count != other.ListStringProp.Count)
                         return false;
-                    for (var i = 0; i < ListStringProp.Count; i++)
-                        if (ListStringProp[i] != other.ListStringProp[i])
-                            return false;
+                    if (ListStringProp.Where((t, i) => t != other.ListStringProp[i]).Any()) {
+                        return false;
+                    }
                     return BoolProp == other.BoolProp;
                 }
             }
