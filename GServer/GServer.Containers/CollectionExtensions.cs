@@ -35,7 +35,7 @@ namespace GServer.Containers
 
         public static void DeserializeFrom(this IList<byte> collection, DataStorage ds)
         {
-            var len = ds.ReadByte();
+            var len = ds.ReadInt32();
             for (var i = 0; i < len; i++)
             {
                 collection.Add(ds.ReadByte());
