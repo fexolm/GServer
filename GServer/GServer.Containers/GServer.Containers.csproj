@@ -45,9 +45,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodeGen.cs" />
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="CustomList.cs" />
     <Compile Include="DataStorage.cs" />
+    <Compile Include="DsSerializeAttribute.cs" />
+    <Compile Include="DsSerializer.cs" />
     <Compile Include="IDeepSerializable.cs" />
     <Compile Include="ISerializable.cs" />
     <Compile Include="Pair.cs" />

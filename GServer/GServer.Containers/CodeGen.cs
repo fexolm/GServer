@@ -1,15 +1,11 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Globalization;
-using System.Linq;
-using GServer.Containers;
 
-
-namespace GServer
+namespace GServer.Containers
 {
     public static class CodeGen
     {
