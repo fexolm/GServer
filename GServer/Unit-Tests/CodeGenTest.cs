@@ -47,6 +47,22 @@ namespace Unit_Tests
         public Sample() { }
     }
 
+    class OptionalClass
+    {
+        [DsSerialize]
+        public int A1 { get; set; }
+
+        [DsSerialize(DsSerializeAttribute.SerializationOptions.Optional)]
+        public string B1 { get; set; }
+
+        public OptionalClass(int a, string b) {
+            A1 = a;
+            B1 = b;
+        }
+
+        public OptionalClass() { }
+    }
+
     public class CodeGenTest
     {
         [Test]
@@ -68,6 +84,27 @@ namespace Unit_Tests
                 Assert.AreEqual(val.first.A1, val.second.A1);
                 Assert.AreEqual(val.first.B1, val.second.B1);
             }
+        }
+
+        [Test]
+        public void OptionalTest() {
+            var sample = new OptionalClass(14, null);
+            var buffer = DsSerializer.Serialize(sample);
+
+            var sample1 = new OptionalClass(14, "kek");
+            var buffer1 = DsSerializer.Serialize(sample1);
+
+
+            var ds = DataStorage.CreateForRead(buffer);
+
+            var res = DsSerializer.DeserializeInto<OptionalClass>(buffer);
+
+            var res1 = DsSerializer.DeserializeInto<OptionalClass>(buffer1);
+            
+            Assert.AreEqual(res.A1, sample.A1);
+            Assert.AreEqual(res.B1, sample.B1);
+            Assert.AreEqual(res1.A1, sample1.A1);
+            Assert.AreEqual(res1.B1, sample1.B1);
         }
     }
 }

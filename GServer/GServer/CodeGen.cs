@@ -30,6 +30,10 @@ namespace GServer
             return result;
         }
 
+        private static bool TrueIfNull(object obj) {
+            return obj == null;
+        }
+
         public delegate byte[] Serializer(object obj);
 
         private static readonly IDictionary<Type, MethodInfo> _serializeActions =
@@ -130,12 +134,19 @@ namespace GServer
             var endIf = il.DefineLabel();
             var options = prop.GetCustomAttribute<DsSerializeAttribute>().Options;
             if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
+                var trueIfNull = typeof(CodeGen).GetMethod("TrueIfNull", BindingFlags.NonPublic | BindingFlags.Static);
+
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Callvirt, prop.GetMethod);
-                il.Emit(OpCodes.Ldnull);
-                il.Emit(OpCodes.Ceq);
-                il.Emit(OpCodes.Dup);
+                il.Emit(OpCodes.Call, prop.GetMethod);
+                il.Emit(OpCodes.Call, trueIfNull);
+
+                il.Emit(OpCodes.Call, _serializeActions[typeof(bool)]);
+                il.Emit(OpCodes.Pop);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Call, prop.GetMethod);
+                il.Emit(OpCodes.Call, trueIfNull);
+
                 il.Emit(OpCodes.Brfalse, elseStmt);
                 il.Emit(OpCodes.Br, endIf);
             }
@@ -168,11 +179,6 @@ namespace GServer
             }
 
             il.MarkLabel(endIf);
-
-            if ((options & DsSerializeAttribute.SerializationOptions.Optional) == 0) return;
-            il.Emit(OpCodes.Not);
-            il.Emit(OpCodes.Call, _serializeActions[typeof(bool)]);
-            il.Emit(OpCodes.Pop);
         }
 
         public static Func<DataStorage, object> GenerateDeserializer(Type type) {
