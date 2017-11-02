@@ -13,6 +13,23 @@ namespace GServer
 {
     public static class CodeGen
     {
+        private static void SerializeListTo<TData>(DataStorage ds, IList<TData> list) {
+            ds.Push(list.Count);
+            foreach (var element in list) {
+                DsSerializer.SerializeTo(ds, element);
+            }
+        }
+
+        private static IList<TData> DeserializeListFrom<TData>(DataStorage ds) {
+            int len = ds.ReadInt32();
+            var result = new List<TData>();
+            for (var i = 0; i < len; i++) {
+                var element = DsSerializer.DeserializeFrom<TData>(ds);
+                result.Add(element);
+            }
+            return result;
+        }
+
         public delegate byte[] Serializer(object obj);
 
         private static readonly IDictionary<Type, MethodInfo> _serializeActions =
@@ -132,7 +149,16 @@ namespace GServer
                 il.Emit(OpCodes.Callvirt, push);
                 il.Emit(OpCodes.Pop);
             }
-            else if (typeof(IEnumerable).IsAssignableFrom(prop.PropertyType)) { }
+            else if (typeof(IList).IsAssignableFrom(prop.PropertyType)) {
+                var listSerializer =
+                    typeof(CodeGen).GetMethod("SerializeListTo", BindingFlags.Static | BindingFlags.NonPublic)
+                        .MakeGenericMethod(prop.PropertyType.GenericTypeArguments[0]);
+
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Callvirt, prop.GetMethod);
+                il.Emit(OpCodes.Call, listSerializer);
+            }
             else {
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
@@ -191,6 +217,15 @@ namespace GServer
                     il.Emit(OpCodes.Ldloc_1);
                     il.Emit(OpCodes.Ldloc_0);
                     il.Emit(OpCodes.Call, read);
+                    il.Emit(OpCodes.Callvirt, prop.SetMethod);
+                }
+                else if (typeof(IList).IsAssignableFrom(prop.PropertyType)) {
+                    var listDeserializer =
+                        typeof(CodeGen).GetMethod("DeserializeListFrom", BindingFlags.Static | BindingFlags.NonPublic)
+                            .MakeGenericMethod(prop.PropertyType.GenericTypeArguments[0]);
+                    il.Emit(OpCodes.Ldloc_1);
+                    il.Emit(OpCodes.Ldloc_0);
+                    il.Emit(OpCodes.Call, listDeserializer);
                     il.Emit(OpCodes.Callvirt, prop.SetMethod);
                 }
                 else {

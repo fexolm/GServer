@@ -2,6 +2,8 @@
 using GServer;
 using GServer.Containers;
 using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Unit_Tests
 {
@@ -10,7 +12,7 @@ namespace Unit_Tests
         [DsSerialize]
         public int A1 { get; set; }
 
-        [DsSerialize(DsSerializeAttribute.SerializationOptions.Optional)]
+        [DsSerialize]
         public string B1 { get; set; }
 
         public SampleIn(int a, string b) {
@@ -32,10 +34,14 @@ namespace Unit_Tests
         [DsSerialize]
         public SampleIn C { get; set; }
 
-        public Sample(int a, string b, SampleIn c) {
+        [DsSerialize]
+        public List<SampleIn> D { get; set; }
+
+        public Sample(int a, string b, SampleIn c, List<SampleIn> d) {
             A = a;
             B = b;
             C = c;
+            D = d;
         }
 
         public Sample() { }
@@ -45,7 +51,11 @@ namespace Unit_Tests
     {
         [Test]
         public void SerializerTest() {
-            var sample = new Sample(512, "kek", new SampleIn(123, null));
+            var sample = new Sample(512, "kek", new SampleIn(123, "431"), new List<SampleIn> {
+                new SampleIn(123, "kok"),
+                new SampleIn(154, "lol"),
+                new SampleIn(125, "heh"),
+            });
             var buffer = DsSerializer.Serialize(sample);
 
             var res = DsSerializer.DeserializeInto<Sample>(buffer);
@@ -54,6 +64,10 @@ namespace Unit_Tests
             Assert.AreEqual(res.B, sample.B);
             Assert.AreEqual(res.C.A1, sample.C.A1);
             Assert.AreEqual(res.C.B1, sample.C.B1);
+            foreach (var val in res.D.Zip(sample.D, (f, s) => new {first = f, second = s})) {
+                Assert.AreEqual(val.first.A1, val.second.A1);
+                Assert.AreEqual(val.first.B1, val.second.B1);
+            }
         }
     }
 }
