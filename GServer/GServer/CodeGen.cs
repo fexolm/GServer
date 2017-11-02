@@ -87,16 +87,9 @@ namespace GServer
         public static Action<DataStorage, object> GenerateSerializer(Type type) {
             Type[] @params = {typeof(DataStorage), typeof(object)};
             var method = new DynamicMethod("Serialize", typeof(void), @params);
-            var createDs =
-                typeof(DataStorage).GetMethod("CreateForWrite", BindingFlags.Public | BindingFlags.Static);
-            var serialize = typeof(DataStorage).GetMethod("Serialize");
             var il = method.GetILGenerator(256);
             il.Emit(OpCodes.Nop);
-
-            PushSerializeMethods(il, type, (prop) => {
-                il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Callvirt, prop.GetMethod);
-            });
+            PushSerializeMethods(il, type);
             il.Emit(OpCodes.Ret);
             try {
                 return (Action<DataStorage, object>) method.CreateDelegate(typeof(Action<DataStorage, object>));
@@ -106,23 +99,23 @@ namespace GServer
             }
         }
 
-        private static void PushSerializeMethods(ILGenerator il, Type type, Action<PropertyInfo> getPropAction) {
+        private static void PushSerializeMethods(ILGenerator il, Type type) {
             var props = type.GetProperties()
                 .Where(m => m.GetCustomAttribute(typeof(DsSerializeAttribute), false) != null);
 
             foreach (var prop in props) {
-                GeneratePropertySerializer(il, prop, getPropAction);
+                GeneratePropertySerializer(il, prop);
             }
         }
 
-        private static void GeneratePropertySerializer(ILGenerator il, PropertyInfo prop,
-            Action<PropertyInfo> getPropAction) {
+        private static void GeneratePropertySerializer(ILGenerator il, PropertyInfo prop) {
             var elseStmt = il.DefineLabel();
             var endIf = il.DefineLabel();
             var options = prop.GetCustomAttribute<DsSerializeAttribute>().Options;
             if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
                 il.Emit(OpCodes.Ldarg_0);
-                getPropAction.Invoke(prop);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Callvirt, prop.GetMethod);
                 il.Emit(OpCodes.Ldnull);
                 il.Emit(OpCodes.Ceq);
                 il.Emit(OpCodes.Dup);
@@ -133,17 +126,19 @@ namespace GServer
             il.MarkLabel(elseStmt);
             if (_serializeActions.ContainsKey(prop.PropertyType)) {
                 il.Emit(OpCodes.Ldarg_0);
-                getPropAction.Invoke(prop);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Callvirt, prop.GetMethod);
                 var push = _serializeActions[prop.PropertyType];
                 il.Emit(OpCodes.Callvirt, push);
                 il.Emit(OpCodes.Pop);
             }
             else if (typeof(IEnumerable).IsAssignableFrom(prop.PropertyType)) { }
             else {
-                PushSerializeMethods(il, prop.PropertyType, (p) => {
-                    getPropAction.Invoke(prop);
-                    il.Emit(OpCodes.Callvirt, p.GetMethod);
-                });
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Callvirt, prop.GetMethod);
+                var serializer = typeof(DsSerializer).GetMethod("SerializeTo");
+                il.Emit(OpCodes.Call, serializer);
             }
 
             il.MarkLabel(endIf);
@@ -166,7 +161,7 @@ namespace GServer
             il.Emit(OpCodes.Newobj, type.GetConstructor(new Type[0]));
             il.DeclareLocal(type);
             il.Emit(OpCodes.Stloc_1);
-            PushDeserializeMethods(il, type, () => { il.Emit(OpCodes.Ldloc_1); });
+            PushDeserializeMethods(il, type);
             il.Emit(OpCodes.Ldloc_1);
             il.Emit(OpCodes.Ret);
             try {
@@ -177,7 +172,7 @@ namespace GServer
             }
         }
 
-        private static void PushDeserializeMethods(ILGenerator il, Type type, Action getPropAction) {
+        private static void PushDeserializeMethods(ILGenerator il, Type type) {
             var props = type.GetProperties()
                 .Where(m => m.GetCustomAttribute(typeof(DsSerializeAttribute), false) != null);
             foreach (var prop in props) {
@@ -193,19 +188,18 @@ namespace GServer
                 il.MarkLabel(elseStmt);
                 if (_deserializeActions.ContainsKey(prop.PropertyType)) {
                     var read = _deserializeActions[prop.PropertyType];
-                    getPropAction.Invoke();
+                    il.Emit(OpCodes.Ldloc_1);
                     il.Emit(OpCodes.Ldloc_0);
                     il.Emit(OpCodes.Call, read);
                     il.Emit(OpCodes.Callvirt, prop.SetMethod);
                 }
                 else {
-                    getPropAction.Invoke();
-                    il.Emit(OpCodes.Newobj, prop.PropertyType.GetConstructor(new Type[0]));
+                    il.Emit(OpCodes.Ldloc_1);
+                    il.Emit(OpCodes.Ldloc_0);
+                    var deserializer = typeof(DsSerializer).GetMethod("DeserializeFrom")
+                        .MakeGenericMethod(prop.PropertyType);
+                    il.Emit(OpCodes.Call, deserializer);
                     il.Emit(OpCodes.Callvirt, prop.SetMethod);
-                    PushDeserializeMethods(il, prop.PropertyType, () => {
-                        getPropAction.Invoke();
-                        il.Emit(OpCodes.Callvirt, prop.GetMethod);
-                    });
                 }
                 il.MarkLabel(endIf);
             }
