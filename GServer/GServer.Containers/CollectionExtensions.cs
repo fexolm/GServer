@@ -33,11 +33,9 @@ namespace GServer.Containers
             }
         }
 
-        public static void DeserializeFrom(this IList<byte> collection, DataStorage ds)
-        {
+        public static void DeserializeFrom(this IList<byte> collection, DataStorage ds) {
             var len = ds.ReadInt32();
-            for (var i = 0; i < len; i++)
-            {
+            for (var i = 0; i < len; i++) {
                 collection.Add(ds.ReadByte());
             }
         }
@@ -54,11 +52,9 @@ namespace GServer.Containers
             }
         }
 
-        public static void SerializeTo(this IList<byte> collection, DataStorage ds)
-        {
+        public static void SerializeTo(this IList<byte> collection, DataStorage ds) {
             ds.Push(collection.Count);
-            foreach (var element in collection)
-            {
+            foreach (var element in collection) {
                 ds.Push(element);
             }
         }
