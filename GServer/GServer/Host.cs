@@ -8,6 +8,12 @@ using System.Linq;
 using GServer.Connection;
 using GServer.Messages;
 
+// ReSharper disable UnusedMember.Global
+// ReSharper disable InlineOutVariableDeclaration
+// ReSharper disable UnusedMethodReturnValue.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
+
 // ReSharper disable ArrangeAccessorOwnerBody
 // ReSharper disable UseNullPropagation
 
@@ -32,29 +38,17 @@ namespace GServer
         internal bool IsAccepted(Token token) {
             return _allowAll || _allowedTokens.Contains(token);
         }
-
-        internal void InitializeConnections(ConnectionManager cm) {
-            if (_allowAll) return;
-            foreach (var token in _allowedTokens) {
-                cm.Add(token, new Connection.Connection(null, token));
-            }
-        }
     }
 
     public delegate void ReceiveHandler(Message msg, Connection.Connection con);
 
     public class Host : IDisposable
     {
+        // ReSharper disable once MemberCanBePrivate.Global
         public bool EnableHandshake { get; set; }
-        private AllowedTokens _allowedTokens;
 
-        public AllowedTokens AllowedTokens {
-            get { return _allowedTokens; }
-            set {
-                _allowedTokens = value;
-                _allowedTokens.InitializeConnections(_connectionManager);
-            }
-        }
+        // ReSharper disable once MemberCanBePrivate.Global
+        public AllowedTokens AllowedTokens { get; set; }
 
         private Token _hostToken;
         private ISocket _client;
@@ -62,6 +56,7 @@ namespace GServer
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
         private readonly IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
+        private int _connectionCleaningTick = 0;
 
         /// <summary>
         /// Interval in server ticks of disconnecting inactive connections 
@@ -102,12 +97,6 @@ namespace GServer
         }
 
         private void ServerTick() {
-            //_connectionCleaningTick++;
-            //if (_connectionCleaningTick > ConnectionCleaningInterval)
-            //{
-            //    CleanConnections();
-            //    _connectionCleaningTick = 0;
-            //}
             _connectionManager.InvokeForAllConnections(c => {
                 var buffer = c.GetBytesToSend();
                 if (buffer.Length > 0) {
