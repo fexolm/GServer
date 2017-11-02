@@ -84,28 +84,22 @@ namespace GServer
                 typeof(DataStorage).GetMethod("ReadFloat", new Type[0]));
         }
 
-        public static Func<object, byte[]> GenerateSerializer(Type type) {
-            Type[] @params = {typeof(object)};
-            var method = new DynamicMethod("Serialize", typeof(byte[]), @params);
+        public static Action<DataStorage, object> GenerateSerializer(Type type) {
+            Type[] @params = {typeof(DataStorage), typeof(object)};
+            var method = new DynamicMethod("Serialize", typeof(void), @params);
             var createDs =
                 typeof(DataStorage).GetMethod("CreateForWrite", BindingFlags.Public | BindingFlags.Static);
             var serialize = typeof(DataStorage).GetMethod("Serialize");
             var il = method.GetILGenerator(256);
             il.Emit(OpCodes.Nop);
-            il.Emit(OpCodes.Call, createDs);
-            il.DeclareLocal(typeof(DataStorage));
-            il.Emit(OpCodes.Stloc_0);
 
             PushSerializeMethods(il, type, (prop) => {
-                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Callvirt, prop.GetMethod);
             });
-
-            il.Emit(OpCodes.Ldloc_0);
-            il.Emit(OpCodes.Callvirt, serialize);
             il.Emit(OpCodes.Ret);
             try {
-                return (Func<object, byte[]>) method.CreateDelegate(typeof(Func<object, byte[]>));
+                return (Action<DataStorage, object>) method.CreateDelegate(typeof(Action<DataStorage, object>));
             }
             catch (Exception ex) {
                 return null;
@@ -127,7 +121,7 @@ namespace GServer
             var endIf = il.DefineLabel();
             var options = prop.GetCustomAttribute<DsSerializeAttribute>().Options;
             if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
-                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldarg_0);
                 getPropAction.Invoke(prop);
                 il.Emit(OpCodes.Ldnull);
                 il.Emit(OpCodes.Ceq);
@@ -138,7 +132,7 @@ namespace GServer
 
             il.MarkLabel(elseStmt);
             if (_serializeActions.ContainsKey(prop.PropertyType)) {
-                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldarg_0);
                 getPropAction.Invoke(prop);
                 var push = _serializeActions[prop.PropertyType];
                 il.Emit(OpCodes.Callvirt, push);
@@ -154,21 +148,19 @@ namespace GServer
 
             il.MarkLabel(endIf);
 
-            if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
-                il.Emit(OpCodes.Not);
-                il.Emit(OpCodes.Call, _serializeActions[typeof(bool)]);
-                il.Emit(OpCodes.Pop);
-            }
+            if ((options & DsSerializeAttribute.SerializationOptions.Optional) == 0) return;
+            il.Emit(OpCodes.Not);
+            il.Emit(OpCodes.Call, _serializeActions[typeof(bool)]);
+            il.Emit(OpCodes.Pop);
         }
 
-        public static Func<byte[], object> GenerateDeserializer(Type type) {
-            Type[] @params = {typeof(byte[])};
+        public static Func<DataStorage, object> GenerateDeserializer(Type type) {
+            Type[] @params = {typeof(DataStorage)};
             var method = new DynamicMethod("Deserialize", typeof(object), @params);
             var createDs = typeof(DataStorage).GetMethod("CreateForRead");
             var il = method.GetILGenerator(256);
             il.Emit(OpCodes.Nop);
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, createDs);
             il.DeclareLocal(typeof(DataStorage));
             il.Emit(OpCodes.Stloc_0);
             il.Emit(OpCodes.Newobj, type.GetConstructor(new Type[0]));
@@ -178,7 +170,7 @@ namespace GServer
             il.Emit(OpCodes.Ldloc_1);
             il.Emit(OpCodes.Ret);
             try {
-                return (Func<byte[], object>) method.CreateDelegate(typeof(Func<byte[], object>));
+                return (Func<DataStorage, object>) method.CreateDelegate(typeof(Func<DataStorage, object>));
             }
             catch (Exception ex) {
                 return null;
@@ -228,8 +220,6 @@ namespace GServer
             return ds.Serialize();
         }
 
-        public static void SerializeIenumerable(ILGenerator il, PropertyInfo prop, Action getPropAction) {
-               
-        }
+        public static void SerializeIenumerable(ILGenerator il, PropertyInfo prop, Action getPropAction) { }
     }
 }
