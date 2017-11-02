@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Net;
 using GServer.Containers;
 
-namespace GServer
+namespace GServer.Containers
 {
     public static class DsSerializer
     {

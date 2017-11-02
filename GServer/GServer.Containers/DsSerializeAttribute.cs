@@ -5,7 +5,7 @@
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedMember.Local
 
-namespace GServer
+namespace GServer.Containers
 {
     public class DsSerializeAttribute : Attribute
     {

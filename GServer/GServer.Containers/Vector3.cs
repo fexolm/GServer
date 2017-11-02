@@ -2,8 +2,13 @@
 {
     public class Vector3 : ISerializable, IDeserializable, IDeepSerializable, IDeepDeserializable
     {
+        [DsSerialize]
         public float X { get; set; }
+
+        [DsSerialize]
         public float Y { get; set; }
+
+        [DsSerialize]
         public float Z { get; set; }
 
         public Vector3() {

@@ -1,15 +1,11 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Globalization;
-using System.Linq;
-using GServer.Containers;
 
-
-namespace GServer
+namespace GServer.Containers
 {
     public static class CodeGen
     {
@@ -28,6 +24,10 @@ namespace GServer
                 result.Add(element);
             }
             return result;
+        }
+
+        private static bool TrueIfNull(object obj) {
+            return obj == null;
         }
 
         public delegate byte[] Serializer(object obj);
@@ -130,12 +130,19 @@ namespace GServer
             var endIf = il.DefineLabel();
             var options = prop.GetCustomAttribute<DsSerializeAttribute>().Options;
             if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
+                var trueIfNull = typeof(CodeGen).GetMethod("TrueIfNull", BindingFlags.NonPublic | BindingFlags.Static);
+
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Callvirt, prop.GetMethod);
-                il.Emit(OpCodes.Ldnull);
-                il.Emit(OpCodes.Ceq);
-                il.Emit(OpCodes.Dup);
+                il.Emit(OpCodes.Call, prop.GetMethod);
+                il.Emit(OpCodes.Call, trueIfNull);
+
+                il.Emit(OpCodes.Call, _serializeActions[typeof(bool)]);
+                il.Emit(OpCodes.Pop);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Call, prop.GetMethod);
+                il.Emit(OpCodes.Call, trueIfNull);
+
                 il.Emit(OpCodes.Brfalse, elseStmt);
                 il.Emit(OpCodes.Br, endIf);
             }
@@ -168,11 +175,6 @@ namespace GServer
             }
 
             il.MarkLabel(endIf);
-
-            if ((options & DsSerializeAttribute.SerializationOptions.Optional) == 0) return;
-            il.Emit(OpCodes.Not);
-            il.Emit(OpCodes.Call, _serializeActions[typeof(bool)]);
-            il.Emit(OpCodes.Pop);
         }
 
         public static Func<DataStorage, object> GenerateDeserializer(Type type) {

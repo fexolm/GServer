@@ -1,5 +1,4 @@
 ﻿using GServer.Messages;
-using System.Linq;
 
 namespace GServer
 {
