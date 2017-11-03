@@ -79,9 +79,10 @@ namespace Unit_Tests
             Assert.AreEqual(res.B, sample.B);
             Assert.AreEqual(res.C.A1, sample.C.A1);
             Assert.AreEqual(res.C.B1, sample.C.B1);
-            foreach (var val in res.D.Zip(sample.D, (f, s) => new {first = f, second = s})) {
-                Assert.AreEqual(val.first.A1, val.second.A1);
-                Assert.AreEqual(val.first.B1, val.second.B1);
+            Assert.AreEqual(res.D.Count, sample.D.Count);
+            for (int i = 0; i < res.D.Count; i++) {
+                Assert.AreEqual(res.D[i].A1, sample.D[i].A1);
+                Assert.AreEqual(res.D[i].B1, sample.D[i].B1);
             }
         }
 
@@ -99,7 +100,7 @@ namespace Unit_Tests
             var res = DsSerializer.DeserializeInto<OptionalClass>(buffer);
 
             var res1 = DsSerializer.DeserializeInto<OptionalClass>(buffer1);
-            
+
             Assert.AreEqual(res.A1, sample.A1);
             Assert.AreEqual(res.B1, sample.B1);
             Assert.AreEqual(res1.A1, sample1.A1);
