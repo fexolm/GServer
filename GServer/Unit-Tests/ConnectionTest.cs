@@ -7,7 +7,7 @@ using GServer.Messages;
 
 namespace Unit_Tests
 {
-    class ConnectionTest
+    internal class ConnectionTest
     {
         [Test]
         public void ReliableAlghoritmTest() {
