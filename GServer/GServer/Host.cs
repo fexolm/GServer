@@ -146,7 +146,7 @@ namespace GServer
         }
 
         private static void InvokeHandler(ReceiveHandler handler, Message msg, Connection.Connection connection) {
-            var async = handler.GetMethodInfo().GetCustomAttributes(typeof(AsyncOperationAttribute), false).Length > 0;
+            var async = handler.GetType().GetCustomAttributes(typeof(AsyncOperationAttribute), false).Length > 0;
             if (async) {
                 ThreadPool.QueueUserWorkItem((o) => handler.Invoke(msg, connection));
             }
@@ -196,7 +196,7 @@ namespace GServer
             connection.UpdateActivity();
         }
 
-        private void ProcessHandlerList(IReadOnlyList<Message> messages, Connection.Connection connection) {
+        private void ProcessHandlerList(IList<Message> messages, Connection.Connection connection) {
             if (connection == null) throw new ArgumentNullException(nameof(connection));
             IList<ReceiveHandler> handlers = null;
             if (messages.Count == 0) {

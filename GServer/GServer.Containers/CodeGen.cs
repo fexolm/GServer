@@ -118,7 +118,7 @@ namespace GServer.Containers
 
         private static void PushSerializeMethods(ILGenerator il, Type type) {
             var props = type.GetProperties()
-                .Where(m => m.GetCustomAttribute(typeof(DsSerializeAttribute), false) != null);
+                .Where(m => m.GetCustomAttributes(typeof(DsSerializeAttribute), false).Length > 0);
 
             foreach (var prop in props) {
                 GeneratePropertySerializer(il, prop);
@@ -128,19 +128,21 @@ namespace GServer.Containers
         private static void GeneratePropertySerializer(ILGenerator il, PropertyInfo prop) {
             var elseStmt = il.DefineLabel();
             var endIf = il.DefineLabel();
-            var options = prop.GetCustomAttribute<DsSerializeAttribute>().Options;
+            var options =
+                ((DsSerializeAttribute) (prop.GetCustomAttributes(typeof(DsSerializeAttribute), false).First()))
+                .Options;
             if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
                 var trueIfNull = typeof(CodeGen).GetMethod("TrueIfNull", BindingFlags.NonPublic | BindingFlags.Static);
 
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Call, prop.GetMethod);
+                il.Emit(OpCodes.Call, prop.GetGetMethod());
                 il.Emit(OpCodes.Call, trueIfNull);
 
                 il.Emit(OpCodes.Call, _serializeActions[typeof(bool)]);
                 il.Emit(OpCodes.Pop);
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Call, prop.GetMethod);
+                il.Emit(OpCodes.Call, prop.GetGetMethod());
                 il.Emit(OpCodes.Call, trueIfNull);
 
                 il.Emit(OpCodes.Brfalse, elseStmt);
@@ -151,7 +153,7 @@ namespace GServer.Containers
             if (_serializeActions.ContainsKey(prop.PropertyType)) {
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Callvirt, prop.GetMethod);
+                il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
                 var push = _serializeActions[prop.PropertyType];
                 il.Emit(OpCodes.Callvirt, push);
                 il.Emit(OpCodes.Pop);
@@ -159,17 +161,17 @@ namespace GServer.Containers
             else if (typeof(IList).IsAssignableFrom(prop.PropertyType)) {
                 var listSerializer =
                     typeof(CodeGen).GetMethod("SerializeListTo", BindingFlags.Static | BindingFlags.NonPublic)
-                        .MakeGenericMethod(prop.PropertyType.GenericTypeArguments[0]);
+                        .MakeGenericMethod(prop.PropertyType.GetGenericArguments()[0]);
 
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Callvirt, prop.GetMethod);
+                il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
                 il.Emit(OpCodes.Call, listSerializer);
             }
             else {
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Callvirt, prop.GetMethod);
+                il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
                 var serializer = typeof(DsSerializer).GetMethod("SerializeTo");
                 il.Emit(OpCodes.Call, serializer);
             }
@@ -202,9 +204,11 @@ namespace GServer.Containers
 
         private static void PushDeserializeMethods(ILGenerator il, Type type) {
             var props = type.GetProperties()
-                .Where(m => m.GetCustomAttribute(typeof(DsSerializeAttribute), false) != null);
+                .Where(m => m.GetCustomAttributes(typeof(DsSerializeAttribute), false).Length > 0);
             foreach (var prop in props) {
-                var options = prop.GetCustomAttribute<DsSerializeAttribute>().Options;
+                var options =
+                    ((DsSerializeAttribute) (prop.GetCustomAttributes(typeof(DsSerializeAttribute), false).First()))
+                    .Options;
                 var elseStmt = il.DefineLabel();
                 var endIf = il.DefineLabel();
                 if ((options & DsSerializeAttribute.SerializationOptions.Optional) != 0) {
@@ -219,16 +223,16 @@ namespace GServer.Containers
                     il.Emit(OpCodes.Ldloc_1);
                     il.Emit(OpCodes.Ldloc_0);
                     il.Emit(OpCodes.Call, read);
-                    il.Emit(OpCodes.Callvirt, prop.SetMethod);
+                    il.Emit(OpCodes.Callvirt, prop.GetSetMethod());
                 }
                 else if (typeof(IList).IsAssignableFrom(prop.PropertyType)) {
                     var listDeserializer =
                         typeof(CodeGen).GetMethod("DeserializeListFrom", BindingFlags.Static | BindingFlags.NonPublic)
-                            .MakeGenericMethod(prop.PropertyType.GenericTypeArguments[0]);
+                            .MakeGenericMethod(prop.PropertyType.GetGenericArguments()[0]);
                     il.Emit(OpCodes.Ldloc_1);
                     il.Emit(OpCodes.Ldloc_0);
                     il.Emit(OpCodes.Call, listDeserializer);
-                    il.Emit(OpCodes.Callvirt, prop.SetMethod);
+                    il.Emit(OpCodes.Callvirt, prop.GetSetMethod());
                 }
                 else {
                     il.Emit(OpCodes.Ldloc_1);
@@ -236,7 +240,7 @@ namespace GServer.Containers
                     var deserializer = typeof(DsSerializer).GetMethod("DeserializeFrom")
                         .MakeGenericMethod(prop.PropertyType);
                     il.Emit(OpCodes.Call, deserializer);
-                    il.Emit(OpCodes.Callvirt, prop.SetMethod);
+                    il.Emit(OpCodes.Callvirt, prop.GetSetMethod());
                 }
                 il.MarkLabel(endIf);
             }

@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>GServer.Containers</RootNamespace>
     <AssemblyName>GServer.Containers</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
