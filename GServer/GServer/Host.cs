@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using GServer.Containers;
-using System.Reflection;
 using System.Linq;
 using GServer.Connection;
 using GServer.Messages;
@@ -56,7 +55,6 @@ namespace GServer
         private readonly ConnectionManager _connectionManager;
         private bool _isListening;
         private readonly IDictionary<short, IList<ReceiveHandler>> _receiveHandlers;
-        private int _connectionCleaningTick = 0;
 
         /// <summary>
         /// Interval in server ticks of disconnecting inactive connections 

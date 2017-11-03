@@ -18,14 +18,14 @@ namespace GServer.Containers
         private static readonly IDictionary<Type, Func<DataStorage, object>> _deserializerCache
             = new Dictionary<Type, Func<DataStorage, object>>();
 
-        public static void SerializeTo(DataStorage ds, object obj) {
+        internal static void SerializeTo(DataStorage ds, object obj) {
             if (!_serializerCache.ContainsKey(obj.GetType())) {
                 _serializerCache[obj.GetType()] = CodeGen.GenerateSerializer(obj.GetType());
             }
             _serializerCache[obj.GetType()].Invoke(ds, obj);
         }
 
-        public static TResult DeserializeFrom<TResult>(DataStorage ds) {
+        internal static TResult DeserializeFrom<TResult>(DataStorage ds) {
             if (!_deserializerCache.ContainsKey(typeof(TResult))) {
                 _deserializerCache[typeof(TResult)] = CodeGen.GenerateDeserializer(typeof(TResult));
             }

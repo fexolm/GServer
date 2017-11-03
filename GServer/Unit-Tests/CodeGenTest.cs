@@ -3,6 +3,7 @@ using GServer.Containers;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
+// ReSharper disable All
 
 namespace Unit_Tests
 {

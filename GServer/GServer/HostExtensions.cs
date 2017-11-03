@@ -10,11 +10,9 @@ namespace GServer
             {
                 foreach (var connection in host.GetConnections())
                 {
-                    if (connection.EndPoint != null)
-                    {
-                        System.Console.WriteLine($"pinging {connection.EndPoint}");
-                        host.Send(new Message((short)MessageType.Ping, Mode.Reliable), connection);
-                    }
+                    if (connection.EndPoint == null) continue;
+                    System.Console.WriteLine($"pinging {connection.EndPoint}");
+                    host.Send(new Message((short)MessageType.Ping, Mode.Reliable), connection);
                 }
             }
             catch

@@ -5,9 +5,12 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
+// ReSharper disable SuggestBaseTypeForParameter
+// ReSharper disable UnusedMember.Local
+
 namespace GServer.Containers
 {
-    public static class CodeGen
+    internal static class CodeGen
     {
         private static void SerializeListTo<TData>(DataStorage ds, IList<TData> list) {
             ds.Push(list.Count);
@@ -108,12 +111,7 @@ namespace GServer.Containers
             il.Emit(OpCodes.Nop);
             PushSerializeMethods(il, type);
             il.Emit(OpCodes.Ret);
-            try {
-                return (Action<DataStorage, object>) method.CreateDelegate(typeof(Action<DataStorage, object>));
-            }
-            catch (Exception ex) {
-                return null;
-            }
+            return (Action<DataStorage, object>) method.CreateDelegate(typeof(Action<DataStorage, object>));
         }
 
         private static void PushSerializeMethods(ILGenerator il, Type type) {
@@ -172,7 +170,8 @@ namespace GServer.Containers
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Callvirt, prop.GetGetMethod());
-                var serializer = typeof(DsSerializer).GetMethod("SerializeTo");
+                var serializer =
+                    typeof(DsSerializer).GetMethod("SerializeTo", BindingFlags.Static | BindingFlags.NonPublic);
                 il.Emit(OpCodes.Call, serializer);
             }
 
@@ -182,24 +181,19 @@ namespace GServer.Containers
         public static Func<DataStorage, object> GenerateDeserializer(Type type) {
             Type[] @params = {typeof(DataStorage)};
             var method = new DynamicMethod("Deserialize", typeof(object), @params);
-            var createDs = typeof(DataStorage).GetMethod("CreateForRead");
             var il = method.GetILGenerator(256);
             il.Emit(OpCodes.Nop);
             il.Emit(OpCodes.Ldarg_0);
             il.DeclareLocal(typeof(DataStorage));
             il.Emit(OpCodes.Stloc_0);
+            // ReSharper disable once AssignNullToNotNullAttribute
             il.Emit(OpCodes.Newobj, type.GetConstructor(new Type[0]));
             il.DeclareLocal(type);
             il.Emit(OpCodes.Stloc_1);
             PushDeserializeMethods(il, type);
             il.Emit(OpCodes.Ldloc_1);
             il.Emit(OpCodes.Ret);
-            try {
-                return (Func<DataStorage, object>) method.CreateDelegate(typeof(Func<DataStorage, object>));
-            }
-            catch (Exception ex) {
-                return null;
-            }
+            return (Func<DataStorage, object>) method.CreateDelegate(typeof(Func<DataStorage, object>));
         }
 
         private static void PushDeserializeMethods(ILGenerator il, Type type) {
@@ -237,7 +231,8 @@ namespace GServer.Containers
                 else {
                     il.Emit(OpCodes.Ldloc_1);
                     il.Emit(OpCodes.Ldloc_0);
-                    var deserializer = typeof(DsSerializer).GetMethod("DeserializeFrom")
+                    var deserializer = typeof(DsSerializer)
+                        .GetMethod("DeserializeFrom", BindingFlags.Static | BindingFlags.NonPublic)
                         .MakeGenericMethod(prop.PropertyType);
                     il.Emit(OpCodes.Call, deserializer);
                     il.Emit(OpCodes.Callvirt, prop.GetSetMethod());
@@ -245,16 +240,5 @@ namespace GServer.Containers
                 il.MarkLabel(endIf);
             }
         }
-
-        public static byte[] SerializeTest(IEnumerable<int> obj) {
-            var ds = DataStorage.CreateForWrite();
-            ds.Push(obj.Count());
-            foreach (var o in obj) {
-                ds.Push(o);
-            }
-            return ds.Serialize();
-        }
-
-        public static void SerializeIenumerable(ILGenerator il, PropertyInfo prop, Action getPropAction) { }
     }
 }
