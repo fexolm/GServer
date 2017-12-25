@@ -1,4 +1,5 @@
-﻿using GServer;
+﻿using System;
+using GServer;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Net;
@@ -244,6 +245,7 @@ namespace Unit_Tests
 
         [Test]
         public void OrderedIfPacketsLost() {
+            ActionDispatcher.Start(1);
             var server = new Host(8080);
             var client = new Host(8081);
             var messageCount = 0;
@@ -268,7 +270,9 @@ namespace Unit_Tests
                 Thread.Sleep(1000);
             }
             for (var i = 0; i < 500; i++) {
-                client.Send(new Message(1023, Mode.Reliable | Mode.Ordered, new byte[100]));
+                ActionDispatcher.Enqueue(() => {
+                    client.Send(new Message(1023, Mode.Reliable | Mode.Ordered, new byte[100]));
+                });
             }
             Thread.Sleep(5000);
             Assert.AreEqual(messageCount, 500);
@@ -278,6 +282,7 @@ namespace Unit_Tests
             foreach (var connection in server.GetConnections()) {
                 Assert.AreEqual(0, connection.BufferCount, "server buffer not empty");
             }
+            ActionDispatcher.Stop();
         }
     }
 }
