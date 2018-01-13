@@ -1,8 +1,7 @@
-﻿using GServer;
+﻿using System.Collections.Generic;
 using GServer.Containers;
 using NUnit.Framework;
-using System.Collections.Generic;
-using System.Linq;
+
 // ReSharper disable All
 
 
@@ -47,7 +46,7 @@ namespace Unit_Tests
 
         public Sample() { }
     }
-  
+
     class OptionalClass
     {
         [DsSerialize]
@@ -63,6 +62,7 @@ namespace Unit_Tests
 
         public OptionalClass() { }
     }
+
     public class CodeGenTest
     {
         [Test]
