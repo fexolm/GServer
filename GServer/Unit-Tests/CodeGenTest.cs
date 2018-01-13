@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 // ReSharper disable All
 
+
 namespace Unit_Tests
 {
     class SampleIn
@@ -62,7 +63,6 @@ namespace Unit_Tests
 
         public OptionalClass() { }
     }
-  
     public class CodeGenTest
     {
         [Test]
@@ -80,7 +80,6 @@ namespace Unit_Tests
             Assert.AreEqual(res.B, sample.B);
             Assert.AreEqual(res.C.A1, sample.C.A1);
             Assert.AreEqual(res.C.B1, sample.C.B1);
-
             Assert.AreEqual(res.D.Count, sample.D.Count);
             for (int i = 0; i < res.D.Count; i++) {
                 Assert.AreEqual(res.D[i].A1, sample.D[i].A1);
