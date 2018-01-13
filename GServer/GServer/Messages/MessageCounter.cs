@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GServer
+namespace GServer.Messages
 {
     internal struct MessageCounter : IComparable
     {

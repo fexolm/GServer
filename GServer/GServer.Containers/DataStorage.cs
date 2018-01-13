@@ -12,14 +12,6 @@ namespace GServer.Containers
         private readonly BinaryReader Reader;
         private readonly BinaryWriter Writer;
 
-        private DataStorage(BinaryReader reader) {
-            Reader = reader;
-        }
-
-        private DataStorage(BinaryWriter writer) {
-            Writer = writer;
-        }
-
         private DataStorage(byte[] buffer) {
             Stream = new MemoryStream(buffer);
             Reader = new BinaryReader(Stream);
@@ -126,6 +118,7 @@ namespace GServer.Containers
             return this;
         }
 
+        [Obsolete]
         public DataStorage Push(IDeepSerializable val) {
             if (Writer == null)
                 throw new Exception("DataStorage in read only mode");

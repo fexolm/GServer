@@ -8,9 +8,10 @@
     <OutputType>Library</OutputType>
     <RootNamespace>GServer.Containers</RootNamespace>
     <AssemblyName>GServer.Containers</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -45,9 +46,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodeGen.cs" />
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="CustomList.cs" />
     <Compile Include="DataStorage.cs" />
+    <Compile Include="DsSerializeAttribute.cs" />
+    <Compile Include="DsSerializer.cs" />
     <Compile Include="IDeepSerializable.cs" />
     <Compile Include="ISerializable.cs" />
     <Compile Include="Pair.cs" />
