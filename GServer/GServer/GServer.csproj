@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>GServer</RootNamespace>
     <AssemblyName>GServer</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -51,7 +51,6 @@
     <Compile Include="Host.cs" />
     <Compile Include="HostExtensions.cs" />
     <Compile Include="HostImpl.cs" />
-    <Compile Include="HttpPipe.cs" />
     <Compile Include="IPlugin.cs" />
     <Compile Include="ISocket.cs" />
     <Compile Include="Messages\Ack.cs" />
