@@ -12,7 +12,7 @@ namespace Unit_Tests
         [DsSerialize]
         public int A1 { get; set; }
 
-        [DsSerialize]
+        [DsSerialize(DsSerializeAttribute.SerializationOptions.Optional)]
         public string B1 { get; set; }
 
         public SampleIn(int a, string b) {
@@ -46,7 +46,7 @@ namespace Unit_Tests
 
         public Sample() { }
     }
-
+  
     class OptionalClass
     {
         [DsSerialize]
@@ -62,7 +62,7 @@ namespace Unit_Tests
 
         public OptionalClass() { }
     }
-
+  
     public class CodeGenTest
     {
         [Test]
@@ -80,6 +80,7 @@ namespace Unit_Tests
             Assert.AreEqual(res.B, sample.B);
             Assert.AreEqual(res.C.A1, sample.C.A1);
             Assert.AreEqual(res.C.B1, sample.C.B1);
+
             Assert.AreEqual(res.D.Count, sample.D.Count);
             for (int i = 0; i < res.D.Count; i++) {
                 Assert.AreEqual(res.D[i].A1, sample.D[i].A1);

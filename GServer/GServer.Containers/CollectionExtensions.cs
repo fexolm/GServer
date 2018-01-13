@@ -38,6 +38,7 @@ namespace GServer.Containers
             }
         }
 
+
         [Obsolete("Use DsSerializer instead")]
         public static void DeserializeFrom(this IList<byte> collection, DataStorage ds) {
             var len = ds.ReadInt32();
@@ -45,7 +46,7 @@ namespace GServer.Containers
                 collection.Add(ds.ReadByte());
             }
         }
-
+      
         [Obsolete("Use DsSerializer instead")]
         public static void FillDeserialize(this IList<int> collection, byte[] buffer) {
             var ds = DataStorage.CreateForRead(buffer);
@@ -59,6 +60,7 @@ namespace GServer.Containers
                 ds.Push(element);
             }
         }
+
 
         [Obsolete("Use DsSerializer instead")]
         public static void SerializeTo(this IList<byte> collection, DataStorage ds) {
